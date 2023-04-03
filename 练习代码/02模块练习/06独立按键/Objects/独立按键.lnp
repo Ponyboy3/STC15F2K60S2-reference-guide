@@ -1,0 +1,4 @@
+".\Objects\STARTUP.obj",
+".\Objects\独立按键.obj" 
+TO ".\Objects\独立按键" 
+PRINT(".\Listings\独立按键.m51") RAMSIZE(256) 

@@ -1,0 +1,4 @@
+".\Objects\STARTUP.obj",
+".\Objects\外部中断.obj" 
+TO ".\Objects\外部中断的基本操作" 
+PRINT(".\Listings\外部中断的基本操作.m51") RAMSIZE(256) 

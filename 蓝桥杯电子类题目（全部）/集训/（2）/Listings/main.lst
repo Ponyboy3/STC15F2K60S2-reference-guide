@@ -1,0 +1,123 @@
+C51 COMPILER V9.55   MAIN                                                                  04/06/2022 12:12:55 PAGE 1   
+
+
+C51 COMPILER V9.55, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\keilc\pack_file\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listi
+                    -ngs\main.lst) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include <STC15F2K60S2.h>
+   2          #include <onewire.h>
+   3          #include <intrins.h>
+   4          
+   5          #define uchar unsigned char 
+   6          #define uint unsigned int 
+   7            
+   8          uchar code type1[]={
+   9                                0xC0,
+  10                                0xF9,
+  11                                0xA4,
+  12                                0xB0,
+  13                                0x99,
+  14                                0x92,
+  15                                0x82,
+  16                                0xF8,
+  17                                0x80,
+  18                                0x90,0xff};
+  19          uchar code type2[]={0x01,0x02,0x04,0x08,0x10,0x20,0x40,0x80};
+  20          uchar num1,num2,num3,num4,num5,num6,num7,num8;
+  21          uchar f_2ms;
+  22          uchar t_2ms;
+  23          uint temp;
+  24          
+  25          
+  26          
+  27          
+  28          void smg_display(uchar n1,uchar n2,uchar n3,uchar n4,uchar n5,uchar n6,uchar n7,uchar n8)
+  29          {
+  30   1        char i;
+  31   1        P0=0xff;
+  32   1        P2=(P2&0x1f)|0xc0;
+  33   1        P0=type2[i];
+  34   1        P2=(P2&0x1f);
+  35   1        switch(i)
+  36   1        {
+  37   2          case 0:P2=(P2&0x1f)|0xe0;P0=type1[n1];P2=(P2&0x1f);break;
+  38   2          case 1:P2=(P2&0x1f)|0xe0;P0=type1[n2];P2=(P2&0x1f);break;   
+  39   2          case 2:P2=(P2&0x1f)|0xe0;P0=type1[n3];P2=(P2&0x1f);break;   
+  40   2          case 3:P2=(P2&0x1f)|0xe0;P0=type1[n4];P2=(P2&0x1f);break;   
+  41   2          case 4:P2=(P2&0x1f)|0xe0;P0=type1[n5];P2=(P2&0x1f);break;   
+  42   2          case 5:P2=(P2&0x1f)|0xe0;P0=type1[n6];P2=(P2&0x1f);break;   
+  43   2          case 6:P2=(P2&0x1f)|0xe0;P0=type1[n7];P2=(P2&0x1f);break;   
+  44   2          case 7:P2=(P2&0x1f)|0xe0;P0=type1[n8];P2=(P2&0x1f);break;   
+  45   2        }
+  46   1        if(++i==8)
+  47   1          i=0;
+  48   1      }
+  49          
+  50          void time1_int1()
+  51          {
+  52   1        EA=1;
+  53   1        ET1=1;
+  54   1        TR1=1;
+C51 COMPILER V9.55   MAIN                                                                  04/06/2022 12:12:55 PAGE 2   
+
+  55   1        TMOD=(TMOD&0x0f)|0x10;
+  56   1        TH1=(65536-2000)/256;
+  57   1        TL1=(65536-2000)%256; 
+  58   1      }
+  59          void main()
+  60          {
+  61   1        P2=(P2&0x1f)|0xa0;
+  62   1        P0=0x00;
+  63   1        P2=(P2&0x1f); 
+  64   1        P2=(P2&0x1f)|0x80;
+  65   1        P0=0xff;
+  66   1        P2=(P2&0x1f);   
+  67   1        time1_int1();
+  68   1        initial_18b20();
+  69   1        while(1)
+  70   1        {
+  71   2          if(f_2ms==1)
+  72   2          {
+  73   3           f_2ms=1;
+  74   3            if(++t_2ms==100)
+  75   3            {
+  76   4              t_2ms=0;
+  77   4              temp=rd_temperature( );
+  78   4            }
+  79   3            
+  80   3            num1=temp/100;num2=temp%100/10;num3=temp%10;
+  81   3            num4=num5=num6=num7=num8=10;
+  82   3            
+  83   3            
+  84   3      
+  85   3          }//f_2ms
+  86   2        } 
+  87   1      }
+  88          void cl_time1_int1() interrupt 3
+  89          {
+  90   1        TH1=(65536-2000)/256;
+  91   1        TL1=(65536-2000)%256;   
+  92   1        smg_display(num1,num2,num3,num4,num5,num6,num7,num8);
+  93   1        f_2ms=1;
+  94   1        
+  95   1        
+  96   1        
+  97   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    409    ----
+   CONSTANT SIZE    =     19    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     12       9
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,254 @@
+C51 COMPILER V9.55   MAIN                                                                  03/30/2022 19:49:49 PAGE 1   
+
+
+C51 COMPILER V9.55, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\keilc\pack_file\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listi
+                    -ngs\main.lst) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include <STC15F2K60S2.h>
+   2          #include <iic.h>
+   3          #include <intrins.h>
+   4          
+   5          #define uchar unsigned char 
+   6          #define uint unsigned int 
+   7            
+   8          uchar code type1[]={0xc0,0xf9,0xa4,0xb0,0x99,0x92,0x82,0xf8,0x80,0x90,0xff};
+   9          uchar code type2[]={0x01,0x02,0x04,0x08,0x10,0x20,0x40,0x80};
+  10          uchar num1,num2,num3,num4,num5,num6,num7,num8;
+  11          uchar GN;
+  12          uchar f_2ms;
+  13          uchar t_2ms,tt_2ms;
+  14          uchar a;
+  15          uchar flsh;
+  16          uint temp_L;
+  17          uint temp_Q;
+  18          
+  19          
+  20          
+  21          void Delay10ms()    //@11.0592MHz
+  22          {
+  23   1        unsigned char i, j;
+  24   1      
+  25   1        i = 108;
+  26   1        j = 145;
+  27   1        do
+  28   1        {
+  29   2          while (--j);
+  30   2        } while (--i);
+  31   1      }
+  32          
+  33          void smg_display(uchar n1,uchar n2,uchar n3,uchar n4,uchar n5,uchar n6,uchar n7,uchar n8)
+  34          {
+  35   1        uchar i;
+  36   1        P0=0xff;
+  37   1        P2=(P2&0x1f)|0xc0;
+  38   1        P0=type2[i];
+  39   1        P2=(P2&0x1f);
+  40   1        switch(i)
+  41   1        {
+  42   2          case 0:P2=(P2&0x1f)|0xe0;P0=type1[n1];P2=(P2&0x1f);break;
+  43   2          case 1:P2=(P2&0x1f)|0xe0;
+  44   2                                  if(GN==0)
+  45   2                                  {
+  46   3                                    P0=type1[n2];
+  47   3                                  }
+  48   2                                  else 
+  49   2                                  {
+  50   3                                    P0=type1[n2]&0x7f;
+  51   3                                  }
+  52   2                                   P2=(P2&0x1f);break;    
+  53   2          case 2:P2=(P2&0x1f)|0xe0;P0=type1[n3];P2=(P2&0x1f);break;   
+  54   2          case 3:P2=(P2&0x1f)|0xe0;P0=type1[n4];P2=(P2&0x1f);break;   
+C51 COMPILER V9.55   MAIN                                                                  03/30/2022 19:49:49 PAGE 2   
+
+  55   2          case 4:P2=(P2&0x1f)|0xe0;P0=type1[n5];P2=(P2&0x1f);break;   
+  56   2          case 5:P2=(P2&0x1f)|0xe0;
+  57   2                                  if(GN==0)
+  58   2                                  {
+  59   3                                    P0=type1[n6];
+  60   3                                  }
+  61   2                                  else 
+  62   2                                  {
+  63   3                                    P0=type1[n6]&0x7f;
+  64   3                                  }
+  65   2                                   P2=(P2&0x1f);break;                                
+  66   2          case 6:P2=(P2&0x1f)|0xe0;P0=type1[n7];P2=(P2&0x1f);break;   
+  67   2          case 7:P2=(P2&0x1f)|0xe0;P0=type1[n8];P2=(P2&0x1f);break;     
+  68   2        }
+  69   1        i++;
+  70   1        if(i==8)
+  71   1          i=0;
+  72   1      }
+  73          
+  74          uchar key_scan()
+  75          {
+  76   1        uchar temp;
+  77   1        temp=(~P3)&0x0f;
+  78   1        if(temp==0) return 0;
+  79   1        Delay10ms();
+  80   1        temp=(~P3)&0x0f;
+  81   1        if(temp==0) return 0; 
+  82   1        return temp;  
+  83   1      }
+  84          void key_change()
+  85          {
+  86   1        uchar D;
+  87   1        D=key_scan();
+  88   1        switch(D)
+  89   1        {
+  90   2          case 8:GN=1;break;
+  91   2          case 4:GN=2;break;    
+  92   2          case 2:GN=3;break;    
+  93   2          case 1:GN=4;break;    
+  94   2      //    case 0:GN=0;break;      
+  95   2        } 
+  96   1      }
+  97          ///////////////////////////////adc
+  98          void initial_adc()
+  99          {
+ 100   1        IIC_Start( );
+ 101   1        IIC_SendByte(0x90+0); 
+ 102   1        IIC_WaitAck( );
+ 103   1        IIC_SendByte(0x1); 
+ 104   1        IIC_WaitAck( );
+ 105   1        IIC_Stop( );
+ 106   1      }
+ 107          uchar du_adc()
+ 108          {
+ 109   1        uchar D;
+ 110   1        IIC_Start( );
+ 111   1        IIC_SendByte(0x90+1); 
+ 112   1        IIC_WaitAck( ); 
+ 113   1        D=IIC_RecByte( );
+ 114   1        IIC_SendAck(1);
+ 115   1        IIC_Stop( );
+ 116   1        return D;
+C51 COMPILER V9.55   MAIN                                                                  03/30/2022 19:49:49 PAGE 3   
+
+ 117   1      }
+ 118          void time1_int1()
+ 119          {
+ 120   1        EA=1;
+ 121   1        ET1=1;
+ 122   1        TR1=1;
+ 123   1        TMOD=(TMOD&0x0f)|0x10;
+ 124   1        TH1=(65536-2000)/256;
+ 125   1        TL1=(65536-2000)%256; 
+ 126   1      }
+ 127          
+ 128          void main()
+ 129          {
+ 130   1        P2=(P2&0x1f)|0xa0;
+ 131   1        P0=0x00;
+ 132   1        P2=(P2&0x1f); 
+ 133   1        P2=(P2&0x1f)|0x80;
+ 134   1        P0=0xff;
+ 135   1        P2=(P2&0x1f); 
+ 136   1      
+ 137   1        num1=num2=num3=num4=num5=num6=num7=num8=10; 
+ 138   1        time1_int1();
+ 139   1        
+ 140   1        initial_adc();
+ 141   1        while(1)
+ 142   1        {
+ 143   2          if(f_2ms==1)
+ 144   2          {
+ 145   3            f_2ms=0;
+ 146   3            key_change();
+ 147   3            if(GN==4)//¿ª
+ 148   3            {
+ 149   4              if(a==0)
+ 150   4              {
+ 151   5                a=1;
+ 152   5                temp_L=0;
+ 153   5              }
+ 154   4              EA=0;
+ 155   4              P2=(P2&0x1f)|0xa0;
+ 156   4              P0=0x10;
+ 157   4              P2=(P2&0x1f);         
+ 158   4              EA=1;
+ 159   4              if(++t_2ms==50)
+ 160   4              {
+ 161   5                t_2ms=0;
+ 162   5                temp_L++;
+ 163   5                if(temp_L==9999)
+ 164   5                {
+ 165   6                  //temp_L=0;
+ 166   6                  GN=3;
+ 167   6                }
+ 168   5                num5=temp_L/1000;num6=temp_L%1000/100;num7=temp_L%100/10;num8=temp_L%10;
+ 169   5              }
+ 170   4              num1=10;num2=0;num3=5;num4=0;
+ 171   4                
+ 172   4            }
+ 173   3            if(GN==3)//¹Ø
+ 174   3            {
+ 175   4              a=0;
+ 176   4              EA=0;
+ 177   4              P2=(P2&0x1f)|0xa0;
+ 178   4              P0=0x00;
+C51 COMPILER V9.55   MAIN                                                                  03/30/2022 19:49:49 PAGE 4   
+
+ 179   4              P2=(P2&0x1f);         
+ 180   4              EA=1; 
+ 181   4              temp_Q=temp_L/2;  
+ 182   4              num5=temp_Q/1000;num6=temp_Q%1000/100;num7=temp_Q%100/10;num8=temp_Q%10;        
+ 183   4              num1=10;num2=0;num3=5;num4=0;
+ 184   4            }
+ 185   3          
+ 186   3          if(++tt_2ms==100)
+ 187   3          {
+ 188   4            tt_2ms=0;
+ 189   4            flsh=du_adc();
+ 190   4          }
+ 191   3          if(flsh<65)
+ 192   3          {
+ 193   4              EA=0;
+ 194   4              P0=0xff;
+ 195   4              P2=(P2&0x1f)|0x80;
+ 196   4              P0=0xfe;
+ 197   4              P2=(P2&0x1f);         
+ 198   4              EA=1;     
+ 199   4          }
+ 200   3          else 
+ 201   3          {
+ 202   4              EA=0;
+ 203   4              P0=0xff;
+ 204   4              P2=(P2&0x1f)|0x80;
+ 205   4              P0=0xff;
+ 206   4              P2=(P2&0x1f);         
+ 207   4              EA=1;     
+ 208   4          }     
+ 209   3          }//f_2ms
+ 210   2        }
+ 211   1      }
+ 212          
+ 213          void cl_time1_int1() interrupt 3
+ 214          {
+ 215   1        TH1=(65536-2000)/256;
+ 216   1        TL1=(65536-2000)%256;   
+ 217   1        
+ 218   1        smg_display(num1,num2,num3,num4,num5,num6,num7,num8);
+ 219   1        
+ 220   1        f_2ms=1;
+ 221   1        
+ 222   1      }
+ 223          
+ 224          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    849    ----
+   CONSTANT SIZE    =     19    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     18      10
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

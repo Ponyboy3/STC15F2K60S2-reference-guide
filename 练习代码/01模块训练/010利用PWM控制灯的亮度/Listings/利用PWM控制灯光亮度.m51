@@ -1,0 +1,235 @@
+BL51 BANKED LINKER/LOCATER V6.22.2.0                                                    03/03/2023  14:17:14  PAGE 1
+
+
+BL51 BANKED LINKER/LOCATER V6.22.2.0, INVOKED BY:
+C:\KEIL_V5\C51\BIN\BL51.EXE .\Objects\STARTUP.obj, .\Objects\PWM调光.obj TO .\Objects\利用PWM控制灯光亮度 PRINT (.\Listi
+>> ngs\利用PWM控制灯光亮度.m51) RAMSIZE (256)
+
+
+MEMORY MODEL: SMALL
+
+
+INPUT MODULES INCLUDED:
+  .\Objects\STARTUP.obj (?C_STARTUP)
+  .\Objects\PWM调光.obj (PWM____)
+  C:\KEIL_V5\C51\LIB\C51S.LIB (?C_INIT)
+
+
+LINK MAP OF MODULE:  .\Objects\利用PWM控制灯光亮度 (?C_STARTUP)
+
+
+            TYPE    BASE      LENGTH    RELOCATION   SEGMENT NAME
+            -----------------------------------------------------
+
+            * * * * * * *   D A T A   M E M O R Y   * * * * * * *
+            REG     0000H     0008H     ABSOLUTE     "REG BANK 0"
+            DATA    0008H     0003H     UNIT         ?DT?PWM____
+            IDATA   000BH     0001H     UNIT         ?STACK
+
+            * * * * * * *   C O D E   M E M O R Y   * * * * * * *
+            CODE    0000H     0003H     ABSOLUTE     
+                    0003H     0008H                  *** GAP ***
+            CODE    000BH     0003H     ABSOLUTE     
+            CODE    000EH     008CH     UNIT         ?C_C51STARTUP
+            CODE    009AH     0047H     UNIT         ?PR?SCANKEYS?PWM____
+            CODE    00E1H     0043H     UNIT         ?PR?SERVICETIMER0?PWM____
+            CODE    0124H     000EH     UNIT         ?PR?INITTIMER0?PWM____
+            CODE    0132H     000DH     UNIT         ?PR?MAIN?PWM____
+            CODE    013FH     000BH     UNIT         ?PR?_DELAYKEY?PWM____
+            CODE    014AH     000AH     UNIT         ?C_INITSEG
+            CODE    0154H     0009H     UNIT         ?PR?SELECTHC573?PWM____
+
+
+
+OVERLAY MAP OF MODULE:   .\Objects\利用PWM控制灯光亮度 (?C_STARTUP)
+
+
+SEGMENT
+  +--> CALLED SEGMENT
+---------------------
+?C_C51STARTUP
+  +--> ?PR?MAIN?PWM____
+  +--> ?C_INITSEG
+
+?PR?MAIN?PWM____
+  +--> ?PR?SELECTHC573?PWM____
+  +--> ?PR?INITTIMER0?PWM____
+  +--> ?PR?SCANKEYS?PWM____
+
+?PR?SCANKEYS?PWM____
+  +--> ?PR?_DELAYKEY?PWM____
+
+BL51 BANKED LINKER/LOCATER V6.22.2.0                                                  03/03/2023  14:17:14  PAGE 2
+
+
+
+
+SYMBOL TABLE OF MODULE:  .\Objects\利用PWM控制灯光亮度 (?C_STARTUP)
+
+  VALUE           TYPE          NAME
+  ----------------------------------
+
+  -------         MODULE        ?C_STARTUP
+  C:000EH         SEGMENT       ?C_C51STARTUP
+  I:000BH         SEGMENT       ?STACK
+  C:0000H         PUBLIC        ?C_STARTUP
+  D:00E0H         SYMBOL        ACC
+  D:00F0H         SYMBOL        B
+  D:0083H         SYMBOL        DPH
+  D:0082H         SYMBOL        DPL
+  N:0000H         SYMBOL        IBPSTACK
+  N:0100H         SYMBOL        IBPSTACKTOP
+  N:0080H         SYMBOL        IDATALEN
+  C:0011H         SYMBOL        IDATALOOP
+  N:0000H         SYMBOL        PBPSTACK
+  N:0100H         SYMBOL        PBPSTACKTOP
+  N:0000H         SYMBOL        PDATALEN
+  N:0000H         SYMBOL        PDATASTART
+  N:0000H         SYMBOL        PPAGE
+  N:0000H         SYMBOL        PPAGEENABLE
+  D:00A0H         SYMBOL        PPAGE_SFR
+  D:0081H         SYMBOL        SP
+  C:000EH         SYMBOL        STARTUP1
+  N:0000H         SYMBOL        XBPSTACK
+  N:0000H         SYMBOL        XBPSTACKTOP
+  N:0000H         SYMBOL        XDATALEN
+  N:0000H         SYMBOL        XDATASTART
+  C:0000H         LINE#         126
+  C:000EH         LINE#         133
+  C:0010H         LINE#         134
+  C:0011H         LINE#         135
+  C:0012H         LINE#         136
+  C:0014H         LINE#         185
+  C:0017H         LINE#         196
+  -------         ENDMOD        ?C_STARTUP
+
+  -------         MODULE        PWM____
+  C:0000H         SYMBOL        _ICE_DUMMY_
+  D:0080H         PUBLIC        P0
+  D:0090H         PUBLIC        P1
+  D:00A0H         PUBLIC        P2
+  D:00B0H         PUBLIC        P3
+  D:0008H         PUBLIC        pwm_dut
+  B:00A8H.7       PUBLIC        EA
+  B:00B0H.0       PUBLIC        S7
+  C:00E1H         PUBLIC        ServiceTimer0
+  D:00A8H         PUBLIC        IE
+  C:0154H         PUBLIC        SelectHC573
+  D:00B8H         PUBLIC        IP
+  C:013FH         PUBLIC        _DelayKey
+  D:0009H         PUBLIC        Stat
+  C:009AH         PUBLIC        ScanKeys
+BL51 BANKED LINKER/LOCATER V6.22.2.0                                                  03/03/2023  14:17:14  PAGE 3
+
+
+  C:0132H         PUBLIC        main
+  D:000AH         PUBLIC        count
+  D:0098H         PUBLIC        SCON
+  D:0089H         PUBLIC        TMOD
+  D:0088H         PUBLIC        TCON
+  B:00A8H.1       PUBLIC        ET0
+  C:0124H         PUBLIC        InitTimer0
+  D:008CH         PUBLIC        TH0
+  D:008AH         PUBLIC        TL0
+  B:0088H.4       PUBLIC        TR0
+  D:00C8H         PUBLIC        T2CON
+  D:00D0H         PUBLIC        PSW
+  B:0080H.0       PUBLIC        L1
+  -------         PROC          SELECTHC573
+  C:0154H         LINE#         6
+  C:0154H         LINE#         7
+  C:0154H         LINE#         8
+  C:015CH         LINE#         9
+  -------         ENDPROC       SELECTHC573
+  -------         PROC          INITTIMER0
+  C:0124H         LINE#         13
+  C:0124H         LINE#         14
+  C:0124H         LINE#         15
+  C:0127H         LINE#         16
+  C:012AH         LINE#         17
+  C:012DH         LINE#         19
+  C:012FH         LINE#         20
+  C:0131H         LINE#         21
+  -------         ENDPROC       INITTIMER0
+  -------         PROC          SERVICETIMER0
+  C:00E1H         LINE#         23
+  C:00ECH         LINE#         25
+  C:00EFH         LINE#         26
+  C:00F2H         LINE#         28
+  C:00F4H         LINE#         29
+  C:00FBH         LINE#         30
+  C:00FBH         LINE#         31
+  C:00FDH         LINE#         32
+  C:00FFH         LINE#         33
+  C:010DH         LINE#         34
+  C:010DH         LINE#         35
+  C:010FH         LINE#         36
+  C:0111H         LINE#         37
+  C:0117H         LINE#         38
+  C:0117H         LINE#         39
+  C:0119H         LINE#         40
+  C:011BH         LINE#         41
+  C:011BH         LINE#         42
+  -------         ENDPROC       SERVICETIMER0
+  -------         PROC          _DELAYKEY
+  D:0006H         SYMBOL        t
+  C:013FH         LINE#         46
+  C:013FH         LINE#         47
+  C:013FH         LINE#         48
+  C:0149H         LINE#         49
+  -------         ENDPROC       _DELAYKEY
+  -------         PROC          SCANKEYS
+BL51 BANKED LINKER/LOCATER V6.22.2.0                                                  03/03/2023  14:17:14  PAGE 4
+
+
+  C:009AH         LINE#         52
+  C:009AH         LINE#         53
+  C:009AH         LINE#         54
+  C:009DH         LINE#         55
+  C:009DH         LINE#         56
+  C:00A4H         LINE#         57
+  C:00A7H         LINE#         58
+  C:00A7H         LINE#         59
+  C:00B6H         LINE#         60
+  C:00B6H         LINE#         61
+  C:00B6H         LINE#         62
+  C:00B8H         LINE#         63
+  C:00BAH         LINE#         64
+  C:00BDH         LINE#         65
+  C:00C0H         LINE#         66
+  C:00C2H         LINE#         68
+  C:00C2H         LINE#         69
+  C:00C4H         LINE#         70
+  C:00C7H         LINE#         71
+  C:00CAH         LINE#         72
+  C:00CCH         LINE#         74
+  C:00CCH         LINE#         75
+  C:00CEH         LINE#         76
+  C:00D1H         LINE#         77
+  C:00D4H         LINE#         78
+  C:00D6H         LINE#         80
+  C:00D6H         LINE#         81
+  C:00D8H         LINE#         82
+  C:00DAH         LINE#         83
+  C:00DDH         LINE#         84
+  C:00DDH         LINE#         85
+  C:00DDH         LINE#         86
+  C:00E0H         LINE#         87
+  C:00E0H         LINE#         88
+  C:00E0H         LINE#         92
+  -------         ENDPROC       SCANKEYS
+  -------         PROC          MAIN
+  C:0132H         LINE#         94
+  C:0132H         LINE#         95
+  C:0132H         LINE#         96
+  C:0135H         LINE#         97
+  C:0137H         LINE#         98
+  C:013AH         LINE#         99
+  C:013AH         LINE#         100
+  C:013AH         LINE#         101
+  C:013DH         LINE#         102
+  -------         ENDPROC       MAIN
+  -------         ENDMOD        PWM____
+
+Program Size: data=12.0 xdata=0 code=341
+LINK/LOCATE RUN COMPLETE.  0 WARNING(S),  0 ERROR(S)

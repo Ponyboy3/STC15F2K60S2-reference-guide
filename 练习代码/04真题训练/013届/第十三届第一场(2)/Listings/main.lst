@@ -1,0 +1,401 @@
+C51 COMPILER V9.59.0.0   MAIN                                                              04/02/2023 20:32:44 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\main
+                    -.lst) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include "reg52.h"
+   2          #include "ds1302.h"
+   3          #include "onewire.h"
+   4          
+   5          sfr P4 = 0xc0;
+   6          sbit P44 = P4^4;
+   7          sbit P42 = P4^2;
+   8          
+   9          #define uchar unsigned char
+  10          #define uint unsigned int
+  11            
+  12          uchar code type1[] = {0xc0,0xf9,0xa4,0xb0,0x99,0x92,0x82,0xf8,0x80,0x90,0xff,0xc1,0xbf};
+  13          uchar code type2[] = {0x01,0x02,0x04,0x08,0x10,0x20,0x40,0x80};
+  14          
+  15          uchar num1,num2,num3,num4,num5,num6,num7,num8;
+  16          bit f_2ms;//2ms标志
+  17          uchar GN;//按键标志
+  18          uchar model;//按键模式标志
+  19          uchar h,m,s;
+  20          uint temperature;
+  21          uchar stat_temp = 23;
+  22          uint count;
+  23          bit f_S13,f_S17;
+  24          uint t_2ms,t_5s,tt_5s;
+  25          uint t_100ms;
+  26          
+  27          uchar bdata U9;
+  28          sbit relay=U9^4;
+  29          
+  30          uchar bdata U6=0xff;
+  31          sbit led1=U6^0;
+  32          sbit led2=U6^1;
+  33          sbit led3=U6^2;
+  34          
+  35          bit f_relay,f_led;
+  36          
+  37          void Display_Smg(uchar n1,uchar n2,uchar n3,uchar n4,uchar n5,uchar n6,uchar n7,uchar n8)
+  38          {
+  39   1        uchar i;
+  40   1        P0 = 0xff;
+  41   1        P2 = (P2 & 0x1f) | 0xc0;
+  42   1        P0 = type2[i];
+  43   1        P2 &= 0x1f;
+  44   1        switch(i)
+  45   1        {
+  46   2          case 0:P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n1];P2 &= 0x1f;break;
+  47   2          case 1:P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n2];P2 &= 0x1f;break;
+  48   2          case 2:P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n3];P2 &= 0x1f;break;
+  49   2          case 3:P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n4];P2 &= 0x1f;break;
+  50   2          case 4:P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n5];P2 &= 0x1f;break;
+  51   2          case 5:P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n6];P2 &= 0x1f;break;
+  52   2          case 6:P2 = (P2 & 0x1f) | 0xe0;
+  53   2                                  if(model == 0)
+  54   2                                  {
+C51 COMPILER V9.59.0.0   MAIN                                                              04/02/2023 20:32:44 PAGE 2   
+
+  55   3                                    P0 = type1[n7]&0x7f;
+  56   3                                  }
+  57   2                                  else
+  58   2                                    P0 = type1[n7];
+  59   2                                                        P2 &= 0x1f;break;
+  60   2          case 7:P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n8];P2 &= 0x1f;break;
+  61   2        }
+  62   1        if(++i == 8)
+  63   1          i = 0;
+  64   1      }
+  65          
+  66          void Delay_Keys(uint t)
+  67          {
+  68   1        while(t--);
+  69   1      }
+  70          uchar Scan_Keys()
+  71          {
+  72   1        uchar H,L;
+  73   1        P3 = 0xcf;P44 = 0;P42 = 0;H = (~P3) & 0x0f;// 1 1 0 0 1 1 1 1
+  74   1        if(H == 0) return 0;
+  75   1        Delay_Keys(100);
+  76   1        P3 = 0xcf;P44 = 0;P42 = 0;H = (~P3) & 0x0f;// 1 1 0 0 1 1 1 1
+  77   1        if(H == 0) return 0;
+  78   1        P3 = 0xf0;P44 = 1;P42 = 1;L = (~P3) & 0x30;// 1 1 0 0 1 1 1 1
+  79   1        if(P44 == 0) L |= 0x80;
+  80   1        if(P42 == 0) L |= 0x40;
+  81   1        return (H+L);
+  82   1      }
+  83          void Change_Keys()
+  84          {
+  85   1        switch(Scan_Keys())
+  86   1        {
+  87   2          case 0x28:GN = 12;break;
+  88   2          case 0x24:GN = 13;break;
+  89   2          case 0x18:GN = 16;break;
+  90   2          case 0x14:GN = 17;break;
+  91   2          case 0:GN = 0;break;
+  92   2        }
+  93   1      }
+  94          
+  95          void Xie_1302()
+  96          {
+  97   1        Write_Ds1302_Byte(0x8e,0x00);
+  98   1        Write_Ds1302_Byte(0x80,0x45);//秒
+  99   1        Write_Ds1302_Byte(0x82,0x58);//分
+ 100   1        Write_Ds1302_Byte(0x84,0x23);//时
+ 101   1      }
+ 102          
+ 103          void Du_1302()
+ 104          {
+ 105   1        s = Read_Ds1302_Byte (0x81);
+ 106   1        m = Read_Ds1302_Byte (0x83);
+ 107   1        h = Read_Ds1302_Byte (0x85);
+ 108   1      }
+ 109          
+ 110          void Init_T1()
+ 111          {
+ 112   1        TMOD = (TMOD & 0x0f) | 0x10;
+ 113   1        TH1 = (65536 - 2000) / 256;
+ 114   1        TL1 = (65536 - 2000) % 256;
+ 115   1        
+ 116   1        EA = 1;
+C51 COMPILER V9.59.0.0   MAIN                                                              04/02/2023 20:32:44 PAGE 3   
+
+ 117   1        ET1 = 1;
+ 118   1        TR1 = 1;
+ 119   1      }
+ 120          void Init_Sys()
+ 121          {
+ 122   1        P2 = (P2 & 0x1f) | 0x80;
+ 123   1        P0 = 0xff;
+ 124   1        P2 &= 0x1f;
+ 125   1        P2 = (P2 & 0x1f) | 0xa0;
+ 126   1        P0 = 0x00;
+ 127   1        P2 &= 0x1f;
+ 128   1        P2 = (P2 & 0x1f) | 0xc0;
+ 129   1        P0 = 0xff;
+ 130   1        P2 &= 0x1f;
+ 131   1        P2 = (P2 & 0x1f) | 0xe0;
+ 132   1        P0 = 0xff;
+ 133   1        P2 &= 0x1f;
+ 134   1        
+ 135   1        U6 = 0xff;
+ 136   1        P2 = (P2 & 0x1f) | 0x80;
+ 137   1        P0 = U6;
+ 138   1        P2 &= 0x1f;
+ 139   1      }
+ 140          void Led_Control()
+ 141          {
+ 142   1        if(m == 0 && s == 0)
+ 143   1        {
+ 144   2          f_led = 1;
+ 145   2        }
+ 146   1        if(f_led == 1)
+ 147   1        {
+ 148   2          EA = 0;
+ 149   2          led1 = 0; P0 = 0xff;
+ 150   2          P2 = (P2 & 0x1f) | 0x80;
+ 151   2          P0 = U6;
+ 152   2          P2 &= 0x1f;
+ 153   2          EA = 1;
+ 154   2          if(++tt_5s == 2500)
+ 155   2          {
+ 156   3            tt_5s = 0;
+ 157   3            EA = 0;
+ 158   3            led1 = 1; P0 = 0xff;
+ 159   3            P2 = (P2 & 0x1f) | 0x80;
+ 160   3            P0 = U6;
+ 161   3            P2 &= 0x1f;
+ 162   3            EA = 1;
+ 163   3            f_led = 0;
+ 164   3          }
+ 165   2        }
+ 166   1        
+ 167   1        if(f_S13 == 0)
+ 168   1        {
+ 169   2          EA = 0;
+ 170   2          led2 = 0; P0 = 0xff;
+ 171   2          P2 = (P2 & 0x1f) | 0x80;
+ 172   2          P0 = U6;
+ 173   2          P2 &= 0x1f;
+ 174   2          EA = 1;
+ 175   2        }
+ 176   1        else
+ 177   1        {
+ 178   2          EA = 0;
+C51 COMPILER V9.59.0.0   MAIN                                                              04/02/2023 20:32:44 PAGE 4   
+
+ 179   2          led2 = 1; P0 = 0xff;
+ 180   2          P2 = (P2 & 0x1f) | 0x80;
+ 181   2          P0 = U6;
+ 182   2          P2 &= 0x1f;
+ 183   2          EA = 1;
+ 184   2        }
+ 185   1        if(relay == 1)
+ 186   1        {
+ 187   2          if(++t_100ms==50)
+ 188   2          {
+ 189   3            t_100ms = 0;
+ 190   3            led3=~led3;
+ 191   3          }
+ 192   2          EA = 0;
+ 193   2                   P0 = 0xff;
+ 194   2          P2 = (P2 & 0x1f) | 0x80;
+ 195   2          P0 = U6;
+ 196   2          P2 &= 0x1f;
+ 197   2          EA = 1;
+ 198   2        }
+ 199   1        else
+ 200   1        {
+ 201   2          EA = 0;
+ 202   2          led3 = 1; P0 = 0xff;
+ 203   2          P2 = (P2 & 0x1f) | 0x80;
+ 204   2          P0 = U6;
+ 205   2          P2 &= 0x1f;
+ 206   2          EA = 1;
+ 207   2        }
+ 208   1      }
+ 209          
+ 210          void Relay_Control()
+ 211          {
+ 212   1        if(f_S13 == 0)
+ 213   1        {
+ 214   2          if(temperature > stat_temp*10)
+ 215   2          {
+ 216   3            EA = 0;
+ 217   3            relay = 1;
+ 218   3            P2 = (P2 & 0x1f) | 0xa0;
+ 219   3            P0 = U9;
+ 220   3            P2 &= 0x1f;
+ 221   3            EA = 1;
+ 222   3          }
+ 223   2          else
+ 224   2          {
+ 225   3            EA = 0;
+ 226   3            relay = 0;
+ 227   3            P2 = (P2 & 0x1f) | 0xa0;
+ 228   3            P0 = U9;
+ 229   3            P2 &= 0x1f;
+ 230   3            EA = 1;
+ 231   3          }
+ 232   2        }
+ 233   1        if(f_S13 == 1)
+ 234   1        {
+ 235   2          if(m==0 && s==0)
+ 236   2          {
+ 237   3            f_relay = 1;
+ 238   3          }
+ 239   2          if(f_relay == 1)
+ 240   2          {
+C51 COMPILER V9.59.0.0   MAIN                                                              04/02/2023 20:32:44 PAGE 5   
+
+ 241   3            EA = 0;
+ 242   3            relay = 1;
+ 243   3            P2 = (P2 & 0x1f) | 0xa0;
+ 244   3            P0 = U9;
+ 245   3            P2 &= 0x1f;
+ 246   3            EA = 1;
+ 247   3            if(++t_5s == 2500)
+ 248   3            {
+ 249   4              t_5s = 0;
+ 250   4              EA = 0;
+ 251   4              relay = 0;
+ 252   4              P2 = (P2 & 0x1f) | 0xa0;
+ 253   4              P0 = U9;
+ 254   4              P2 &= 0x1f;
+ 255   4              EA = 1;
+ 256   4              f_relay = 0;
+ 257   4            }
+ 258   3          }
+ 259   2        }
+ 260   1      }
+ 261          void main()
+ 262          {
+ 263   1        Init_Sys();
+ 264   1        Init_T1();
+ 265   1        Init_18b20();
+ 266   1        Xie_1302();
+ 267   1        while(1)
+ 268   1        {
+ 269   2          if(f_2ms == 1)
+ 270   2          {
+ 271   3            f_2ms = 0;
+ 272   3            Du_1302();
+ 273   3            Change_Keys();
+ 274   3            Led_Control();
+ 275   3            Relay_Control();
+ 276   3            if(++t_2ms == 100)
+ 277   3            {
+ 278   4              t_2ms = 0;
+ 279   4              temperature = Read_Temp();
+ 280   4            }
+ 281   3            if(GN == 12)
+ 282   3            {
+ 283   4              model++;
+ 284   4              if(model > 2)
+ 285   4              {
+ 286   5                model = 0;
+ 287   5              }
+ 288   4              while(Scan_Keys());
+ 289   4            }
+ 290   3            if(GN == 13)
+ 291   3            {
+ 292   4              f_S13 = ~f_S13;
+ 293   4              while(Scan_Keys());
+ 294   4            }
+ 295   3            switch(model)
+ 296   3            {
+ 297   4              case 0:
+ 298   4                num2 = 1;
+ 299   4                num1= 11;
+ 300   4                num3=num4=num5=10;
+ 301   4                num6=temperature/100;num7=temperature/10%10;num8=temperature%10;
+ 302   4              break;
+C51 COMPILER V9.59.0.0   MAIN                                                              04/02/2023 20:32:44 PAGE 6   
+
+ 303   4              
+ 304   4              case 1:
+ 305   4                if(GN == 17)
+ 306   4                {
+ 307   5                  f_S17 = 1;
+ 308   5                  while(Scan_Keys());
+ 309   5                  f_S17 = 0;
+ 310   5                }
+ 311   4                Du_1302();
+ 312   4                num2 = 2;
+ 313   4                num1= 11;
+ 314   4                num3=10;
+ 315   4                num6=12;
+ 316   4                num4=h/16;num5=h%16;
+ 317   4                num7=m/16;num8=m%16;
+ 318   4              break;
+ 319   4              
+ 320   4              case 2:
+ 321   4                  if(GN == 16)
+ 322   4                  {
+ 323   5                    stat_temp++;
+ 324   5                    if(stat_temp > 99)
+ 325   5                    {
+ 326   6                      stat_temp = 99;
+ 327   6                    }
+ 328   5                    while(Scan_Keys());
+ 329   5                  }
+ 330   4                  if(GN == 17)
+ 331   4                  {
+ 332   5                    stat_temp--;
+ 333   5                    if(stat_temp < 10)
+ 334   5                    {
+ 335   6                      stat_temp = 10;
+ 336   6                    }
+ 337   5                    while(Scan_Keys());
+ 338   5                  }
+ 339   4                num3=num4=num5=num6=10;
+ 340   4                num7=stat_temp/10;num8=stat_temp%10;
+ 341   4                num2 = 3;
+ 342   4                num1= 11;
+ 343   4              break;
+ 344   4            }
+ 345   3          }
+ 346   2        }
+ 347   1      }
+ 348          void Service_T1() interrupt 3
+ 349          {
+ 350   1        TH1 = (65536 - 2000) / 256;
+ 351   1        TL1 = (65536 - 2000) % 256;
+ 352   1        
+ 353   1        f_2ms = 1;
+ 354   1        Display_Smg(num1,num2,num3,num4,num5,num6,num7,num8);
+ 355   1        if(f_S17 == 1)
+ 356   1        {
+ 357   2          Du_1302();
+ 358   2          num2 = 2;
+ 359   2          num1= 11;
+ 360   2          num3=10;
+ 361   2          num6=12;
+ 362   2          num4=m/16;num5=m%16;
+ 363   2          num7=s/16;num8=s%16;
+ 364   2        }       
+C51 COMPILER V9.59.0.0   MAIN                                                              04/02/2023 20:32:44 PAGE 7   
+
+ 365   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1217    ----
+   CONSTANT SIZE    =     21    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     28       9
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      5    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

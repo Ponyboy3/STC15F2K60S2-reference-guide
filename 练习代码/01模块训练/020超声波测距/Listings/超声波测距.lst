@@ -1,0 +1,162 @@
+C51 COMPILER V9.59.0.0   __________                                                        03/10/2023 23:05:22 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE __________
+OBJECT MODULE PLACED IN .\Objects\超声波测距.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE 超声波测距.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listing
+                    -s\超声波测距.lst) TABS(2) OBJECT(.\Objects\超声波测距.obj)
+
+line level    source
+
+   1          #include "reg52.h"
+   2          #include "intrins.h"
+   3          
+   4          sbit TX = P1^0;
+   5          sbit RX = P1^1;
+   6          
+   7          unsigned char code SMG_NUM[10] = {0xc0,0xf9,0xa4,0xb0,0x99,0x92,0x82,0xf8,0x80,0x90};
+   8          
+   9          unsigned int d = 0;
+  10          
+  11          //==========数码管显示函数=======
+  12          void Delay(unsigned int t)
+  13          {
+  14   1        while(t--);
+  15   1      }
+  16          
+  17          void Display_SMG_Bit(unsigned char pos,unsigned char value)
+  18          {
+  19   1        P2 = (P2 & 0x1f) | 0xc0;
+  20   1        P0 = 0x01 << pos;
+  21   1        P2 &= 0x1f;
+  22   1        
+  23   1        P2 = (P2 & 0x1f) | 0xe0;
+  24   1        P0 = value;
+  25   1        P2 &= 0x1f;
+  26   1      }
+  27          
+  28          void Display_SMG()
+  29          {
+  30   1        if(d == 999)
+  31   1        {
+  32   2          Display_SMG_Bit(0,0x8e);
+  33   2          Delay(500);
+  34   2        }
+  35   1        else
+  36   1        {
+  37   2          
+  38   2          
+  39   2          Display_SMG_Bit(5,SMG_NUM[d / 100]);
+  40   2          Delay(500);
+  41   2          Display_SMG_Bit(6,SMG_NUM[(d % 100) / 10]);
+  42   2          Delay(500);
+  43   2          Display_SMG_Bit(7,SMG_NUM[d % 10]);
+  44   2          Delay(500);
+  45   2        }
+  46   1        P2 = (P2 & 0x1f) | 0xc0;
+  47   1        P0 = 0xff;
+  48   1        P2 &= 0x1f;
+  49   1        
+  50   1        P2 = (P2 & 0x1f) | 0xe0;
+  51   1        P0 = 0xff;
+  52   1        P2 &= 0x1f;
+  53   1        Delay(500);
+  54   1      }
+C51 COMPILER V9.59.0.0   __________                                                        03/10/2023 23:05:22 PAGE 2   
+
+  55          
+  56          //===========超声波函数==========
+  57          void Delay_12us()
+  58          {
+  59   1        unsigned char i;
+  60   1        _nop_();
+  61   1        _nop_();
+  62   1        
+  63   1        i = 33;
+  64   1        while(--i);
+  65   1      }
+  66          
+  67          void Send_W()
+  68          {
+  69   1        unsigned char i;
+  70   1        for(i = 0;i < 8;i++)
+  71   1        {
+  72   2          TX = 1;
+  73   2          Delay_12us();
+  74   2          TX = 0;
+  75   2          Delay_12us();
+  76   2        }
+  77   1      }
+  78          
+  79          void Get_Distance()
+  80          {
+  81   1        unsigned int t;
+  82   1        TMOD &= 0x0f;             //定时器1模式0，13位，最大8192个计数脉冲                
+  83   1        TL1 = 0x00;                   
+  84   1        TH1 = 0x00; 
+  85   1        
+  86   1        Send_W();
+  87   1        TR1 = 1;            //启动定时器            
+  88   1        while((RX == 1) && (TF1 == 0));    //等待超声波信号返回或者等到测量超出范围
+  89   1        TR1 = 0;            //停止定时器        
+  90   1        
+  91   1        if(TF1 == 0)              //正常测量范围              
+  92   1        {
+  93   2          t = TH1;                  
+  94   2          t = (t << 8) | TL1;   
+  95   2          d = ((t / 10) * 17) / 100 + 3;
+  96   2        }
+  97   1        else                        //超出测量范围      
+  98   1        {
+  99   2          TF1 = 0;
+ 100   2          d = 999;
+ 101   2        }
+ 102   1        
+ 103   1      }
+ 104          
+ 105          //==========系统初始化===========
+ 106          void Init_Sys()
+ 107          {
+ 108   1        P2 = (P2 & 0x1f) | 0x80;
+ 109   1        P0 = 0xff;
+ 110   1        P2 &= 0x1f;
+ 111   1        
+ 112   1        P2 = (P2 & 0x1f) | 0xa0;
+ 113   1        P0 = 0x00;
+ 114   1        P2 &= 0x1f;
+ 115   1      }
+ 116          
+C51 COMPILER V9.59.0.0   __________                                                        03/10/2023 23:05:22 PAGE 3   
+
+ 117          
+ 118          void Delay1(unsigned char n)        //数码管显示增强
+ 119          {
+ 120   1        while(n--)
+ 121   1        {
+ 122   2          Display_SMG();
+ 123   2        }
+ 124   1      }
+ 125          
+ 126          void main()
+ 127          {
+ 128   1        Init_Sys();
+ 129   1        while(1)
+ 130   1        {
+ 131   2          Get_Distance();
+ 132   2          Delay1(20);
+ 133   2        }
+ 134   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    363    ----
+   CONSTANT SIZE    =     10    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      2    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

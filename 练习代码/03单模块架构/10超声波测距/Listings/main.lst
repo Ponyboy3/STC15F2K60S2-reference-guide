@@ -1,0 +1,358 @@
+C51 COMPILER V9.55   MAIN                                                                  06/05/2022 20:34:31 PAGE 1   
+
+
+C51 COMPILER V9.55, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\keilc\pack_file\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listi
+                    -ngs\main.lst) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          /****************************************
+   2          利用定时器1实现对数码管动态扫描 显示
+   3          *********************************************/
+   4          #include <STC15F2K60S2.H>
+   5          #include <intrins.h>
+   6          #define uchar unsigned char 
+   7          #define uint unsigned int 
+   8            
+   9          uchar code type1[]={  0xC0,
+  10                                0xF9,
+  11                                0xA4,
+  12                                0xB0,
+  13                                0x99,
+  14                                0x92,
+  15                                0x82,
+  16                                0xF8,
+  17                                0x80,
+  18                                0x90,0xff};
+  19          uchar code type2[]={0x01,0x02,0x04,0x08,0x10,0x20,0x40,0x80};
+  20          
+  21          uchar num1,num2,num3,num4,num5,num6,num7,num8;
+  22          uchar f_2ms;
+  23          uchar t_2ms;
+  24          
+  25          sbit trig=P1^0;
+  26          sbit echo=P1^1;
+  27          
+  28          
+  29          uint temp1;
+  30          uchar temp=10;
+  31          
+  32          void smg_display(char n1,char n2,char n3,char n4,char n5,char n6,char n7,char n8)
+  33          {
+  34   1        char i;
+  35   1        P0=0xff;
+  36   1        P2=(P2&0x1f)|0xc0;
+  37   1        P0=type2[i];
+  38   1        P2=(P2&0x1f);
+  39   1        switch(i)
+  40   1        {
+  41   2          case 0:P2=(P2&0x1f)|0xe0; P0=type1[n1]; P2=(P2&0x1f);break;
+  42   2          case 1:P2=(P2&0x1f)|0xe0; P0=type1[n2]; P2=(P2&0x1f);break;   
+  43   2          case 2:P2=(P2&0x1f)|0xe0; P0=type1[n3]; P2=(P2&0x1f);break;   
+  44   2          case 3:P2=(P2&0x1f)|0xe0; P0=type1[n4]; P2=(P2&0x1f);break;   
+  45   2          case 4:P2=(P2&0x1f)|0xe0; P0=type1[n5]; P2=(P2&0x1f);break;   
+  46   2          case 5:P2=(P2&0x1f)|0xe0; P0=type1[n6]; P2=(P2&0x1f);break;   
+  47   2          case 6:P2=(P2&0x1f)|0xe0; P0=type1[n7]; P2=(P2&0x1f);break;   
+  48   2          case 7:P2=(P2&0x1f)|0xe0; P0=type1[n8]; P2=(P2&0x1f);break;   
+  49   2          
+  50   2        }
+  51   1        if(++i==8)
+  52   1          i=0;
+  53   1      }
+  54          void time0()
+C51 COMPILER V9.55   MAIN                                                                  06/05/2022 20:34:31 PAGE 2   
+
+  55          {
+  56   1        TMOD=(TMOD&0xf0)|0x01;
+  57   1        TH0=(65536-12)/256;
+  58   1        TL0=(65536-12)%256;   
+  59   1      }
+  60          
+  61          void time1_int1()
+  62          {
+  63   1        EA=1;
+  64   1        ET1=1;
+  65   1        TR1=1;
+  66   1        TMOD=(TMOD&0x0f)|0x10;
+  67   1        TH1=(65536-2000)/256;
+  68   1        TL1=(65536-2000)%256;   
+  69   1      }
+  70          
+  71          void initial_all()
+  72          {
+  73   1        P2=(P2&0x1f)|0xa0;
+  74   1        P0=0x00;
+  75   1        P2=(P2&0x1f); 
+  76   1        P2=(P2&0x1f)|0x80;
+  77   1        P0=0xff;
+  78   1        P2=(P2&0x1f); 
+  79   1        P2=(P2&0x1f)|0xc0;
+  80   1        P0=0xff;
+  81   1        P2=(P2&0x1f);   
+  82   1        P2=(P2&0x1f)|0xe0;
+  83   1        P0=0xff;
+  84   1        P2=(P2&0x1f);   
+  85   1      }
+  86          ////////////////////////////////超声波
+  87          
+  88          
+  89          uchar csb()
+  90          {
+  91   1        temp=10;
+  92   1        trig=0; 
+  93   1        TR0=1;
+  94   1        //引脚发送40Khz方波信号
+  95   1        while(temp--)  //每隔12us发5个方波
+  96   1        {
+  97   2          while(!TF0);
+  98   2            trig ^= 1;          // if(trig==1) { Delay20us();}//可以不用
+  99   2            TH0=(65536-12)/256;
+ 100   2            TL0=(65536-12)%256;     
+ 101   2            TF0=0;       //TF0必须要先赋值在清零
+ 102   2        }   
+ 103   1              TR0=0;
+ 104   1              TL0=0;
+ 105   1              TH0=0;
+ 106   1              TR0=1;
+ 107   1            while( echo && !TF0 );
+ 108   1            TR0=0;
+ 109   1        
+ 110   1            if(TF0==1)
+ 111   1            {
+ 112   2              TF0=0;
+ 113   2              return 999;
+ 114   2            }
+ 115   1            else
+ 116   1              return ((TH0<<8)+TL0)*0.017;
+C51 COMPILER V9.55   MAIN                                                                  06/05/2022 20:34:31 PAGE 3   
+
+ 117   1      }
+ 118          
+ 119          void main()
+ 120          {
+ 121   1        initial_all();  
+ 122   1        time1_int1();
+ 123   1        time0();
+ 124   1        num1=num2=num3=num4=num5=num6=num7=num8=10;
+ 125   1        while(1)
+ 126   1        {
+ 127   2         if(f_2ms==1)
+ 128   2         {
+ 129   3           f_2ms=0;
+ 130   3           
+ 131   3           
+ 132   3             temp1=csb();
+ 133   3             num1=temp1/100;num2=temp1%100/10;num3=temp1%10;
+ 134   3         }//f_2ms
+ 135   2        }
+ 136   1      }
+ 137          
+ 138          
+ 139          
+ 140          void cl_time1_int1() interrupt 3
+ 141          {
+ 142   1        TH1=(65536-2000)/256;
+ 143   1        TL1=(65536-2000)%256;   
+ 144   1        
+ 145   1        smg_display(num1,num2,num3,num4,num5,num6,num7,num8);
+ 146   1        f_2ms=1;
+ 147   1      }
+ 148          
+ 149          
+ 150          
+ 151          /*===========================================
+ 152          //官方程序
+ 153          =============================================*/
+ 154          
+ 155          /*
+ 156          #include <STC15F2K60S2.H>
+ 157          #include <intrins.h>
+ 158          #define uchar unsigned char 
+ 159          #define uint unsigned int 
+ 160            
+ 161          uchar code type1[]={  0xC0,
+ 162                                0xF9,
+ 163                                0xA4,
+ 164                                0xB0,
+ 165                                0x99,
+ 166                                0x92,
+ 167                                0x82,
+ 168                                0xF8,
+ 169                                0x80,
+ 170                                0x90,0xff};
+ 171          uchar code type2[]={0x01,0x02,0x04,0x08,0x10,0x20,0x40,0x80};
+ 172          
+ 173          uchar num1,num2,num3,num4,num5,num6,num7,num8;
+ 174          bit f_2ms;
+ 175          uchar t_2ms;
+ 176          uchar GN;
+ 177          
+ 178          sbit TX = P1^0; // 发射引脚
+C51 COMPILER V9.55   MAIN                                                                  06/05/2022 20:34:31 PAGE 4   
+
+ 179          sbit RX = P1^1; // 接收引脚
+ 180          
+ 181          void smg_display(char n1,char n2,char n3,char n4,char n5,char n6,char n7,char n8)
+ 182          {
+ 183            char i;
+ 184            P2=(P2&0x1f)|0xc0;
+ 185            P0=type2[i];
+ 186            P2=(P2&0x1f);
+ 187            P0=0xff;
+ 188            switch(i)
+ 189            {
+ 190              case 0:P2=(P2&0x1f)|0xe0; P0=type1[n1]; P2=(P2&0x1f);break;
+ 191              case 1:P2=(P2&0x1f)|0xe0; P0=type1[n2]; P2=(P2&0x1f);break;   
+ 192              case 2:P2=(P2&0x1f)|0xe0; P0=type1[n3]; P2=(P2&0x1f);break;   
+ 193              case 3:P2=(P2&0x1f)|0xe0; P0=type1[n4]; P2=(P2&0x1f);break;   
+ 194              case 4:P2=(P2&0x1f)|0xe0; P0=type1[n5]; P2=(P2&0x1f);break;   
+ 195              case 5:P2=(P2&0x1f)|0xe0; P0=type1[n6]; P2=(P2&0x1f);break;   
+ 196              case 6:P2=(P2&0x1f)|0xe0; P0=type1[n7]; P2=(P2&0x1f);break;   
+ 197              case 7:P2=(P2&0x1f)|0xe0; P0=type1[n8]; P2=(P2&0x1f);break;   
+ 198              
+ 199            }
+ 200            if(++i==8)
+ 201              i=0;
+ 202          }
+ 203          
+ 204          //==============================================
+ 205          void Timer0Init(void) // 12us@12.000MHz 
+ 206          { 
+ 207           TMOD=(TMOD&0xf0)|0x01;
+ 208           TL0 = 0xF4; // 设置定时初值
+ 209           TH0 = 0xFF; // 设置定时初值
+ 210          // TF0 = 0; // 清除 TF0 标志
+ 211          // TR0 = 0; // 定时器 0 停止
+ 212          }
+ 213          
+ 214          unsigned char ucDist, ucNum = 10;
+ 215          unsigned char Wave_Recv(void) 
+ 216            { 
+ 217             ucNum = 10; 
+ 218             TX = 0; 
+ 219             TR0 = 1; // 定时器 0 计时
+ 220             // TX 引脚发送 40kHz 方波信号驱动超声波发送探头
+ 221             while(ucNum--) 
+ 222             { 
+ 223                 while(!TF0); 
+ 224                 TX ^= 1; 
+ 225                 TL0 = 0xF4; // 设置定时初值
+ 226                 TH0 = 0xFF; // 设置定时初值     
+ 227                 TF0 = 0; 
+ 228             } 
+ 229             TR0 = 0; 
+ 230             TL0 = 0; // 设置定时初值
+ 231             TH0 = 0; // 设置定时初值
+ 232             TR0 = 1; 
+ 233             while(RX && !TF0); // 等待收到脉冲
+ 234             TR0 = 0; 
+ 235             
+ 236             if(TF0) // 发生溢出
+ 237             { 
+ 238               TF0 = 0; 
+ 239               ucDist = 900; 
+ 240             } 
+C51 COMPILER V9.55   MAIN                                                                  06/05/2022 20:34:31 PAGE 5   
+
+ 241             else // 计算距离
+ 242                ucDist = ((TH0<<8)+TL0)*0.017; 
+ 243             
+ 244                return ucDist;     
+ 245            }
+ 246          
+ 247          void time1_int1()
+ 248          {
+ 249            EA=1;
+ 250            ET1=1;
+ 251            TR1=1;
+ 252            TMOD=(TMOD&0x0f)|0x10;
+ 253            TH1=(65536-2000)/256;
+ 254            TL1=(65536-2000)%256;   
+ 255          }
+ 256          
+ 257          void initial_all()
+ 258          {
+ 259            P2=(P2&0x1f)|0xa0;
+ 260            P0=0x00;
+ 261            P2=(P2&0x1f); 
+ 262            P2=(P2&0x1f)|0x80;
+ 263            P0=0xff;
+ 264            P2=(P2&0x1f); 
+ 265            P2=(P2&0x1f)|0xc0;
+ 266            P0=0xff;
+ 267            P2=(P2&0x1f);   
+ 268            P2=(P2&0x1f)|0xe0;
+ 269            P0=0xff;
+ 270            P2=(P2&0x1f);   
+ 271          }
+ 272          
+ 273          void main()
+ 274          {
+ 275            initial_all();  
+ 276            time1_int1();
+ 277            Timer0Init( );
+ 278            while(1)
+ 279            {
+ 280          //   if(f_2ms==1)
+ 281          //   {
+ 282          //     f_2ms=0;
+ 283            
+ 284               
+ 285            
+ 286               
+ 287               
+ 288               
+ 289               num1=Wave_Recv( )/100; num2=Wave_Recv( )%100/10;num3=Wave_Recv( )%10;
+ 290               num4=10;num5=10;num6=10;num7=10;num8=10;
+ 291            
+ 292          //   }//f_2ms
+ 293            }
+ 294          }
+ 295          
+ 296          
+ 297          
+ 298          void cl_time1_int1() interrupt 3
+ 299          {
+ 300            TH1=(65536-2000)/256;
+ 301            TL1=(65536-2000)%256;   
+ 302            
+C51 COMPILER V9.55   MAIN                                                                  06/05/2022 20:34:31 PAGE 6   
+
+ 303            smg_display(num1,num2,num3,num4,num5,num6,num7,num8);
+ 304            f_2ms=1;
+ 305          }
+ 306          
+ 307          
+ 308          */
+ 309          
+ 310          
+ 311          
+ 312          
+ 313          
+ 314          
+ 315          
+ 316          
+ 317          
+ 318          
+ 319          
+ 320          
+ 321          
+ 322          
+ 323          
+ 324          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    562    ----
+   CONSTANT SIZE    =     19    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     13       9
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

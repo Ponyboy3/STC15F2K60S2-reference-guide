@@ -1,0 +1,155 @@
+C51 COMPILER V9.59.0.0   EX20                                                              04/01/2022 16:39:41 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE EX20
+OBJECT MODULE PLACED IN .\Objects\ex20.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE ex20.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\ex20
+                    -.lst) TABS(2) OBJECT(.\Objects\ex20.obj)
+
+line level    source
+
+   1          /*******************************************************************************
+   2          * 文件名称：DS1302时钟驱动实验
+   3          * 实验目的：1.掌握数码管动态扫描的基本原理,掌握数码管消除“鬼影”的方法
+   4          *           2.掌握51单片机定时器工作模式和配置方法
+   5          *           3.掌握keil uvision集成开发环境下，中断服务函数设计方法
+   6          *           4.掌握DS1302时钟芯片驱动和工作模式配置的方法
+   7          * 实验配置：J3跳线配置为IO方式
+   8          * 程序现象：数码管动态显示
+   9          * 硬件环境：IAP15F2K61S2@11.0592MHz
+  10          * 注意事项：1.DS1302实验过程中应避免用手接触时钟外部晶振，外部的干扰可能导致晶振停
+  11                       止振荡，造成走时异常
+  12                      2.不同的晶振启振时间存在差异，建议上电初始化后，延迟小段时间，再对RTC
+  13                       芯片进行操作
+  14          * 日期版本：2022/02/08
+  15          *******************************************************************************/
+  16          #include "reg52.h"  //定义51单片机特殊功能寄存器
+  17          #include "ds1302.h"
+  18          
+  19          sfr AUXR = 0x8E;    //定义辅助寄存器
+  20                                     //  0    1    2      3      4     5    6     7     8     9    10    熄灭
+  21          code unsigned char tab[] = { 0xc0, 0xf9, 0xa4, 0xb0, 0x99, 0x92, 0x82, 0xf8, 0x80, 0x90, 0xFF, 0xbf};
+  22          unsigned char dspbuf[8] = {10, 10, 10, 10, 10, 10, 10, 10}; //显示缓冲区
+  23          unsigned char dspcom = 0;  //显示位选
+  24          unsigned char ms = 0;
+  25          bit rtc_flag = 0;
+  26          
+  27          void cls_buzz()
+  28          {
+  29   1          P2 = (P2 & 0x1F | 0xA0);
+  30   1          P0 = 0x00;
+  31   1          P2 &= 0x1F;
+  32   1      }
+  33          
+  34          void cls_led()
+  35          {
+  36   1          P2 = (P2 & 0x1F | 0x80);
+  37   1          P0 = 0xFF;
+  38   1          P2 &= 0x1F;
+  39   1      }
+  40          
+  41          void Delay100ms()   //@11.0592MHz
+  42          {
+  43   1          unsigned char i, j, k;
+  44   1          _nop_();
+  45   1          _nop_();
+  46   1          i = 5;
+  47   1          j = 52;
+  48   1          k = 195;
+  49   1          do
+  50   1          {
+  51   2              do
+  52   2              {
+  53   3                  while (--k);
+  54   3              }
+C51 COMPILER V9.59.0.0   EX20                                                              04/01/2022 16:39:41 PAGE 2   
+
+  55   2              while (--j);
+  56   2          }
+  57   1          while (--i);
+  58   1      }
+  59          
+  60          //主函数
+  61          void main(void)
+  62          {
+  63   1          unsigned char *p_rtc;
+  64   1      
+  65   1          cls_buzz();
+  66   1          cls_led();
+  67   1          AUXR |= 0x80;
+  68   1          TMOD &= 0xF0;
+  69   1          TL0 = 0xCD;
+  70   1          TH0 = 0xD4;
+  71   1          TF0 = 0;
+  72   1          TR0 = 1;
+  73   1          ET0 = 1;
+  74   1          EA = 1;
+  75   1          Delay100ms();
+  76   1          SetRTC();
+  77   1          while(1)
+  78   1          {
+  79   2              if(rtc_flag)
+  80   2              {
+  81   3                  rtc_flag = 0;
+  82   3                  p_rtc = ReadRTC();
+  83   3      
+  84   3                  dspbuf[0] = p_rtc[0];
+  85   3                  dspbuf[1] = p_rtc[1];
+  86   3                  dspbuf[2] = 11;
+  87   3                  dspbuf[3] = p_rtc[2];
+  88   3                  dspbuf[4] = p_rtc[3];
+  89   3                  dspbuf[5] = 11;
+  90   3                  dspbuf[6] = p_rtc[4];
+  91   3                  dspbuf[7] = p_rtc[5];
+  92   3              }
+  93   2          }
+  94   1      }
+  95          
+  96          //显示函数
+  97          void display(void)
+  98          {
+  99   1          P2 = ((P2 & 0x1f) | 0xe0);
+ 100   1          P0 = 0xff;
+ 101   1          P2 &= 0x1f;
+ 102   1      
+ 103   1          P2 = ((P2 & 0x1f) | 0xc0);
+ 104   1          P0 = (1 << dspcom);
+ 105   1          P2 &= 0x1f;
+ 106   1      
+ 107   1          P2 = ((P2 & 0x1f) | 0xe0);
+ 108   1          P0 = tab[dspbuf[dspcom]];
+ 109   1          P2 &= 0x1f;
+ 110   1          if(++dspcom == 8)
+ 111   1          {
+ 112   2              dspcom = 0;
+ 113   2          }
+ 114   1      }
+ 115          
+ 116          //定时器中断服务函数
+C51 COMPILER V9.59.0.0   EX20                                                              04/01/2022 16:39:41 PAGE 3   
+
+ 117          void isr_timer_0(void)  interrupt 1  //默认中断优先级 1
+ 118          {
+ 119   1          if(++ms == 200)
+ 120   1          {
+ 121   2              ms = 0;
+ 122   2              rtc_flag = 1;
+ 123   2          }
+ 124   1          display();  //1ms执行一次
+ 125   1      }
+ 126          
+ 127          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    255    ----
+   CONSTANT SIZE    =     12    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     10    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      1    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

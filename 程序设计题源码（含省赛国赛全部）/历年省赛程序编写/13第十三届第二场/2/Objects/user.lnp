@@ -1,0 +1,4 @@
+".\Objects\main.obj",
+".\Objects\iic.obj" 
+TO ".\Objects\user" 
+PRINT(".\Listings\user.m51") RAMSIZE(256) 

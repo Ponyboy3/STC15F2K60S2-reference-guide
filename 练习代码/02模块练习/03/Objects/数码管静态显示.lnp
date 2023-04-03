@@ -1,0 +1,4 @@
+".\Objects\STARTUP.obj",
+".\Objects\数码管静态显示.obj" 
+TO ".\Objects\数码管静态显示" 
+PRINT(".\Listings\数码管静态显示.m51") RAMSIZE(256) 

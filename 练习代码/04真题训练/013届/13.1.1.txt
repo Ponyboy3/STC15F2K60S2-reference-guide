@@ -1,0 +1,324 @@
+#include "reg52.h"
+#include "smg_ca.h"
+#include "onewire.h"
+#include "ds1302.h"
+
+sbit R1 = P3^2;
+sbit R2 = P3^3;
+sbit C1 = P3^5;
+sbit C2 = P3^4;
+
+unsigned char code Read_DS1302[7] = {0x81,0x83,0x85,0x87,0x89,0x8b,0x8d};
+unsigned char code Write_DS1302[7] = {0x80,0x82,0x84,0x86,0x88,0x8a,0x8c};
+//2023.3.4.星期六.23:59:30
+unsigned char  Time[7] = {0x30,0x59,0x23,0x06,0x04,0x03,0x23};
+
+unsigned char code SMG_NUM[18]=
+ {0xc0,0xf9,0xa4,0xb0,0x99,0x92,
+	0x82,0xf8,0x80,0x90,0x88,0x80,
+	0xc6,0xc0,0x86,0x8e,0xbf,0x7f};
+
+unsigned char code SMG_NUM0[10]=
+ {0x40,0x79,0x24,0x30,0x19,0x12,
+	0x02,0x78,0x00,0x10};
+	
+unsigned char Init_T = 23;
+unsigned int  Temp;
+
+unsigned char KeyS12s = 0;
+unsigned char KeyS13s = 0;
+	
+unsigned char K1 = 0;
+unsigned char K2 = 0;
+
+void DelayKey(unsigned int t);
+void Scan_Keys();
+void Read_Temp();
+
+//============================数码管显示=======
+void Display_T()  
+{
+	if(KeyS12s == 0)//      U 1 : : : 2 3  5
+	{
+		Display_SMG(SMG_NUM[Temp % 10],7);
+		DelaySMG(500);
+		Display_SMG(SMG_NUM0[(Temp / 100) % 10],6);
+		DelaySMG(500);
+		Display_SMG(SMG_NUM[Temp / 100],5);
+		DelaySMG(500);
+		Display_SMG(0xf9,1);
+		DelaySMG(500);
+		Display_SMG(0xc1,0);
+		DelaySMG(500);
+	}
+	else if(KeyS12s == 1) // U 2 : 2 3 - 2 5
+	{
+		if(K1 == 1 && K2 == 1)
+		{
+			Display_SMG(SMG_NUM[Time[0] % 16],7);
+			DelaySMG(500);
+			Display_SMG(SMG_NUM[Time[0] /16],6);
+			DelaySMG(500);
+			Display_SMG(0xbf,5);
+			DelaySMG(500);
+			Display_SMG(SMG_NUM[Time[1] % 16],4);
+			DelaySMG(500);
+			Display_SMG(SMG_NUM[Time[1] / 16],3);
+			DelaySMG(500);
+			Display_SMG(0xa4,1);
+			DelaySMG(500);
+			Display_SMG(0xc1,0);
+			DelaySMG(500);
+		}
+		else
+		{
+			Display_SMG(SMG_NUM[Time[1]% 16],7);
+			DelaySMG(500);
+			Display_SMG(SMG_NUM[Time[1] /16],6);
+			DelaySMG(500);
+			Display_SMG(0xbf,5);
+			DelaySMG(500);
+			Display_SMG(SMG_NUM[Time[2]% 16],4);
+			DelaySMG(500);
+			Display_SMG(SMG_NUM[Time[2]/ 16],3);
+			DelaySMG(500);
+			Display_SMG(0xa4,1);
+			DelaySMG(500);
+			Display_SMG(0xc1,0);
+			DelaySMG(500);
+		}
+	}
+	else if(KeyS12s == 2) 
+	{
+		if(KeyS13s == 0)    // U 3 : : : 2 3 :
+		{
+			TR0 = 1;
+			Display_SMG(SMG_NUM[Init_T % 10],7);
+			DelaySMG(500);
+			Display_SMG(SMG_NUM[Init_T / 10],6);
+			DelaySMG(500);
+			Display_SMG(0xb0,1); 
+			DelaySMG(500);
+			Display_SMG(0xc1,0);
+			DelaySMG(500);
+		}
+		else if(KeyS13s == 1)// U 3 : 2 3 - 2 5
+		{
+			
+			
+			while(C2 == 0)
+			{
+				Display_SMG(SMG_NUM[Time[0] % 16],7);
+				DelaySMG(500);
+				Display_SMG(SMG_NUM[Time[0] /16],6);
+				DelaySMG(500);
+				Display_SMG(0xbf,5);
+				DelaySMG(500);
+				Display_SMG(SMG_NUM[Time[1] % 16],4);
+				DelaySMG(500);
+				Display_SMG(SMG_NUM[Time[1] / 16],3);
+				DelaySMG(500);
+				Display_SMG(0xb0,1);
+				DelaySMG(500);
+				Display_SMG(0xc1,0);
+				DelaySMG(500);
+			}
+			Display_SMG(SMG_NUM[Time[0] % 16],7);
+			DelaySMG(500);
+			Display_SMG(SMG_NUM[Time[0] /16],6);
+			DelaySMG(500);
+			Display_SMG(0xbf,5);
+			DelaySMG(500);
+			Display_SMG(SMG_NUM[Time[1] % 16],4);
+			DelaySMG(500);
+			Display_SMG(SMG_NUM[Time[1] / 16],3);
+			DelaySMG(500);
+			Display_SMG(0xb0,1);
+			DelaySMG(500);
+			Display_SMG(0xc1,0);
+			DelaySMG(500);
+		}
+		
+	}
+}
+//=====================================================
+
+//======================================按键扫描=======
+void Scan_Keys()
+{
+	R1 = 0;
+	R2 = 1;
+	C1 = C2 = 1;
+	if(C1 == 0 && KeyS12s == 2)   //    S13按下
+	{
+			if(KeyS13s == 0 )//时间控制模式
+			{
+				while(C1 == 0)
+				{
+					Display_T();
+				}
+				KeyS13s++;
+
+			}
+			else if(KeyS13s == 1)//温度控制模式
+			{
+				while(C1 == 0)
+				{
+					Display_T();
+				}
+				KeyS13s = 0;
+				
+			}
+	}
+	else if(C2 == 0)   //    S17按下
+	{
+		K2 = 1;
+		if( KeyS12s == 2)
+		{
+			while(C2 == 0)
+			{
+				Display_T();
+			}
+			Init_T--;
+		}
+		K2 = 0;
+	}
+	
+	R1 = 1;
+	R2 = 0;
+	C1 = C2 = 1;
+	if(C1 == 0)   //    S12按下
+	{
+			if(KeyS12s == 0)//时间显示
+			{
+				while(C1 == 0)
+				{
+					Display_T();
+				}
+				KeyS12s++;
+				K1 = 1;
+			}
+			else if(KeyS12s == 1)//参数设置
+			{
+				while(C1 == 0)
+				{
+					Display_T();
+				}
+				KeyS12s++;
+				K1 = 0;
+			}
+			else if(KeyS12s == 2)//温度显示
+			{
+				while(C1 == 0)
+				{
+					Display_T();
+				}
+				KeyS12s = 0;
+				K1 = 0;
+				Read_Temp();
+			}
+	}
+	else if(C2 == 0)   //    S16按下
+	{
+		if(KeyS12s == 2)
+		{
+			while(C2 == 0)
+			{
+				Display_T();
+			}
+			Init_T++;
+		}
+	}
+}
+//========================================================
+
+//=======================时钟模块=========================
+void DS1302_Config()
+{
+	unsigned char i;
+	Write_Ds1302_Byte(0x8e,0x00);
+	for(i = 0;i < 7;i++)
+	{
+		Write_Ds1302_Byte(Write_DS1302[i],Time[i]);
+	}
+	Write_Ds1302_Byte(0x8e,0x80);
+}
+
+void DS1302_ReadTime()
+{
+	unsigned char i;
+	for(i = 0;i < 7;i++)
+	{
+		Time[i] = Read_Ds1302_Byte (Read_DS1302[i]);
+	}
+}
+//========================================================
+
+
+//=====================温度读取===========================
+void Delay_Temp(unsigned int t)
+{
+	while(t--)
+	{
+		Display_T();
+	}
+}
+
+void Read_Temp()
+{
+	unsigned int LSB,MSB;
+	
+	init_ds18b20();
+	Write_DS18B20(0xcc);
+	Write_DS18B20(0x44);
+	Delay_Temp(1000);
+	init_ds18b20();
+	Write_DS18B20(0xcc);
+	Write_DS18B20(0xbe);
+	LSB = Read_DS18B20();
+	MSB = Read_DS18B20();
+	init_ds18b20();
+	
+	Temp = 0x0000;
+	Temp = MSB;
+	Temp <<= 8; 
+	Temp = Temp | LSB;
+	
+	if((Temp & 0xf800) == 0x0000)
+	{
+		Temp >>= 4;
+		Temp = Temp * 10;
+		Temp = Temp + (LSB & 0x0f) * 0.625;
+	}
+}
+//========================================================
+void JDQ_Cont()
+{
+	if(Temp > Init_T)
+	{
+		SelectHC573(5);//温度超过标准，继电器开
+		P0 = 0x10;
+	}
+	else
+	{
+		SelectHC573(5);
+		P0 = 0x00;
+	}
+	
+}
+void main()
+{
+	SelectHC573(5);
+	P0 = 0x00;     //关闭蜂鸣器
+	SelectHC573(4);
+	P0 = 0xff;
+	
+	DS1302_Config();
+	while(1)
+	{
+		Display_T();
+		Scan_Keys();
+		DS1302_ReadTime();
+		JDQ_Cont();
+	}
+}

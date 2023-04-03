@@ -1,0 +1,99 @@
+C51 COMPILER V9.59.0.0   DS1302____                                                        03/05/2023 15:44:57 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE DS1302____
+OBJECT MODULE PLACED IN .\Objects\DS1302时钟.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE DS1302时钟.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listing
+                    -s\DS1302时钟.lst) TABS(2) OBJECT(.\Objects\DS1302时钟.obj)
+
+line level    source
+
+   1          #include "reg52.h"
+   2          #include "absacc.h"
+   3          #include "ds1302.h"
+   4          #include "smg_ca.h"
+   5          
+   6          code unsigned char SMG_duanma[18] = 
+   7              {0xc0,0xf9,0xa4,0xb0,0x99,0x92,
+   8               0x82,0xf8,0x80,0x90}; 
+   9          
+  10          unsigned char code Write_DS1302_adrr[7] = {0x80,0x82,0x84,0x86,0x88,0x8a,0x8c};
+  11          unsigned char code Read_DS1302_adrr[7] = {0x81,0x83,0x85,0x87,0x89,0x89,0x8d};
+  12          //20年4月18日，周六，23点59分24秒；
+  13          unsigned char Timer[7] = {0x24,0x59,0x23,0x18,0x04,0x06,0x20};
+  14          
+  15          void DS1302_Config()
+  16          {
+  17   1        char i;
+  18   1        Write_Ds1302_Byte(0x8e,0x00);//保护
+  19   1        for(i = 0;i < 7;i++)
+  20   1        {
+  21   2          Write_Ds1302_Byte(Write_DS1302_adrr[i],Timer[i]);
+  22   2        }
+  23   1        Write_Ds1302_Byte(0x8e,0x80);//保护
+  24   1      } 
+  25          
+  26          void Read_DS1302_Time()
+  27          {
+  28   1        char i;
+  29   1        for(i = 0;i < 7;i++)
+  30   1        {
+  31   2          Timer[i] = Read_Ds1302_Byte(Read_DS1302_adrr[i]);
+  32   2        }
+  33   1        
+  34   1      }
+  35          
+  36          void Display_DS1302()
+  37          {
+  38   1        Display_SMG(SMG_duanma[Timer[2]/16],0);
+  39   1        DelaySMG(100);
+  40   1        Display_SMG(SMG_duanma[Timer[2]%16],1);
+  41   1        DelaySMG(100);
+  42   1        
+  43   1        Display_SMG(0xbf,2);
+  44   1        DelaySMG(100);
+  45   1        
+  46   1        Display_SMG(SMG_duanma[Timer[1]/16],3);
+  47   1        DelaySMG(100);
+  48   1        Display_SMG(SMG_duanma[Timer[1]%16],4);
+  49   1        DelaySMG(100);
+  50   1        
+  51   1        Display_SMG(0xbf,5);
+  52   1        DelaySMG(100);
+  53   1        
+  54   1        Display_SMG(SMG_duanma[Timer[0]/16],6);
+C51 COMPILER V9.59.0.0   DS1302____                                                        03/05/2023 15:44:57 PAGE 2   
+
+  55   1        DelaySMG(100);
+  56   1        Display_SMG(SMG_duanma[Timer[0]%16],7);
+  57   1        DelaySMG(100);
+  58   1        
+  59   1        SelectHC573(6);
+  60   1        P0 = 0xff;
+  61   1        SelectHC573(7);
+  62   1        P0 = 0xff;
+  63   1      }
+  64          
+  65          void main()
+  66          {
+  67   1        DS1302_Config();
+  68   1        while(1)
+  69   1        {
+  70   2          Read_DS1302_Time();
+  71   2          Display_DS1302();
+  72   2        }
+  73   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    337    ----
+   CONSTANT SIZE    =     32    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      7       2
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

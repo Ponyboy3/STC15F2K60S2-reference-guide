@@ -1,0 +1,73 @@
+C51 COMPILER V9.59.0.0   __________                                                        03/04/2023 11:58:42 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE __________
+OBJECT MODULE PLACED IN .\Objects\´æ´¢Æ÷À©Õ¹.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE ´æ´¢Æ÷À©Õ¹.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listing
+                    -s\´æ´¢Æ÷À©Õ¹.lst) TABS(2) OBJECT(.\Objects\´æ´¢Æ÷À©Õ¹.obj)
+
+line level    source
+
+   1          #include "reg52.h"
+   2          #include "absacc.h"
+   3          
+   4          
+   5          void Delay(unsigned int t)
+   6          {
+   7   1        while(t--);
+   8   1        while(t--);
+   9   1      }
+  10          
+  11          void LEDRunning()
+  12          {
+  13   1        XBYTE[0x8000] = 0xf0;
+  14   1        Delay(60000);
+  15   1        Delay(60000);
+  16   1        XBYTE[0x8000] = 0x0f;
+  17   1        Delay(60000);
+  18   1        Delay(60000);
+  19   1        XBYTE[0x8000] = 0xff;
+  20   1        Delay(60000);
+  21   1        Delay(60000);
+  22   1      }
+  23          
+  24          void SMGRunning()
+  25          {
+  26   1        unsigned char i;
+  27   1        for(i = 0;i < 8 ;i++)
+  28   1        {
+  29   2          XBYTE[0xc000] = 0x01 << i;
+  30   2          XBYTE[0xe000] = 0x00;
+  31   2          Delay(60000);
+  32   2          Delay(60000);
+  33   2        }
+  34   1        XBYTE[0xe000] = 0xff;
+  35   1        Delay(60000);
+  36   1        Delay(60000);
+  37   1      }
+  38          
+  39          void main()
+  40          {
+  41   1        while(1)
+  42   1        {
+  43   2          LEDRunning();
+  44   2          SMGRunning();
+  45   2        }
+  46   1        
+  47   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    120    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+C51 COMPILER V9.59.0.0   __________                                                        03/04/2023 11:58:42 PAGE 2   
+
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

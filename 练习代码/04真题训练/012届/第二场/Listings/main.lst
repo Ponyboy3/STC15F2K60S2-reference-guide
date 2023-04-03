@@ -1,0 +1,419 @@
+C51 COMPILER V9.59.0.0   MAIN                                                              03/27/2023 22:11:32 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\main
+                    -.lst) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include "reg52.h"
+   2          #include "iic.h"
+   3          
+   4          #define uchar unsigned char 
+   5          #define uint unsigned int
+   6          
+   7          uchar code type1[] = {0xc0,0xf9,0xa4,0xb0,0x99,0x92,0x82,0xf8,0x80,0x90,0xff,0xbf,0x8e,0xc8,0xc1};
+   8          uchar code type2[] = {0x01,0x02,0x04,0x08,0x10,0x20,0x40,0x80};
+   9          
+  10          uchar num1,num2,num3,num4,num5,num6,num7,num8;
+  11          uchar GN;
+  12          uint count;
+  13          uchar model;
+  14          uchar K;
+  15          uchar f_S7;
+  16          bit f_2ms;
+  17          bit f;
+  18          bit f_S5;
+  19          bit f_1s;
+  20          uint V_ADC;
+  21          uint temp_f,temp_t;
+  22          uint d_f,d_v;
+  23          uint t_2ms;
+  24          uchar Led_d;
+  25          
+  26          //==========数码管显示=======
+  27          void Display_SMG(uchar n1,uchar n2,uchar n3,uchar n4,uchar n5,uchar n6,uchar n7,uchar n8)
+  28          {
+  29   1        char i;
+  30   1        P0 = 0xff;
+  31   1        P2 = (P2 & 0x1f) | 0xc0;
+  32   1        P0 = type2[i];
+  33   1        P2 &= 0x1f;
+  34   1        switch(i)
+  35   1        {
+  36   2          case 0:P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n1];P2 &= 0x1f;break;
+  37   2          case 1:P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n2];P2 &= 0x1f;break;
+  38   2          case 2:P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n3];P2 &= 0x1f;break;
+  39   2          case 3:P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n4];P2 &= 0x1f;break;
+  40   2          case 4:P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n5];P2 &= 0x1f;break;
+  41   2          case 5:P2 = (P2 & 0x1f) | 0xe0;
+  42   2                        if(model == 2)
+  43   2                        {
+  44   3                          P0 = type1[n6]&0x7f;
+  45   3                        }
+  46   2                        else
+  47   2                          P0 = type1[n6];
+  48   2                                                        P2 &= 0x1f;break;
+  49   2          case 6:P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n7];P2 &= 0x1f;break;
+  50   2          case 7:P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n8];P2 &= 0x1f;break;
+  51   2        }
+  52   1        if(++i==8)
+  53   1          i = 0;
+  54   1      }
+C51 COMPILER V9.59.0.0   MAIN                                                              03/27/2023 22:11:32 PAGE 2   
+
+  55          //==========独立按键=========
+  56          void Delay_Keys(uint t)
+  57          {
+  58   1        while(t--);
+  59   1      }
+  60          uchar Scan_Keys()
+  61          {
+  62   1        char d;
+  63   1        d = (~P3) & 0x0f;
+  64   1        if(d == 0) return 0;
+  65   1        Delay_Keys(100);
+  66   1        if(d == 0) return 0;
+  67   1        Delay_Keys(100);
+  68   1        return d;
+  69   1      }
+  70          void Change_Keys()
+  71          {
+  72   1        switch(Scan_Keys())
+  73   1        {
+  74   2          case 8:GN = 1;break;//S4
+  75   2          case 4:GN = 2;break;
+  76   2          case 2:GN = 3;break;
+  77   2          case 1:GN = 4;break;//S7
+  78   2          case 0:GN = 0;break;
+  79   2        }
+  80   1      }
+  81          //==========RB1\RB3读取==========
+  82          uchar Read_Rb(uchar m)
+  83          {
+  84   1        uchar d;
+  85   1        IIC_Start();
+  86   1        IIC_SendByte(0x90);
+  87   1        IIC_WaitAck();
+  88   1        if(m == 1)
+  89   1        {
+  90   2          IIC_SendByte(0x01);
+  91   2        }
+  92   1        else if(m == 3)
+  93   1        {
+  94   2          IIC_SendByte(0x03);
+  95   2        }
+  96   1        IIC_WaitAck();
+  97   1        IIC_Stop();
+  98   1        
+  99   1        Delay_Keys(500);
+ 100   1        
+ 101   1        IIC_Start();
+ 102   1        IIC_SendByte(0x91);
+ 103   1        IIC_WaitAck();
+ 104   1        d = IIC_RecByte();
+ 105   1        IIC_SendAck(1);
+ 106   1        IIC_Stop();
+ 107   1        return d;
+ 108   1      }
+ 109          //==========led控制==========
+ 110          void Led_Control()
+ 111          {
+ 112   1        P0 = 0xff;
+ 113   1        if(f_1s == 1)
+ 114   1        {
+ 115   2          P2 = (P2 & 0x1f) | 0x80;
+ 116   2          P0 = 0xff;
+C51 COMPILER V9.59.0.0   MAIN                                                              03/27/2023 22:11:32 PAGE 3   
+
+ 117   2          P2 &= 0x1f;
+ 118   2        }
+ 119   1        else
+ 120   1        {
+ 121   2          if(model == 0)
+ 122   2        {
+ 123   3          P2 = (P2 & 0x1f) | 0x80;
+ 124   3          P0 = P0 & 0xfb;//L3
+ 125   3          P2 &= 0x1f;
+ 126   3        }
+ 127   2        else
+ 128   2        {
+ 129   3          P2 = (P2 & 0x1f) | 0x80;
+ 130   3          P0 = P0 | 0x04;
+ 131   3          P2 &= 0x1f;
+ 132   3        }
+ 133   2        if(model == 1)
+ 134   2        {
+ 135   3          P2 = (P2 & 0x1f) | 0x80;
+ 136   3          P0 = P0 & 0xf7;//L4
+ 137   3          P2 &= 0x1f;
+ 138   3        }
+ 139   2        else
+ 140   2        {
+ 141   3          P2 = (P2 & 0x1f) | 0x80;
+ 142   3          P0 = P0 | 0x08;
+ 143   3          P2 &= 0x1f;
+ 144   3        }
+ 145   2        
+ 146   2        if(model == 2)
+ 147   2        {
+ 148   3          P2 = (P2 & 0x1f) | 0x80;
+ 149   3          P0 = P0 & 0xef;//L5
+ 150   3          P2 &= 0x1f;
+ 151   3        }
+ 152   2        else
+ 153   2        {
+ 154   3          P2 = (P2 & 0x1f) | 0x80;
+ 155   3          P0 = P0 | 0x10;
+ 156   3          P2 &= 0x1f;
+ 157   3        }
+ 158   2        if(temp_f > d_f)
+ 159   2        {
+ 160   3          P2 = (P2 & 0x1f) | 0x80;
+ 161   3          P0 = P0 & 0xfd;//L2
+ 162   3          P2 &= 0x1f;
+ 163   3        }
+ 164   2        else
+ 165   2        {
+ 166   3          P2 = (P2 & 0x1f) | 0x80;
+ 167   3          P0 = P0 | 0x02;
+ 168   3          P2 &= 0x1f;
+ 169   3        }
+ 170   2        if(V_ADC > d_v)
+ 171   2        {
+ 172   3          P2 = (P2 & 0x1f) | 0x80;
+ 173   3          P0 = P0 & 0xfe;//L1
+ 174   3          Led_d = P0;
+ 175   3          P2 &= 0x1f;
+ 176   3        }
+ 177   2        else
+ 178   2        {
+C51 COMPILER V9.59.0.0   MAIN                                                              03/27/2023 22:11:32 PAGE 4   
+
+ 179   3          P2 = (P2 & 0x1f) | 0x80;
+ 180   3          P0 = P0 | 0x01;
+ 181   3          Led_d = P0;
+ 182   3          P2 &= 0x1f;
+ 183   3        }
+ 184   2        }
+ 185   1      }
+ 186          //==========定时器T1初始化===
+ 187          void Init_T1()
+ 188          {
+ 189   1        TMOD = (TMOD & 0xf0) | 0x10;
+ 190   1        TH1 = (65536 - 2000) / 256;
+ 191   1        TL1 = (65536 - 2000) % 256;
+ 192   1        
+ 193   1        EA = 1;
+ 194   1        ET1 = 1;
+ 195   1        TR1 = 1;
+ 196   1      }
+ 197          //==========定时器T1初始化===
+ 198          void Init_T0()
+ 199          {
+ 200   1        TMOD = (TMOD & 0x0f) | 0x05;
+ 201   1        TH0 = 0;
+ 202   1        TL0 = 0;
+ 203   1      }
+ 204          //==========系统初始化=====
+ 205          void Init_Sys()
+ 206          {
+ 207   1        P2 = (P2 & 0x1f) | 0x80;
+ 208   1        P0 = 0xff;
+ 209   1        P2 &= 0x1f;
+ 210   1        P2 = (P2 & 0x1f) | 0xa0;
+ 211   1        P0 = 0xff;
+ 212   1        P2 &= 0x1f;
+ 213   1        P2 = (P2 & 0x1f) | 0xc0;
+ 214   1        P0 = 0xff;
+ 215   1        P2 &= 0x1f;
+ 216   1        P2 = (P2 & 0x1f) | 0xe0;
+ 217   1        P0 = 0xff;
+ 218   1        P2 &= 0x1f;
+ 219   1      }
+ 220          
+ 221          void main()
+ 222          {
+ 223   1        Init_Sys();
+ 224   1        Init_T1();
+ 225   1        Init_T0();
+ 226   1        while(1)
+ 227   1        {
+ 228   2          if(f_2ms == 1)
+ 229   2          {
+ 230   3            f_2ms = 0;
+ 231   3            Change_Keys();
+ 232   3            if(GN == 1)
+ 233   3            {
+ 234   4              f_S5 = 0;
+ 235   4              model++;
+ 236   4              if(model == 3)
+ 237   4              {
+ 238   5                model = 0;
+ 239   5              }
+ 240   4              while(Scan_Keys());
+C51 COMPILER V9.59.0.0   MAIN                                                              03/27/2023 22:11:32 PAGE 5   
+
+ 241   4            }
+ 242   3            if(GN == 3)
+ 243   3            {
+ 244   4              V_ADC = Read_Rb(3);
+ 245   4              if(V_ADC > 250)
+ 246   4              {
+ 247   5                V_ADC = 250;
+ 248   5              }
+ 249   4              V_ADC = 2*V_ADC;
+ 250   4              d_v = V_ADC;
+ 251   4              while(Scan_Keys());
+ 252   4            }
+ 253   3            if(GN == 4)
+ 254   3            {
+ 255   4              d_f = temp_f;
+ 256   4              count = 0;
+ 257   4              f_S7 = 1;
+ 258   4              while(Scan_Keys());
+ 259   4              f_S7 = 0;
+ 260   4            }
+ 261   3            switch(model)
+ 262   3            {
+ 263   4              case 0:
+ 264   4                num1 = 12;
+ 265   4                if(temp_f > 9999)
+ 266   4                {
+ 267   5                  num4=temp_f/10000;num5=temp_f/1000%10;num6=temp_f/100%10;num7=temp_f/10%10;num8=temp_f%10;
+ 268   5                }
+ 269   4                else if(temp_f > 999)
+ 270   4                {
+ 271   5                  num4=10;num5=temp_f/1000;num6=temp_f/100%10;num7=temp_f/10%10;num8=temp_f%10;
+ 272   5                }
+ 273   4                else if(temp_f > 99)
+ 274   4                {
+ 275   5                  num4=10;num5=10;num6=temp_f/100;num7=temp_f/10%10;num8=temp_f%10;
+ 276   5                }
+ 277   4                else if(temp_f > 9)
+ 278   4                {
+ 279   5                  num4=10;num5=10;num6=10;num7=temp_f/10;num8=temp_f%10;
+ 280   5                }
+ 281   4                else
+ 282   4                {
+ 283   5                  num4=10;num5=10;num6=10;num7=10;num8=temp_f;
+ 284   5                }
+ 285   4                num2=num3=10;
+ 286   4              break;
+ 287   4              
+ 288   4              case 1:
+ 289   4                temp_t = 1000000/temp_f;
+ 290   4                if(temp_t > 9999)
+ 291   4                {
+ 292   5                  num4=temp_t/10000;num5=temp_t/1000%10;num6=temp_t/100%10;num7=temp_t/10%10;num8=temp_t%10;
+ 293   5                }
+ 294   4                else if(temp_t > 999)
+ 295   4                {
+ 296   5                  num4=10;num5=temp_t/1000;num6=temp_t/100%10;num7=temp_t/10%10;num8=temp_t%10;
+ 297   5                }
+ 298   4                else if(temp_t > 99)
+ 299   4                {
+ 300   5                  num4=10;num5=10;num6=temp_t/100;num7=temp_t/10%10;num8=temp_t%10;
+ 301   5                }
+ 302   4                else if(temp_t > 9)
+C51 COMPILER V9.59.0.0   MAIN                                                              03/27/2023 22:11:32 PAGE 6   
+
+ 303   4                {
+ 304   5                  num4=10;num5=10;num6=10;num7=temp_t/10;num8=temp_t%10;
+ 305   5                }
+ 306   4                else
+ 307   4                {
+ 308   5                  num4=10;num5=10;num6=10;num7=10;num8=temp_t;
+ 309   5                }
+ 310   4                num1 = 13;
+ 311   4                num2=num3=10;
+ 312   4              break;
+ 313   4              
+ 314   4              case 2:
+ 315   4                if(GN == 2)
+ 316   4                {
+ 317   5                  f_S5 = ~f_S5;
+ 318   5                  while(Scan_Keys());
+ 319   5                }
+ 320   4                if(f_S5 == 0)
+ 321   4                {
+ 322   5                  V_ADC = Read_Rb(1)*2;
+ 323   5                  if(V_ADC > 250)
+ 324   5                  {
+ 325   6                    V_ADC = 250;
+ 326   6                  }
+ 327   5                  V_ADC = 2*V_ADC;
+ 328   5                  num3 = 1;
+ 329   5                }
+ 330   4                else
+ 331   4                {
+ 332   5                  V_ADC = Read_Rb(3);
+ 333   5                  if(V_ADC > 250)
+ 334   5                  {
+ 335   6                    V_ADC = 250;
+ 336   6                  }
+ 337   5                  V_ADC = 2*V_ADC;
+ 338   5                  num3 = 3;
+ 339   5                }
+ 340   4                num1 = 14;
+ 341   4                num2 = 11;
+ 342   4                num6=V_ADC/100;num7=V_ADC/10%10;num8=V_ADC%10;
+ 343   4                num4=num5=10;
+ 344   4              break;
+ 345   4            }
+ 346   3            Led_Control();
+ 347   3          }
+ 348   2        }
+ 349   1      }
+ 350          void Service_T1() interrupt 3
+ 351          {
+ 352   1        TH1 = (65536 - 2000) / 256;
+ 353   1        TL1 = (65536 - 2000) % 256;
+ 354   1        
+ 355   1        f_2ms = 1;
+ 356   1        Display_SMG(num1,num2,num3,num4,num5,num6,num7,num8);
+ 357   1        
+ 358   1        if(f_S7 == 1)
+ 359   1        {
+ 360   2          count++;
+ 361   2          if(count == 500)
+ 362   2          {
+ 363   3            f_1s = ~f_1s;
+ 364   3          }
+C51 COMPILER V9.59.0.0   MAIN                                                              03/27/2023 22:11:32 PAGE 7   
+
+ 365   2        }
+ 366   1        
+ 367   1        if(++t_2ms == 250)
+ 368   1        {
+ 369   2          t_2ms = 0;
+ 370   2          f=~f;
+ 371   2          if(f == 0)
+ 372   2          {
+ 373   3            TH0 = 0;
+ 374   3            TL0 = 0;
+ 375   3            TR0 = 1;
+ 376   3          }
+ 377   2          else
+ 378   2          {
+ 379   3            TR0 = 0;
+ 380   3            temp_f=((TH0<<8)+TL0)*2;
+ 381   3          }
+ 382   2        }
+ 383   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1603    ----
+   CONSTANT SIZE    =     23    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     27      11
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      4    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

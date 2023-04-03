@@ -1,0 +1,181 @@
+C51 COMPILER V9.59.0.0   EX8                                                               04/12/2022 09:59:11 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE EX8
+OBJECT MODULE PLACED IN .\Objects\ex8.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE ex8.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\ex8.l
+                    -st) TABS(2) OBJECT(.\Objects\ex8.obj)
+
+line level    source
+
+   1          /*******************************************************************************
+   2          * 文件名称：定时器扫描按键实验
+   3          * 实验目的：1.掌握通过定时器扫描按键键值的基本方法
+   4          *           2.掌握51单片机定时器工作模式和配置方法
+   5          * 实验配置：J3跳线配置为IO方式，J5配置为BTN、J2配置为1-3和2-4
+   6          * 程序现象：按S7、S6按键，数码管显示数字分别加1、减1
+   7          * 硬件环境：IAP15F2K61S2@11.0592MHz
+   8          * 注意事项：无
+   9          * 日期版本：2022/02/08
+  10          *******************************************************************************/
+  11          #include "reg52.h"
+  12          #include "intrins.h"
+  13          
+  14          sfr AUXR = 0x8E;
+  15          bit key_re;
+  16          unsigned char key_press;
+  17          unsigned char key_value;
+  18          bit key_flag;
+  19          unsigned char intr;
+  20                                     //  0     1     2     3     4     5    6     7     8     9    熄灭
+  21          code unsigned char tab[] = { 0xc0, 0xf9, 0xa4, 0xb0, 0x99, 0x92, 0x82, 0xf8, 0x80, 0x90, 0xff};
+  22          unsigned char dspbuf[8] = {10, 10, 10, 10, 10, 10, 10, 10}; //显示缓冲区
+  23          unsigned char dspcom = 0;
+  24          unsigned char read_key(void);
+  25          void display(void);
+  26          void cls_buzz()
+  27          {
+  28   1          P2 = (P2 & 0x1F | 0xA0);
+  29   1          P0 = 0x00;
+  30   1          P2 &= 0x1F;
+  31   1      }
+  32          
+  33          void cls_led()
+  34          {
+  35   1          P2 = (P2 & 0x1F | 0x80);
+  36   1          P0 = 0xFF;
+  37   1          P2 &= 0x1F;
+  38   1      }
+  39          
+  40          //主函数
+  41          void main(void)
+  42          {
+  43   1          unsigned char key_temp;
+  44   1          unsigned char num;
+  45   1          cls_buzz();
+  46   1          cls_led();
+  47   1          P3 = 0xff;  //按键接口初始化
+  48   1          AUXR |= 0x80; //1T模式，IAP15F2K61S2单片机特殊功能寄存器
+  49   1          TMOD &= 0xF0;
+  50   1          TL0 = 0xCD;
+  51   1          TH0 = 0xD4;
+  52   1          TF0 = 0;
+  53   1          TR0 = 1;
+  54   1          ET0 = 1;
+C51 COMPILER V9.59.0.0   EX8                                                               04/12/2022 09:59:11 PAGE 2   
+
+  55   1          EA = 1;
+  56   1      
+  57   1          while(1)
+  58   1          {
+  59   2              if(key_flag)
+  60   2              {
+  61   3                  key_flag = 0;
+  62   3                  key_temp = read_key();
+  63   3              }
+  64   2              //进入按键处理程序部分
+  65   2              switch(key_temp)
+  66   2              {
+  67   3              case 1:
+  68   3                  num++;
+  69   3                  break;
+  70   3              case 2:
+  71   3                  num--;
+  72   3                  break;
+  73   3              }
+  74   2              key_temp = 0;  //完成按键处理程序后，清除键值
+  75   2      
+  76   2              (num >= 100) ? (dspbuf[5] = num / 100) : (dspbuf[5] = 10);
+  77   2              (num >= 10) ? (dspbuf[6] = num % 100 / 10) : (dspbuf[6] = 10);
+  78   2              dspbuf[7] = num % 10;
+  79   2          }
+  80   1      }
+  81          
+  82          //定时器中断服务函数
+  83          void isr_timer_0(void)  interrupt 1  //默认中断优先级 1
+  84          {
+  85   1          display();
+  86   1          if(++intr == 10)  //1ms执行一次
+  87   1          {
+  88   2              intr = 0;
+  89   2              key_flag = 1;  //10ms按键扫描标志位置1
+  90   2          }
+  91   1      }
+  92          
+  93          //读取键值
+  94          unsigned char read_key(void)
+  95          {
+  96   1      
+  97   1          unsigned char key_temp;
+  98   1      
+  99   1          key_temp = (P3 & 0x0f);
+ 100   1          /**************多次检测，可以可以防止抖动*********************/
+ 101   1          if(key_temp != 0x0f) //有按键按下
+ 102   1              key_press++;
+ 103   1          else
+ 104   1              key_press = 0;  //抖动
+ 105   1      
+ 106   1          if(key_press == 5)
+ 107   1          {
+ 108   2              key_press = 0;
+ 109   2              key_re = 1;
+ 110   2              switch(key_temp)
+ 111   2              {
+ 112   3              case 0x0e:
+ 113   3                  key_value = 1;  //
+ 114   3                  break;
+ 115   3              case 0x0d:
+ 116   3                  key_value = 2;  //
+C51 COMPILER V9.59.0.0   EX8                                                               04/12/2022 09:59:11 PAGE 3   
+
+ 117   3                  break;
+ 118   3              case 0x0b:
+ 119   3                  key_value = 3;  //
+ 120   3                  break;
+ 121   3              case 0x07:
+ 122   3                  key_value = 4;  //
+ 123   3                  break;
+ 124   3              }
+ 125   2          }
+ 126   1          //连续5次检测到按键被按下，并且该按键已经释放
+ 127   1          if((key_re == 1) && (key_temp == 0x0f))
+ 128   1          {
+ 129   2              key_re = 0;
+ 130   2              return key_value;
+ 131   2          }
+ 132   1      
+ 133   1          return 0xff;  //无按键按下或被按下的按键未被释放
+ 134   1      }
+ 135          
+ 136          void display(void)
+ 137          {
+ 138   1          P2 = ((P2 & 0x1f) | 0xe0);
+ 139   1          P0 = 0xff;
+ 140   1          P2 &= 0x1f;
+ 141   1      
+ 142   1          P2 = ((P2 & 0x1f) | 0xc0);
+ 143   1          P0 = (1 << dspcom);
+ 144   1          P2 &= 0x1f;
+ 145   1      
+ 146   1          P2 = ((P2 & 0x1f) | 0xe0);
+ 147   1          P0 = tab[dspbuf[dspcom]];
+ 148   1          P2 &= 0x1f;
+ 149   1          if(++dspcom == 8)
+ 150   1          {
+ 151   2              dspcom = 0;
+ 152   2          }
+ 153   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    375    ----
+   CONSTANT SIZE    =     11    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     12       2
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      2    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

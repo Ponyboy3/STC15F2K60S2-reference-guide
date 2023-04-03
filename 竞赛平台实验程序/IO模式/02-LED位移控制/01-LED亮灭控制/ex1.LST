@@ -1,0 +1,86 @@
+C51 COMPILER V9.59.0.0   EX1                                                               08/01/2022 15:12:39 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE EX1
+OBJECT MODULE PLACED IN ex1.OBJ
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE ex1.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND TABS(2)
+
+line level    source
+
+   1          /*******************************************************************************
+   2          * 文件名称：LED闪烁实验
+   3          * 实验目的：1.掌握单片机IO口操作的基本方法
+   4          *           2.掌握软件延时函数的设计方法
+   5          * 实验配置：J3跳线配置为IO方式，J5配置为KBD、J2配置为1-3和2-4
+   6          * 实验现象：LED以0.2S为间隔亮灭
+   7          * 硬件环境：IAP15F2K61S2单片机，单片机内部振荡器频率：11.0592M
+   8          * 注意事项：包含STC15F2K60S2.H头文件，里面包含了所有的STC15系列的寄存器定义，
+   9                      此头文件可在STC-ISP软件中生成，要用到_nop_()必须要包含intrins.h
+  10                头文件
+  11          * 日期版本：2022/2/8
+  12          *******************************************************************************/
+  13          #include "STC15F2K60S2.H"
+  14          #include "intrins.h"
+  15          
+  16          //关闭蜂鸣器
+  17          void cls_buzz(void)
+  18          {
+  19   1          P2 = (P2 & 0x1F | 0xA0);
+  20   1          P0 = 0x00;
+  21   1          P2 &= 0x1F;
+  22   1      }
+  23          
+  24          //延时200ms
+  25          void delay()    //@11.0592MHz
+  26          {
+  27   1          unsigned char i, j, k;
+  28   1      
+  29   1          _nop_();
+  30   1          _nop_();
+  31   1          i = 9;
+  32   1          j = 104;
+  33   1          k = 139;
+  34   1          do
+  35   1          {
+  36   2              do
+  37   2              {
+  38   3                  while (--k);
+  39   3              }
+  40   2              while (--j);
+  41   2          }
+  42   1          while (--i);
+  43   1      }
+  44          
+  45          
+  46          void main(void)
+  47          {
+  48   1          cls_buzz();
+  49   1          while(1)
+  50   1          {
+  51   2              P2 = ((P2 & 0x1f) | 0x80);
+  52   2              P0 = 0xff;  //LED关
+  53   2              P2 &= 0x1f;
+  54   2              delay();
+  55   2      
+C51 COMPILER V9.59.0.0   EX1                                                               08/01/2022 15:12:39 PAGE 2   
+
+  56   2              P2 = ((P2 & 0x1f) | 0x80);
+  57   2              P0 = 0x00;  //LED开
+  58   2              P2 &= 0x1f;
+  59   2              delay();
+  60   2          }
+  61   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     69    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

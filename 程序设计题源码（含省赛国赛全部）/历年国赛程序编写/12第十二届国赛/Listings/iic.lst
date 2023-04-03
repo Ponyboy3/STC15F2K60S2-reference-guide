@@ -1,0 +1,119 @@
+C51 COMPILER V9.55   IIC                                                                   06/16/2022 19:12:31 PAGE 1   
+
+
+C51 COMPILER V9.55, COMPILATION OF MODULE IIC
+OBJECT MODULE PLACED IN .\Objects\iic.obj
+COMPILER INVOKED BY: D:\keilc\pack_file\C51\BIN\C51.EXE iic.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listin
+                    -gs\iic.lst) TABS(2) OBJECT(.\Objects\iic.obj)
+
+line level    source
+
+   1          
+   2          #include "iic.h"
+   3          
+   4          #define DELAY_TIME 5
+   5          
+   6          //
+   7          void IIC_Delay(unsigned char i)
+   8          {
+   9   1          do{_nop_();}
+  10   1          while(i--);        
+  11   1      }
+  12          
+  13          //
+  14          void IIC_Start(void)
+  15          {
+  16   1          SDA = 1;
+  17   1          SCL = 1;
+  18   1          IIC_Delay(DELAY_TIME);
+  19   1          SDA = 0;
+  20   1          IIC_Delay(DELAY_TIME);
+  21   1          SCL = 0;  
+  22   1      }
+  23          
+  24          //
+  25          void IIC_Stop(void)
+  26          {
+  27   1          SDA = 0;
+  28   1          SCL = 1;
+  29   1          IIC_Delay(DELAY_TIME);
+  30   1          SDA = 1;
+  31   1          IIC_Delay(DELAY_TIME);
+  32   1      }
+  33          
+  34          //
+  35          void IIC_SendAck(bit ackbit)
+  36          {
+  37   1          SCL = 0;
+  38   1          SDA = ackbit;           
+  39   1          IIC_Delay(DELAY_TIME);
+  40   1          SCL = 1;
+  41   1          IIC_Delay(DELAY_TIME);
+  42   1          SCL = 0; 
+  43   1          SDA = 1;
+  44   1          IIC_Delay(DELAY_TIME);
+  45   1      }
+  46          
+  47          //
+  48          bit IIC_WaitAck(void)
+  49          {
+  50   1          bit ackbit;
+  51   1        
+  52   1          SCL  = 1;
+  53   1          IIC_Delay(DELAY_TIME);
+  54   1          ackbit = SDA;
+C51 COMPILER V9.55   IIC                                                                   06/16/2022 19:12:31 PAGE 2   
+
+  55   1          SCL = 0;
+  56   1          IIC_Delay(DELAY_TIME);
+  57   1          return ackbit;
+  58   1      }
+  59          
+  60          //
+  61          void IIC_SendByte(unsigned char byt)
+  62          {
+  63   1          unsigned char i;
+  64   1      
+  65   1          for(i=0; i<8; i++)
+  66   1          {
+  67   2              SCL  = 0;
+  68   2              IIC_Delay(DELAY_TIME);
+  69   2              if(byt & 0x80) SDA  = 1;
+  70   2              else SDA  = 0;
+  71   2              IIC_Delay(DELAY_TIME);
+  72   2              SCL = 1;
+  73   2              byt <<= 1;
+  74   2              IIC_Delay(DELAY_TIME);
+  75   2          }
+  76   1          SCL  = 0;  
+  77   1      }
+  78          
+  79          //
+  80          unsigned char IIC_RecByte(void)
+  81          {
+  82   1          unsigned char i, da;
+  83   1          for(i=0; i<8; i++)
+  84   1          {   
+  85   2            SCL = 1;
+  86   2          IIC_Delay(DELAY_TIME);
+  87   2          da <<= 1;
+  88   2          if(SDA) da |= 1;
+  89   2          SCL = 0;
+  90   2          IIC_Delay(DELAY_TIME);
+  91   2          }
+  92   1          return da;    
+  93   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    152    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----       2
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

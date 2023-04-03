@@ -1,0 +1,113 @@
+C51 COMPILER V9.59.0.0   EX14                                                              08/06/2022 11:11:34 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE EX14
+OBJECT MODULE PLACED IN ex14.OBJ
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE ex14.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND TABS(2)
+
+line level    source
+
+   1          /*******************************************************************************
+   2          * 文件名称：DS18B20温度传感器实验-小数点处理
+   3          * 实验目的：1.掌握常用的字符串处理函数
+   4          *           2.掌握DS18B20温度传感器的操作方法
+   5          * 实验配置：J3跳线配置为IO方式，J5配置为BTN、J2配置为1-3和2-4
+   6          * 程序现象：板子通过串口将温度检测数值发送到电脑
+   7          * 硬件环境：IAP15F2K61S2@11.0592MHz
+   8          * 程序说明：1.通过串口输出实时温度数据，使用串口调试工具接收数据
+   9          *           2.串口通讯波特率设定为2400
+  10          * 日期版本：2022/02/08
+  11          *******************************************************************************/
+  12          #include "STC15F2K60S2.H"  //定义51单片机特殊功能寄存器
+  13          #include "onewire.h"  //单总线函数库
+  14          #include <stdio.h>
+  15          #include "intrins.h"
+  16          
+  17          #define BAUD       2400  //波特率
+  18          #define SYSTEMCLOCK  11059200L  //系统时钟频率
+  19          //函数声明
+  20          /*****************************************/
+  21          void delay(void);
+  22          void cls_buzz();
+  23          void uart_sendstring(unsigned char *str);
+  24          /*****************************************/
+  25          
+  26          //主函数
+  27          void main(void)
+  28          {
+  29   1          float temperature;
+  30   1          unsigned char str[40];
+  31   1          cls_buzz();
+  32   1          SCON = 0x50;
+  33   1          AUXR = 0x40;                //1T
+  34   1          TMOD = 0x00;
+  35   1          TL1 = (65536 - (SYSTEMCLOCK / 4 / BAUD));
+  36   1          TH1 = (65536 - (SYSTEMCLOCK / 4 / BAUD)) >> 8;
+  37   1          TR1 = 1;
+  38   1      
+  39   1          while(1)
+  40   1          {
+  41   2              sprintf(str, "%s%6.3f%c%c", "temperature:", temperature, '\r', '\n');
+  42   2      
+  43   2              temperature = rd_temperature_f();  //读温度
+  44   2              uart_sendstring(str);
+  45   2              delay();
+  46   2              delay();
+  47   2          }
+  48   1      }
+  49          
+  50          void delay()    //@11.0592MHz  300ms
+  51          {
+  52   1          unsigned char i, j, k;
+  53   1      
+  54   1          _nop_();
+  55   1          _nop_();
+C51 COMPILER V9.59.0.0   EX14                                                              08/06/2022 11:11:34 PAGE 2   
+
+  56   1          i = 13;
+  57   1          j = 156;
+  58   1          k = 83;
+  59   1          do
+  60   1          {
+  61   2              do
+  62   2              {
+  63   3                  while (--k);
+  64   3              }
+  65   2              while (--j);
+  66   2          }
+  67   1          while (--i);
+  68   1      }
+  69          
+  70          void cls_buzz()
+  71          {
+  72   1          P2 = ((P2 & 0x1f) | 0xA0);
+  73   1          P0 = 0x00;
+  74   1          P2 &= 0x1f;
+  75   1      }
+  76          //通过串口发送字符串
+  77          void uart_sendstring(unsigned char *str)
+  78          {
+  79   1          unsigned char *p;
+  80   1          p = str;
+  81   1          while(*p != '\0')
+  82   1          {
+  83   2              SBUF = *p;
+  84   2              while(TI == 0);  //等待发送标志位置位
+  85   2              TI = 0;
+  86   2              p++;
+  87   2          }
+  88   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    145    ----
+   CONSTANT SIZE    =     25    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----      44
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

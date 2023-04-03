@@ -1,0 +1,150 @@
+C51 COMPILER V9.59.0.0   MAIN                                                              03/28/2023 22:48:34 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\main
+                    -.lst) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include "reg52.h"
+   2          #include "intrins.h"
+   3          
+   4          #define uchar unsigned char
+   5          #define uint unsigned int
+   6            
+   7          sbit TX = P1^0;
+   8          sbit RX = P1^1;
+   9            
+  10          uchar code type1[] = {0xc0,0xf9,0xa4,0xb0,0x99,0x92,0x82,0xf8,0x80,0x90,0xff,0xc6};
+  11          uchar code type2[] = {0x01,0x02,0x04,0x08,0x10,0x20,0x40,0x80};
+  12          
+  13          uchar num1,num2,num3,num4,num5,num6,num7,num8;
+  14          bit f_2ms;
+  15          uint distance;
+  16          void Display_SMG(uchar n1,uchar n2,uchar n3,uchar n4,uchar n5,uchar n6,uchar n7,uchar n8)
+  17          {
+  18   1        char i;
+  19   1        P0 = 0xff;
+  20   1        P2 = (P2 & 0x1f) | 0xc0;
+  21   1        P0 = type2[i];
+  22   1        P2 &= 0x1f;
+  23   1        switch(i)
+  24   1        {
+  25   2          case 0:P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n1];P2 &= 0x1f;break;
+  26   2          case 1:P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n2];P2 &= 0x1f;break;
+  27   2          case 2:P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n3];P2 &= 0x1f;break;
+  28   2          case 3:P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n4];P2 &= 0x1f;break;
+  29   2          case 4:P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n5];P2 &= 0x1f;break;
+  30   2          case 5:P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n6];P2 &= 0x1f;break;
+  31   2          case 6:P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n7];P2 &= 0x1f;break;
+  32   2          case 7:P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n8];P2 &= 0x1f;break;
+  33   2        }
+  34   1        if(++i==8)
+  35   1          i=0;
+  36   1      }
+  37          void Init_T0()
+  38          {
+  39   1        TMOD = (TMOD & 0xf0) | 0x01;
+  40   1        TH0 = (65536 - 12) / 256;
+  41   1        TL0 = (65536 - 12) % 256;
+  42   1      }
+  43          void Init_T1()
+  44          {
+  45   1        TMOD = (TMOD & 0x0f) | 0x10;
+  46   1        TH1 = (65536 - 2000) / 256;
+  47   1        TL1 = (65536 - 2000) % 256;
+  48   1        
+  49   1        EA = 1;
+  50   1        ET1 = 1;
+  51   1        TR1 = 1;
+  52   1      }
+  53          //超声波模块
+  54          uchar Get_Distance()
+C51 COMPILER V9.59.0.0   MAIN                                                              03/28/2023 22:48:34 PAGE 2   
+
+  55          {
+  56   1        uchar temp=16;
+  57   1        TX=0; 
+  58   1        TR0=1;
+  59   1        //引脚发送40Khz方波信号
+  60   1        while(temp--)  //每隔12us发8个方波
+  61   1        {
+  62   2          while(!TF0);
+  63   2            TX ^= 1;          // if(TX==1) { Delay20us();}//可以不用
+  64   2            TH0=(65536-12)/256;
+  65   2            TL0=(65536-12)%256;     
+  66   2            TF0=0;       //TF0必须要先赋值在清零
+  67   2        }   
+  68   1              TR0=0;
+  69   1              TL0=0;
+  70   1              TH0=0;
+  71   1              TR0=1;
+  72   1            while( RX && !TF0 );
+  73   1            TR0=0;
+  74   1        
+  75   1            if(TF0==1)
+  76   1            {
+  77   2              TF0=0;
+  78   2              return 999;
+  79   2            }
+  80   1            else
+  81   1              return ((TH0<<8)+TL0)*0.017;
+  82   1      }
+  83          void Init_Sys()
+  84          {
+  85   1        P2 = (P2 & 0x1f) | 0x80;
+  86   1        P0 = 0xff;
+  87   1        P2 &= 0x1f;
+  88   1        P2 = (P2 & 0x1f) | 0xa0;
+  89   1        P0 = 0x00;
+  90   1        P2 &= 0x1f;
+  91   1        P2 = (P2 & 0x1f) | 0xc0;
+  92   1        P0 = 0xff;
+  93   1        P2 &= 0x1f;
+  94   1        P2 = (P2 & 0x1f) | 0xe0;
+  95   1        P0 = 0xff;
+  96   1        P2 &= 0x1f;
+  97   1      }
+  98          void main()
+  99          {
+ 100   1        Init_Sys();
+ 101   1        Init_T1();
+ 102   1        Init_T0();
+ 103   1        while(1)
+ 104   1        {
+ 105   2          if(f_2ms == 1)
+ 106   2          {
+ 107   3            f_2ms = 0;
+ 108   3            distance = Get_Distance();
+ 109   3            num1=num2=num3=num4=10;
+ 110   3            num5=distance/100;num6=distance/10%10;num7=distance%10;
+ 111   3            num8=11;
+ 112   3          }
+ 113   2        }
+ 114   1      }
+ 115          void Service_T1() interrupt 3
+ 116          {
+C51 COMPILER V9.59.0.0   MAIN                                                              03/28/2023 22:48:34 PAGE 3   
+
+ 117   1        TH1 = (65536 - 2000) / 256;
+ 118   1        TL1 = (65536 - 2000) % 256;
+ 119   1        
+ 120   1        f_2ms = 1;
+ 121   1        Display_SMG(num1,num2,num3,num4,num5,num6,num7,num8);
+ 122   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    533    ----
+   CONSTANT SIZE    =     20    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     10       9
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      1    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

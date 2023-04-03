@@ -1,0 +1,90 @@
+C51 COMPILER V9.59.0.0   LED____                                                           03/06/2023 11:54:35 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE LED____
+OBJECT MODULE PLACED IN .\Objects\led基础.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE led基础.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\l
+                    -ed基础.lst) TABS(2) OBJECT(.\Objects\led基础.obj)
+
+line level    source
+
+   1          #include "reg52.h"
+   2          
+   3          
+   4          void Delay(unsigned int t)
+   5          {
+   6   1        while(t--);
+   7   1      }
+   8          
+   9          void Init_Sys()
+  10          {
+  11   1        P2 = (P2 & 0x1f) | 0x80;
+  12   1        P0 = 0xff;
+  13   1        P2 &= 0x1f;
+  14   1        
+  15   1        P2 = (P2 & 0x1f) | 0xa0;
+  16   1        P0 = 0x00;
+  17   1        P2 &= 0x1f;
+  18   1      }
+  19          
+  20          void Display_Led()
+  21          {
+  22   1        unsigned char i;
+  23   1        for(i = 0;i < 3;i++)
+  24   1        {
+  25   2          P2 = (P2 & 0x1f) | 0x80;
+  26   2          P0 = 0x00;
+  27   2          P2 &= 0x1f;
+  28   2          Delay(60000);
+  29   2          Delay(60000);
+  30   2          P2 = (P2 & 0x1f) | 0x80;
+  31   2          P0 = 0xff;
+  32   2          P2 &= 0x1f;
+  33   2          Delay(60000);
+  34   2          Delay(60000);
+  35   2        }
+  36   1        
+  37   1        for(i = 0;i < 8;i++)
+  38   1        {
+  39   2          P2 = (P2 & 0x1f) | 0x80;
+  40   2          P0 = 0xfe << i;
+  41   2          P2 &= 0x1f;
+  42   2          Delay(60000);
+  43   2          Delay(60000);
+  44   2        }
+  45   1        for(i = 0;i < 8;i++)
+  46   1        {
+  47   2          P2 = (P2 & 0x1f) | 0x80;
+  48   2          P0 = ~(0xfe << i);
+  49   2          P2 &= 0x1f;
+  50   2          Delay(60000);
+  51   2          Delay(60000);
+  52   2        }
+  53   1        
+  54   1        
+C51 COMPILER V9.59.0.0   LED____                                                           03/06/2023 11:54:35 PAGE 2   
+
+  55   1      }
+  56          
+  57          void main()
+  58          {
+  59   1        Init_Sys();
+  60   1        while(1)
+  61   1        {
+  62   2          Display_Led();
+  63   2        }
+  64   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    181    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

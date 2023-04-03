@@ -1,0 +1,359 @@
+C51 COMPILER V9.55   MIAN                                                                  04/28/2022 14:58:49 PAGE 1   
+
+
+C51 COMPILER V9.55, COMPILATION OF MODULE MIAN
+OBJECT MODULE PLACED IN .\Objects\mian.obj
+COMPILER INVOKED BY: D:\keilc\pack_file\C51\BIN\C51.EXE mian.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listi
+                    -ngs\mian.lst) TABS(2) OBJECT(.\Objects\mian.obj)
+
+line level    source
+
+   1          //#include <STC15F2K60S2.h>
+   2          #include <reg52.h>
+   3          #include <iic.h>
+   4          #include <intrins.h>
+   5          
+   6          #define uchar unsigned char 
+   7          #define uint unsigned int 
+   8            
+   9          uchar code type1[]={
+  10                                0xC0,
+  11                                0xF9,
+  12                                0xA4,
+  13                                0xB0,
+  14                                0x99,
+  15                                0x92,
+  16                                0x82,
+  17                                0xF8,
+  18                                0x80,
+  19                                0x90,0xff,0xbf};
+  20          uchar code type2[]={0x01,0x02,0x04,0x08,0x10,0x20,0x40,0x80};
+  21          uint type3[]={0xff,0xff,0xff};
+  22          uchar num1,num2,num3,num4,num5,num6,num7,num8;
+  23          uchar GN;
+  24          uchar f_2ms;
+  25          uint t_2ms;
+  26          uint temp_vv,temp_v;
+  27          uchar grade;
+  28          char a,b,c;
+  29          
+  30          void Delay10ms()    //@12.000MHz
+  31          {
+  32   1        unsigned char i, j;
+  33   1      
+  34   1        i = 117;
+  35   1        j = 184;
+  36   1        do
+  37   1        {
+  38   2          while (--j);
+  39   2        } while (--i);
+  40   1      }
+  41          
+  42          void smg_display(uchar n1,uchar n2,uchar n3,uchar n4,uchar n5,uchar n6,uchar n7,uchar n8)
+  43          {
+  44   1        char i;
+  45   1        P0=0xff;
+  46   1        P2=(P2&0x1f)|0xc0;
+  47   1        P0=type2[i];
+  48   1        P2=(P2&0x1f);
+  49   1        switch(i)
+  50   1        {
+  51   2          case 0:P2=(P2&0x1f)|0xe0;P0=type1[n1];P2=(P2&0x1f);break;
+  52   2          case 1:P2=(P2&0x1f)|0xe0;P0=type1[n2];P2=(P2&0x1f);break;   
+  53   2          case 2:P2=(P2&0x1f)|0xe0;P0=type1[n3];P2=(P2&0x1f);break;   
+  54   2          case 3:P2=(P2&0x1f)|0xe0;P0=type1[n4];P2=(P2&0x1f);break;   
+C51 COMPILER V9.55   MIAN                                                                  04/28/2022 14:58:49 PAGE 2   
+
+  55   2          case 4:P2=(P2&0x1f)|0xe0;P0=type1[n5];P2=(P2&0x1f);break;   
+  56   2          case 5:P2=(P2&0x1f)|0xe0;P0=type1[n6];P2=(P2&0x1f);break;   
+  57   2          case 6:P2=(P2&0x1f)|0xe0;P0=type1[n7];P2=(P2&0x1f);break;   
+  58   2          case 7:P2=(P2&0x1f)|0xe0;P0=type1[n8];P2=(P2&0x1f);break;   
+  59   2        }
+  60   1        if(++i==8)
+  61   1          i=0;
+  62   1      }
+  63          ///////////
+  64          uchar key_scan()
+  65          {
+  66   1        uchar temp;
+  67   1        temp=(~P3)&0x0f;
+  68   1        if(temp==0) return 0;
+  69   1        Delay10ms();
+  70   1        temp=(~P3)&0x0f;
+  71   1        if(temp==0) return 0; 
+  72   1        return temp;
+  73   1        
+  74   1        
+  75   1        
+  76   1      }
+  77          void key_change ()
+  78          {
+  79   1        uchar D;
+  80   1        D=key_scan();
+  81   1        switch(D)
+  82   1        {
+  83   2          case 8:GN=1;break;
+  84   2          case 4:GN=2;break;    
+  85   2          case 0:GN=0;break;    
+  86   2        }
+  87   1      
+  88   1      }
+  89          ////////////////////////////////////adc
+  90          void initial_adc()
+  91          {
+  92   1        IIC_Start( ); 
+  93   1        IIC_SendByte(0x90+0);
+  94   1        IIC_WaitAck( );
+  95   1        IIC_SendByte(0x1);
+  96   1        IIC_WaitAck( ); 
+  97   1        IIC_Stop( );
+  98   1      }
+  99          uint du_adc()
+ 100          {
+ 101   1        uint D;
+ 102   1        IIC_Start( ); 
+ 103   1        IIC_SendByte(0x90+1);
+ 104   1        IIC_WaitAck( ); 
+ 105   1        D=IIC_RecByte(  );
+ 106   1        IIC_SendAck(1);
+ 107   1        IIC_Stop( );
+ 108   1      
+ 109   1        D=D*(500.0/255);
+ 110   1      //  D=(D*500)/255;
+ 111   1        return D; 
+ 112   1      }
+ 113          ////////////////////////////////24c02
+ 114          void xie_24c02(uchar addr,uchar dat)
+ 115          {
+ 116   1        IIC_Start( ); 
+C51 COMPILER V9.55   MIAN                                                                  04/28/2022 14:58:49 PAGE 3   
+
+ 117   1        IIC_SendByte(0xa0+0);
+ 118   1        IIC_WaitAck( );
+ 119   1        IIC_SendByte(addr);
+ 120   1        IIC_WaitAck( ); 
+ 121   1        IIC_SendByte(dat);
+ 122   1        IIC_WaitAck( );   
+ 123   1        IIC_Stop( );
+ 124   1      }
+ 125          
+ 126          uchar du_24c02(uchar addr)
+ 127          {
+ 128   1        uchar D;
+ 129   1        IIC_Start( ); 
+ 130   1        IIC_SendByte(0xa0+0);
+ 131   1        IIC_WaitAck( );
+ 132   1        IIC_SendByte(addr);
+ 133   1        IIC_WaitAck( ); 
+ 134   1      
+ 135   1        IIC_Start( ); 
+ 136   1        IIC_SendByte(0xa0+1);
+ 137   1        IIC_WaitAck( ); 
+ 138   1        D=IIC_RecByte(  );
+ 139   1        IIC_SendAck(1);
+ 140   1        IIC_Stop( );
+ 141   1        return D; 
+ 142   1      }
+ 143          
+ 144          void led_display()
+ 145          {
+ 146   1        if(c==0)
+ 147   1        {
+ 148   2        if(temp_v<100 || temp_v==100)
+ 149   2        {
+ 150   3          EA=0;
+ 151   3          grade=5;
+ 152   3          P0=0xff;
+ 153   3          P2=(P2&0x1f)|0x80;
+ 154   3          P0=0x00;
+ 155   3          P2=(P2&0x1f);
+ 156   3          EA=1;
+ 157   3        }
+ 158   2      
+ 159   2      if(temp_v>100 && (temp_v<200 || temp_v==200))
+ 160   2      {
+ 161   3          EA=0;
+ 162   3          grade=4;
+ 163   3          P0=0xff;
+ 164   3          P2=(P2&0x1f)|0x80;
+ 165   3          P0=0xc0;
+ 166   3          P2=(P2&0x1f);
+ 167   3          EA=1;     
+ 168   3      }
+ 169   2      
+ 170   2        if(temp_v>200 && (temp_v<300 || temp_v==300))
+ 171   2        {
+ 172   3          EA=0;
+ 173   3          grade=3;
+ 174   3          P0=0xff;
+ 175   3          P2=(P2&0x1f)|0x80;
+ 176   3          P0=0xf0;
+ 177   3          P2=(P2&0x1f); 
+ 178   3          EA=1;   
+C51 COMPILER V9.55   MIAN                                                                  04/28/2022 14:58:49 PAGE 4   
+
+ 179   3        }   
+ 180   2        if(temp_v>300 && (temp_v<400 || temp_v==400))
+ 181   2        {
+ 182   3          EA=0;
+ 183   3          grade=2;
+ 184   3          P0=0xff;
+ 185   3          P2=(P2&0x1f)|0x80;
+ 186   3          P0=0xfc;
+ 187   3          P2=(P2&0x1f);
+ 188   3          EA=1;   
+ 189   3        }   
+ 190   2        if(temp_v>400 && (temp_v<500 || temp_v==500))
+ 191   2        {
+ 192   3          EA=0;
+ 193   3          grade=1;
+ 194   3          P0=0xff;
+ 195   3          P2=(P2&0x1f)|0x80;
+ 196   3          P0=0xfe;
+ 197   3          P2=(P2&0x1f); 
+ 198   3          EA=1;   
+ 199   3        } 
+ 200   2      }
+ 201   1      
+ 202   1      }
+ 203          
+ 204          void time1_int1()
+ 205          {
+ 206   1        EA=1;
+ 207   1        ET1=1;
+ 208   1        TR1=1;
+ 209   1        TMOD=(TMOD&0x0f)|0x10;
+ 210   1        TH1=(65536-2000)/256;
+ 211   1        TL1=(65536-2000)%256; 
+ 212   1      }
+ 213          
+ 214          void main()
+ 215          {
+ 216   1        P2=(P2&0x1f)|0xa0;
+ 217   1        P0=0x00;
+ 218   1        P2=(P2&0x1f); 
+ 219   1        P2=(P2&0x1f)|0x80;
+ 220   1        P0=0xff;
+ 221   1        P2=(P2&0x1f);   
+ 222   1        time1_int1();
+ 223   1        
+ 224   1        
+ 225   1        initial_adc();
+ 226   1        while(1)
+ 227   1        {
+ 228   2          if(f_2ms==1)
+ 229   2          {
+ 230   3           f_2ms=0;
+ 231   3            key_change ();
+ 232   3           led_display();
+ 233   3            
+ 234   3            
+ 235   3           if(GN==1)
+ 236   3           {
+ 237   4             b=1;
+ 238   4             while(key_scan());
+ 239   4           }
+ 240   3           if(GN==2)
+C51 COMPILER V9.55   MIAN                                                                  04/28/2022 14:58:49 PAGE 5   
+
+ 241   3           {
+ 242   4            c=1;
+ 243   4              num1=11;num2=du_24c02(0);num3=11;
+ 244   4              num4=num5=10;
+ 245   4              num6=(du_24c02(1)*2)/100;num7=(du_24c02(1)*2)%100/10;num8=(du_24c02(1)*2)%10;
+ 246   4      
+ 247   4          EA=0;
+ 248   4          P0=0xff;
+ 249   4          P2=(P2&0x1f)|0x80;
+ 250   4          P0=0xff;
+ 251   4          P2=(P2&0x1f); 
+ 252   4          EA=1;       
+ 253   4         
+ 254   4            while(key_scan());
+ 255   4             c=0;
+ 256   4           }
+ 257   3           
+ 258   3      //     if(c==1)
+ 259   3      //     {
+ 260   3      //        num1=11;num2=du_24c02(0);num3=11;
+ 261   3      //        num4=num5=10;
+ 262   3      //        num6=(du_24c02(1)*2)/100;num7=(du_24c02(1)*2)%100/10;num8=(du_24c02(1)*2)%10;         
+ 263   3      //     }
+ 264   3      
+ 265   3            
+ 266   3      
+ 267   3           if(c==0)
+ 268   3           {
+ 269   4              num1=11;num2=grade;num3=11;
+ 270   4              num4=num5=10;
+ 271   4              num6=temp_vv/100;num7=temp_vv%100/10;num8=temp_vv%10;          
+ 272   4           }
+ 273   3           
+ 274   3            if(b==1)
+ 275   3            {
+ 276   4              xie_24c02(0,grade);
+ 277   4              Delay10ms();
+ 278   4              xie_24c02(1,temp_vv/2);
+ 279   4              Delay10ms();        
+ 280   4              b=0;
+ 281   4            }
+ 282   3            
+ 283   3            
+ 284   3             if(++t_2ms>100)
+ 285   3             {
+ 286   4               t_2ms=0;
+ 287   4                 temp_v=du_adc(); 
+ 288   4                 type3[a]=temp_v;
+ 289   4                 if(++a==3)
+ 290   4                 {
+ 291   5                   a=0;
+ 292   5                   temp_vv=(type3[0]+type3[1]+type3[2])/3;
+ 293   5                   
+ 294   5                 }
+ 295   4             }
+ 296   3         
+ 297   3             
+ 298   3      
+ 299   3      
+ 300   3      
+ 301   3          }//f_2ms
+ 302   2        } 
+C51 COMPILER V9.55   MIAN                                                                  04/28/2022 14:58:49 PAGE 6   
+
+ 303   1      }
+ 304          void cl_time1_int1() interrupt 3
+ 305          {
+ 306   1        TH1=(65536-2000)/256;
+ 307   1        TL1=(65536-2000)%256;   
+ 308   1        smg_display(num1,num2,num3,num4,num5,num6,num7,num8);
+ 309   1        f_2ms=1;
+ 310   1      
+ 311   1      
+ 312   1      }
+ 313          
+ 314          
+ 315          
+ 316          
+ 317          
+ 318          
+ 319          
+ 320          
+ 321          
+ 322          
+ 323          
+ 324          
+ 325          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1150    ----
+   CONSTANT SIZE    =     20    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     26      15
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

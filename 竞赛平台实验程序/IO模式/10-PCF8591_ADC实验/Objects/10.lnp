@@ -1,0 +1,4 @@
+".\Objects\i2c.obj",
+".\Objects\ex10.obj" 
+TO ".\Objects\10" 
+PRINT(".\Listings\10.m51") RAMSIZE(256) 

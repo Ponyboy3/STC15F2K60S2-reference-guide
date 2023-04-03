@@ -1,0 +1,91 @@
+C51 COMPILER V9.59.0.0   EX4                                                               04/25/2022 16:04:10 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE EX4
+OBJECT MODULE PLACED IN ex4.OBJ
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE ex4.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND TABS(2)
+
+line level    source
+
+   1          /*******************************************************************************
+   2          * 文件名称：按键控制实验
+   3          * 实验目的：1.掌握单片机IO口操作的基本方法
+   4          *           2.掌握C51关键字"sbit"的用法
+   5          *           2.掌握单片机常见外围驱动电路的设计方法
+   6          * 实验配置：J3跳线配置为IO方式，J5配置为BTN
+   7          * 实验现象：按s7打开led灯，s6关闭led灯，s5打开蜂鸣器，s4关闭蜂鸣器。
+   8          * 硬件环境：IAP15F2K61S2单片机，单片机内部振荡器频率：11.0592M
+   9          * 注意事项：包含头文件还可以是STC15F2K60S2.H
+  10          * 日期版本：2022/02/08
+  11          *******************************************************************************/
+  12          
+  13          #include "reg52.h"  //定义51单片机特殊功能寄存器
+  14          
+  15          /** 独立按键接口 */
+  16          sbit S7  = P3 ^ 0;
+  17          sbit S6  = P3 ^ 1;
+  18          sbit S5  = P3 ^ 2;
+  19          sbit S4  = P3 ^ 3;
+  20          sbit buzz  = P0 ^ 6;
+  21          
+  22          
+  23          void cls_buzz(void)
+  24          {
+  25   1          P2 = (P2 & 0x1F | 0xA0);
+  26   1          P0 = 0x00;
+  27   1          P2 &= 0x1F;
+  28   1      }
+  29          
+  30          //主函数
+  31          void main(void)
+  32          {
+  33   1          cls_buzz();
+  34   1      
+  35   1          while(1)
+  36   1          {
+  37   2              if(S7 == 0)
+  38   2              {
+  39   3                  P2 = ((P2 & 0x1f) | 0x80);
+  40   3                  P0 = 0xff;  //关闭所有LED
+  41   3                  P2 &= 0x1f;
+  42   3              }
+  43   2              if(S6 == 0)
+  44   2              {
+  45   3                  P2 = ((P2 & 0x1f) | 0x80);
+  46   3                  P0 = 0x00;  //打开所有LED
+  47   3                  P2 &= 0x1f;
+  48   3              }
+  49   2              if(S5 == 0)
+  50   2              {
+  51   3                  P2 = ((P2 & 0x1f) | 0xA0);
+  52   3                  P0 = 0x00;
+  53   3                  buzz = 1; //打开蜂鸣器
+  54   3                  P2 &= 0x1f;
+  55   3              }
+C51 COMPILER V9.59.0.0   EX4                                                               04/25/2022 16:04:10 PAGE 2   
+
+  56   2              if(S4 == 0)
+  57   2              {
+  58   3                  P2 = ((P2 & 0x1f) | 0xA0);
+  59   3                  P0 = 0x00;
+  60   3                  buzz = 0; //关闭蜂鸣器
+  61   3                  P2 &= 0x1f;
+  62   3              }
+  63   2          }
+  64   1      }
+  65          
+  66          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     92    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

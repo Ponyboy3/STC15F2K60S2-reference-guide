@@ -1,0 +1,116 @@
+C51 COMPILER V9.59.0.0   ________                                                          03/07/2023 16:37:24 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE ________
+OBJECT MODULE PLACED IN .\Objects\独立按键.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE 独立按键.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\
+                    -独立按键.lst) TABS(2) OBJECT(.\Objects\独立按键.obj)
+
+line level    source
+
+   1          #include "reg52.h"
+   2          
+   3          sbit S7 = P3^0;
+   4          sbit S6 = P3^1;
+   5          sbit S5 = P3^2;
+   6          sbit S4 = P3^3;
+   7          
+   8          void Delay(unsigned int t)
+   9          {
+  10   1        while(t--);
+  11   1      }
+  12          
+  13          void Init_Sys()
+  14          {
+  15   1        P2 = (P2 & 0x1f) | 0x80;
+  16   1        P0 = 0xff;
+  17   1        P2 &= 0x1f;
+  18   1        
+  19   1        P2 = (P2 & 0x1f) | 0xa0;
+  20   1        P0 = 0x00;
+  21   1        P2 &= 0x1f;
+  22   1      }
+  23          
+  24          void Scan_Key()
+  25          {
+  26   1        if(S7 == 0)
+  27   1        {
+  28   2          Delay(100);
+  29   2          if(S7 == 0)
+  30   2          {
+  31   3            P2 = (P2 & 0x1f) | 0x80;
+  32   3            P0 = ~0x01;
+  33   3            P2 &= 0x1f;
+  34   3            while(S7 == 0);
+  35   3            P2 = (P2 & 0x1f) | 0x80;
+  36   3            P0 = 0xff;
+  37   3            P2 &= 0x1f;
+  38   3          }
+  39   2        }
+  40   1        if(S6 == 0)
+  41   1        {
+  42   2          Delay(100);
+  43   2          if(S6 == 0)
+  44   2          {
+  45   3            P2 = (P2 & 0x1f) | 0x80;
+  46   3            P0 = ~0x02;
+  47   3            P2 &= 0x1f;
+  48   3            while(S6 == 0);
+  49   3            P2 = (P2 & 0x1f) | 0x80;
+  50   3            P0 = 0xff;
+  51   3            P2 &= 0x1f;
+  52   3          }
+  53   2        }
+  54   1        if(S5 == 0)
+C51 COMPILER V9.59.0.0   ________                                                          03/07/2023 16:37:24 PAGE 2   
+
+  55   1        {
+  56   2          if(S5 == 0)
+  57   2          {
+  58   3            P2 = (P2 & 0x1f) | 0x80;
+  59   3            P0 = ~0x04;
+  60   3            P2 &= 0x1f;
+  61   3            while(S5 == 0);
+  62   3            P2 = (P2 & 0x1f) | 0x80;
+  63   3            P0 = 0xff;
+  64   3            P2 &= 0x1f;
+  65   3          }
+  66   2        }
+  67   1        if(S4 == 0)
+  68   1        {
+  69   2          Delay(100);
+  70   2          if(S4 == 0)
+  71   2          {
+  72   3            P2 = (P2 & 0x1f) | 0x80;
+  73   3            P0 = ~0x08;
+  74   3            P2 &= 0x1f;
+  75   3            while(S4 == 0);
+  76   3            P2 = (P2 & 0x1f) | 0x80;
+  77   3            P0 = 0xff;
+  78   3            P2 &= 0x1f;
+  79   3          }
+  80   2        }
+  81   1      }
+  82          
+  83          void main()
+  84          {
+  85   1        Init_Sys();
+  86   1        while(1)
+  87   1        {
+  88   2          Scan_Key();
+  89   2        }
+  90   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    210    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

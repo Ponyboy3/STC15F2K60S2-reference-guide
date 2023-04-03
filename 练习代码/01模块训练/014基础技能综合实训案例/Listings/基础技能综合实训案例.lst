@@ -1,0 +1,24 @@
+C51 COMPILER V9.59.0.0   ____________________                                              03/04/2023 12:05:49 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE ____________________
+OBJECT MODULE PLACED IN .\Objects\基础技能综合实训案例.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE 基础技能综合实训案例.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT
+                    -(.\Listings\基础技能综合实训案例.lst) TABS(2) OBJECT(.\Objects\基础技能综合实训案例.obj)
+
+line level    source
+
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =      2    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,521 @@
+C51 COMPILER V9.55   MAIN                                                                  04/05/2022 10:29:02 PAGE 1   
+
+
+C51 COMPILER V9.55, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\keilc\pack_file\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listi
+                    -ngs\main.lst) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include <STC15F2K60S2.h>
+   2          #include <ds1302.h>
+   3          #include <onewire.h>
+   4          #include <intrins.h>
+   5          
+   6          #define uchar unsigned char 
+   7          #define uint unsigned int 
+   8            
+   9          uchar code type1[]={  0xC0,
+  10                                0xF9,
+  11                                0xA4,
+  12                                0xB0,
+  13                                0x99,
+  14                                0x92,
+  15                                0x82,
+  16                                0xF8,
+  17                                0x80,
+  18                                0x90,0xff,0xbf};
+  19          uchar code type2[]={0x01,0x02,0x04,0x08,0x10,0x20,0x40,0x80};
+  20          
+  21          uchar num1,num2,num3,num4,num5,num6,num7,num8;
+  22          uchar GN;
+  23          uchar f_2ms;
+  24          uint t_2ms;
+  25          uint tt_2ms;
+  26          uint t_5s;
+  27          uint z_2ms;
+  28          uchar hour,minute,second;
+  29          uchar hour1=0,minute1=0,second1=0;
+  30          uchar model_s,model_n;
+  31          bit shans=0;
+  32          bit f_led;
+  33          uchar a=2,b,c;
+  34          char led;
+  35          
+  36          void Delay10ms()    //@12.000MHz
+  37          {
+  38   1        unsigned char i, j;
+  39   1      
+  40   1        i = 117;
+  41   1        j = 184;
+  42   1        do
+  43   1        {
+  44   2          while (--j);
+  45   2        } while (--i);
+  46   1      }
+  47          
+  48          void smg_display(uchar n1,uchar n2,uchar n3,uchar n4,uchar n5,uchar n6,uchar n7,uchar n8)
+  49          {
+  50   1        char i;
+  51   1        P0=0xff;
+  52   1        P2=(P2&0x1f)|0xc0;
+  53   1        P0=type2[i];
+  54   1        P2=(P2&0x1f);
+C51 COMPILER V9.55   MAIN                                                                  04/05/2022 10:29:02 PAGE 2   
+
+  55   1        switch(i)
+  56   1        {
+  57   2          case 0:P2=(P2&0x1f)|0xe0;P0=type1[n1];P2=(P2&0x1f);break;
+  58   2          case 1:P2=(P2&0x1f)|0xe0;P0=type1[n2];P2=(P2&0x1f);break;   
+  59   2          case 2:P2=(P2&0x1f)|0xe0;P0=type1[n3];P2=(P2&0x1f);break;   
+  60   2          case 3:P2=(P2&0x1f)|0xe0;P0=type1[n4];P2=(P2&0x1f);break;   
+  61   2          case 4:P2=(P2&0x1f)|0xe0;P0=type1[n5];P2=(P2&0x1f);break;   
+  62   2          case 5:P2=(P2&0x1f)|0xe0;P0=type1[n6];P2=(P2&0x1f);break;   
+  63   2          case 6:P2=(P2&0x1f)|0xe0;P0=type1[n7];P2=(P2&0x1f);break;   
+  64   2          case 7:P2=(P2&0x1f)|0xe0;P0=type1[n8];P2=(P2&0x1f);break;     
+  65   2        }
+  66   1        if(++i==8)
+  67   1          i=0;
+  68   1      }
+  69          uchar key_scan()
+  70          {
+  71   1        char temp;
+  72   1        temp=(~P3)&0x0f;
+  73   1        if(temp==0) return 0;
+  74   1        Delay10ms();
+  75   1        temp=(~P3)&0x0f;
+  76   1        if(temp==0) return 0; 
+  77   1        return temp;
+  78   1        
+  79   1        
+  80   1      }
+  81          void key_change()
+  82          {
+  83   1        char D;
+  84   1        D=key_scan();
+  85   1        switch(D)
+  86   1        {
+  87   2          case 8:GN=1;break;
+  88   2          case 4:GN=2;break;
+  89   2          case 2:GN=3;break;
+  90   2          case 1:GN=4;break;
+  91   2          case 0:GN=0;break;
+  92   2        }
+  93   1      }
+  94          ///////////////////////////////1302
+  95          void xie_1302()
+  96          {
+  97   1        Write_Ds1302_Byte( 0x8e,0x00 );
+  98   1        Write_Ds1302_Byte( 0x84,0x23 ); 
+  99   1        Write_Ds1302_Byte( 0x82,0x59 ); 
+ 100   1        Write_Ds1302_Byte( 0x80,0x57 ); 
+ 101   1      
+ 102   1      }
+ 103          void du_1302()
+ 104          {
+ 105   1        hour=Read_Ds1302_Byte( 0x85 );   hour=(hour>>4)*10+(hour&0x0f);
+ 106   1        minute=Read_Ds1302_Byte( 0x83 ); minute=(minute>>4)*10+(minute&0x0f);
+ 107   1        second=Read_Ds1302_Byte( 0x81 ); second=(second>>4)*10+(second&0x0f);
+ 108   1      }
+ 109          uchar bcd_change(uchar D)
+ 110          {
+ 111   1        uchar dat1,dat2;
+ 112   1        dat1=D/10;
+ 113   1        dat2=D%10;
+ 114   1        dat2=dat1*16+dat2;
+ 115   1        return dat2;
+ 116   1      
+C51 COMPILER V9.55   MAIN                                                                  04/05/2022 10:29:02 PAGE 3   
+
+ 117   1      }
+ 118          void time1_int1()
+ 119          {
+ 120   1        EA=1;
+ 121   1        ET1=1;
+ 122   1        TR1=1;
+ 123   1        TMOD=(TMOD&0x0f)|0x10;
+ 124   1        TH1=(65536-2000)/256;
+ 125   1        TL1=(65536-2000)%256; 
+ 126   1      }
+ 127          
+ 128          void main()
+ 129          {
+ 130   1        P2=(P2&0x1f)|0xa0;
+ 131   1        P0=0x00;
+ 132   1        P2=(P2&0x1f); 
+ 133   1        P2=(P2&0x1f)|0x80;
+ 134   1        P0=0xff;
+ 135   1        P2=(P2&0x1f);   
+ 136   1        time1_int1();
+ 137   1        initial_18b20();
+ 138   1        xie_1302();
+ 139   1        while(1)
+ 140   1        {
+ 141   2         if(f_2ms==1)
+ 142   2         {
+ 143   3          f_2ms=0;
+ 144   3          key_change(); 
+ 145   3            if(++t_2ms==500)
+ 146   3            {
+ 147   4              t_2ms=0;
+ 148   4              shans=~shans; 
+ 149   4            }
+ 150   3          
+ 151   3              if(a==2)
+ 152   3              {
+ 153   4                  du_1302();
+ 154   4                  num1=hour/10;num2=hour%10;
+ 155   4                  num3=11;
+ 156   4                  num4=minute/10;num5=minute%10;
+ 157   4                  num6=11;        
+ 158   4                  num7=second/10;num8=second%10;
+ 159   4              }
+ 160   3          if(b==0)
+ 161   3          {     
+ 162   4           if(GN==4 && model_n==0)
+ 163   4           {
+ 164   5             model_s++;
+ 165   5             if(model_s==4)
+ 166   5               model_s=0;
+ 167   5             while(key_scan());
+ 168   5           }
+ 169   4           if(GN==3 && model_s==0)
+ 170   4           {
+ 171   5             model_n++;
+ 172   5             if(model_n==4)
+ 173   5               model_n=0;
+ 174   5             while(key_scan());
+ 175   5           }  
+ 176   4         }
+ 177   3      
+ 178   3      
+C51 COMPILER V9.55   MAIN                                                                  04/05/2022 10:29:02 PAGE 4   
+
+ 179   3      
+ 180   3         
+ 181   3           switch(model_s)//时间调节
+ 182   3           {
+ 183   4             case 0:
+ 184   4                     if(a==1)
+ 185   4                     {
+ 186   5                       Write_Ds1302_Byte( 0x84,bcd_change(hour) );
+ 187   5                       Write_Ds1302_Byte( 0x82,bcd_change(minute) );
+ 188   5                       Write_Ds1302_Byte( 0x80,bcd_change(second) );  
+ 189   5                       a=2;
+ 190   5                     }                           
+ 191   4                     break;
+ 192   4             case 1:
+ 193   4                   a=1;
+ 194   4                   if(GN==2)
+ 195   4                   {
+ 196   5                     if(hour==23)
+ 197   5                       hour=23;
+ 198   5                     else
+ 199   5                       hour++;
+ 200   5                     //Write_Ds1302_Byte( 0x84,bcd_change(hour) );                 
+ 201   5                     while(key_scan());
+ 202   5                   }              
+ 203   4                   if(GN==1)
+ 204   4                   {
+ 205   5                     if(hour==0)
+ 206   5                       hour=0;
+ 207   5                     else
+ 208   5                       hour--;
+ 209   5                     //Write_Ds1302_Byte( 0x84,bcd_change(hour) );
+ 210   5                     while(key_scan());
+ 211   5                   }                 
+ 212   4                   if(shans==0)
+ 213   4                   {
+ 214   5                    num1=hour/10; num2=hour%10;  
+ 215   5                   }
+ 216   4                   else
+ 217   4                   {
+ 218   5                     num1=10; num2=10; 
+ 219   5                   }
+ 220   4                   num3=11;
+ 221   4                   num4=minute/10;num5=minute%10;
+ 222   4                   num6=11;
+ 223   4                   num7=second/10;num8=second%10;      
+ 224   4                   break;
+ 225   4             case 2:
+ 226   4                   a=1;
+ 227   4                   if(GN==2)
+ 228   4                   {
+ 229   5                     if(minute==59)
+ 230   5                       minute=59;
+ 231   5                     else
+ 232   5                       minute++;
+ 233   5                    // Write_Ds1302_Byte( 0x82,bcd_change(minute) );                 
+ 234   5                     while(key_scan());
+ 235   5                   }              
+ 236   4                   if(GN==1)
+ 237   4                   {
+ 238   5                     if(minute==0)
+ 239   5                       minute=0;
+ 240   5                     else
+C51 COMPILER V9.55   MAIN                                                                  04/05/2022 10:29:02 PAGE 5   
+
+ 241   5                       minute--;
+ 242   5                    // Write_Ds1302_Byte( 0x82,bcd_change(minute) );
+ 243   5                     while(key_scan());
+ 244   5                   }                 
+ 245   4                   if(shans==0)
+ 246   4                   {
+ 247   5                    num4=minute/10; num5=minute%10;  
+ 248   5                   }
+ 249   4                   else
+ 250   4                   {
+ 251   5                     num4=10; num5=10; 
+ 252   5                   }
+ 253   4                   num3=11;
+ 254   4                   num1=hour/10;num2=hour%10;
+ 255   4                   num6=11;
+ 256   4                   num7=second/10;num8=second%10;      
+ 257   4                   break; 
+ 258   4             case 3:
+ 259   4                   a=1;
+ 260   4                   if(GN==2)
+ 261   4                   {
+ 262   5                     if(second==59)
+ 263   5                       second=59;
+ 264   5                     else
+ 265   5                       second++;
+ 266   5                    // Write_Ds1302_Byte( 0x80,bcd_change(second) );                 
+ 267   5                     while(key_scan());
+ 268   5                   }              
+ 269   4                   if(GN==1)
+ 270   4                   {
+ 271   5                     if(second==0)
+ 272   5                       second=0;
+ 273   5                     else
+ 274   5                       second--;
+ 275   5                    // Write_Ds1302_Byte( 0x80,bcd_change(second) );
+ 276   5                     while(key_scan());
+ 277   5                   }                 
+ 278   4                   if(shans==0)
+ 279   4                   {
+ 280   5                    num7=second/10; num8=second%10;  
+ 281   5                   }
+ 282   4                   else
+ 283   4                   {
+ 284   5                     num7=10; num8=10; 
+ 285   5                   }
+ 286   4                   num3=11;
+ 287   4                   num1=hour/10;num2=hour%10;
+ 288   4                   num6=11;
+ 289   4                   num4=minute/10;num5=minute%10;      
+ 290   4                   break;            
+ 291   4           }//switch时间
+ 292   3           
+ 293   3           
+ 294   3           switch(model_n)//时间调节
+ 295   3           {
+ 296   4             case 0:
+ 297   4                       if(a==3)
+ 298   4                       {
+ 299   5                         a=2; 
+ 300   5                       }
+ 301   4                       
+ 302   4                                 
+C51 COMPILER V9.55   MAIN                                                                  04/05/2022 10:29:02 PAGE 6   
+
+ 303   4                     break;
+ 304   4             case 1:
+ 305   4                   a=1;
+ 306   4                   if(GN==2)
+ 307   4                   {
+ 308   5                     if(hour1==23)
+ 309   5                       hour1=23;
+ 310   5                     else
+ 311   5                       hour1++;
+ 312   5                     //Write_Ds1302_Byte( 0x84,bcd_change(hour) );                 
+ 313   5                     while(key_scan());
+ 314   5                   }              
+ 315   4                   if(GN==1)
+ 316   4                   {
+ 317   5                     if(hour1==0)
+ 318   5                       hour1=0;
+ 319   5                     else
+ 320   5                       hour1--;
+ 321   5                     //Write_Ds1302_Byte( 0x84,bcd_change(hour) );
+ 322   5                     while(key_scan());
+ 323   5                   }                 
+ 324   4                   if(shans==0)
+ 325   4                   {
+ 326   5                    num1=hour1/10; num2=hour1%10;  
+ 327   5                   }
+ 328   4                   else
+ 329   4                   {
+ 330   5                     num1=10; num2=10; 
+ 331   5                   }
+ 332   4                   num3=11;
+ 333   4                   num4=minute1/10;num5=minute1%10;
+ 334   4                   num6=11;
+ 335   4                   num7=second1/10;num8=second1%10;      
+ 336   4                   break;
+ 337   4             case 2:
+ 338   4                   a=1;
+ 339   4                   if(GN==2)
+ 340   4                   {
+ 341   5                     if(minute1==59)
+ 342   5                       minute1=59;
+ 343   5                     else
+ 344   5                       minute1++;
+ 345   5                    // Write_Ds1302_Byte( 0x82,bcd_change(minute) );                 
+ 346   5                     while(key_scan());
+ 347   5                   }              
+ 348   4                   if(GN==1)
+ 349   4                   {
+ 350   5                     if(minute1==0)
+ 351   5                       minute1=0;
+ 352   5                     else
+ 353   5                       minute1--;
+ 354   5                    // Write_Ds1302_Byte( 0x82,bcd_change(minute) );
+ 355   5                     while(key_scan());
+ 356   5                   }                 
+ 357   4                   if(shans==0)
+ 358   4                   {
+ 359   5                    num4=minute1/10; num5=minute1%10;  
+ 360   5                   }
+ 361   4                   else
+ 362   4                   {
+ 363   5                     num4=10; num5=10; 
+ 364   5                   }
+C51 COMPILER V9.55   MAIN                                                                  04/05/2022 10:29:02 PAGE 7   
+
+ 365   4                   num3=11;
+ 366   4                   num1=hour1/10;num2=hour1%10;
+ 367   4                   num6=11;
+ 368   4                   num7=second1/10;num8=second1%10;      
+ 369   4                   break; 
+ 370   4             case 3:
+ 371   4                   a=3;
+ 372   4                   if(GN==2)
+ 373   4                   {
+ 374   5                     if(second1==59)
+ 375   5                       second1=59;
+ 376   5                     else
+ 377   5                       second1++;
+ 378   5                    // Write_Ds1302_Byte( 0x80,bcd_change(second) );                 
+ 379   5                     while(key_scan());
+ 380   5                   }              
+ 381   4                   if(GN==1)
+ 382   4                   {
+ 383   5                     if(second1==0)
+ 384   5                       second1=0;
+ 385   5                     else
+ 386   5                       second1--;
+ 387   5                    // Write_Ds1302_Byte( 0x80,bcd_change(second) );
+ 388   5                     while(key_scan());
+ 389   5                   }                 
+ 390   4                   if(shans==0)
+ 391   4                   {
+ 392   5                    num7=second1/10; num8=second1%10;  
+ 393   5                   }
+ 394   4                   else
+ 395   4                   {
+ 396   5                     num7=10; num8=10; 
+ 397   5                   }
+ 398   4                   num3=11;
+ 399   4                   num1=hour1/10;num2=hour1%10;
+ 400   4                   num6=11;
+ 401   4                   num4=minute1/10;num5=minute1%10;      
+ 402   4                   break;            
+ 403   4           }//switch闹钟     
+ 404   3           
+ 405   3        /////////////////////////////闹钟
+ 406   3           if(c==0)
+ 407   3           {
+ 408   4              if(hour==hour1 && minute==minute1 && second==second1)    
+ 409   4              {
+ 410   5                led=1;b=1;  
+ 411   5              }      
+ 412   4           }
+ 413   3      
+ 414   3          if((GN==1) || (GN==2) || (GN==3) || (GN==4))
+ 415   3          {
+ 416   4             led=0;c=0;
+ 417   4             while(key_scan());
+ 418   4             b=0;
+ 419   4          } 
+ 420   3        if(led==1)
+ 421   3        {     c=1;
+ 422   4              if(++z_2ms==100)
+ 423   4                {
+ 424   5                  z_2ms=0;
+ 425   5                  f_led=~f_led; 
+ 426   5                  
+C51 COMPILER V9.55   MAIN                                                                  04/05/2022 10:29:02 PAGE 8   
+
+ 427   5                if(f_led==0)
+ 428   5                {
+ 429   6                P0=0xff;
+ 430   6                P2=(P2&0x1f)|0x80;
+ 431   6                P0=0xfe;
+ 432   6                P2=(P2&0x1f);    
+ 433   6                }
+ 434   5                if(f_led==1)
+ 435   5                {
+ 436   6                P0=0xff;
+ 437   6                P2=(P2&0x1f)|0x80;
+ 438   6                P0=0xff;
+ 439   6                P2=(P2&0x1f);    
+ 440   6                }
+ 441   5            } 
+ 442   4          if(++t_5s==2500)
+ 443   4          {
+ 444   5            b=0;
+ 445   5            t_5s=0;
+ 446   5            led=0;
+ 447   5          }
+ 448   4      
+ 449   4        } 
+ 450   3        if(led==0)
+ 451   3        {  
+ 452   4            
+ 453   4            P0=0xff;
+ 454   4            P2=(P2&0x1f)|0x80;
+ 455   4            P0=0xff;
+ 456   4            P2=(P2&0x1f); 
+ 457   4        } 
+ 458   3        
+ 459   3         }//f_2ms;
+ 460   2         
+ 461   2        }
+ 462   1      }
+ 463          void cl_time1_int1() interrupt 3
+ 464          {
+ 465   1        TH1=(65536-2000)/256;
+ 466   1        TL1=(65536-2000)%256;   
+ 467   1        smg_display(num1,num2,num3,num4,num5,num6,num7,num8);
+ 468   1        f_2ms=1;
+ 469   1        
+ 470   1        
+ 471   1      }
+ 472          
+ 473          
+ 474          
+ 475          
+ 476          
+ 477          
+ 478          
+ 479          
+ 480          
+ 481          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1623    ----
+   CONSTANT SIZE    =     20    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+C51 COMPILER V9.55   MAIN                                                                  04/05/2022 10:29:02 PAGE 9   
+
+   DATA SIZE        =     30       9
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      2    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

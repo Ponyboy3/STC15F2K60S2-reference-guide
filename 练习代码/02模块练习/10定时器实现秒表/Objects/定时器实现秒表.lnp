@@ -1,0 +1,4 @@
+".\Objects\STARTUP.obj",
+".\Objects\定时器实现秒表.obj" 
+TO ".\Objects\定时器实现秒表" 
+PRINT(".\Listings\定时器实现秒表.m51") RAMSIZE(256) 

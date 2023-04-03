@@ -1,0 +1,175 @@
+C51 COMPILER V9.59.0.0   ____                                                              03/02/2023 17:36:51 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE ____
+OBJECT MODULE PLACED IN .\Objects\秒表.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE 秒表.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\秒表
+                    -.lst) TABS(2) OBJECT(.\Objects\秒表.obj)
+
+line level    source
+
+   1          #include "reg52.h"
+   2          
+   3          sbit S4 = P3^3;
+   4          sbit S5 = P3^2;
+   5          
+   6          unsigned char t_m = 0;
+   7          unsigned char t_s = 0;
+   8          unsigned char t_005s = 0;
+   9          
+  10          unsigned char code SMG_NUM[18]=
+  11           {0xc0,0xf9,0xa4,0xb0,0x99,0x92,
+  12            0x82,0xf8,0x80,0x90,0x88,0x80,
+  13            0xc6,0xc0,0x86,0x8e,0xbf,0x7f};
+  14          
+  15          void SelectHC573(unsigned char channel)
+  16          {
+  17   1        switch(channel)
+  18   1        {
+  19   2          case 4:
+  20   2            P2 = (P2 & 0x1f) | 0x80;
+  21   2          break;
+  22   2          case 5:
+  23   2            P2 = (P2 & 0x1f) | 0xa0;
+  24   2          break;
+  25   2          case 6:
+  26   2            P2 = (P2 & 0x1f) | 0xc0;
+  27   2          break;
+  28   2          case 7:
+  29   2            P2 = (P2 & 0x1f) | 0xe0;
+  30   2          break;
+  31   2        }
+  32   1      }
+  33          
+  34          void DisplaySMG_bit(unsigned char value,unsigned char pos)
+  35          {
+  36   1        SelectHC573(6);
+  37   1        P0 = 0x01 << pos;
+  38   1        SelectHC573(7);
+  39   1        P0 = value;
+  40   1      }
+  41          
+  42          void DelaySMG(unsigned int t)
+  43          {
+  44   1        while(t--);
+  45   1      }
+  46          
+  47          void DisplayTime()
+  48          {
+  49   1        DisplaySMG_bit(SMG_NUM[t_005s % 10],7);
+  50   1        DelaySMG(500);
+  51   1        DisplaySMG_bit(SMG_NUM[t_005s / 10],6);
+  52   1        DelaySMG(500);
+  53   1        DisplaySMG_bit(SMG_NUM[16],5);
+  54   1        DelaySMG(500);
+C51 COMPILER V9.59.0.0   ____                                                              03/02/2023 17:36:51 PAGE 2   
+
+  55   1        DisplaySMG_bit(SMG_NUM[t_s % 10],4);
+  56   1        DelaySMG(500);
+  57   1        DisplaySMG_bit(SMG_NUM[t_s / 10],3);
+  58   1        DelaySMG(500);
+  59   1        DisplaySMG_bit(SMG_NUM[16],2);
+  60   1        DelaySMG(500);
+  61   1        DisplaySMG_bit(SMG_NUM[t_m % 10],1);
+  62   1        DelaySMG(500);
+  63   1        DisplaySMG_bit(SMG_NUM[t_m / 10],0);
+  64   1        DelaySMG(500);
+  65   1      }
+  66          
+  67          //==============定时器相关函数============
+  68          void Init_Timer0()
+  69          {
+  70   1        TMOD = 0X01;
+  71   1        TH0 = (65535 - 50000) / 256; //   50ms
+  72   1        TL0 = (65535 - 50000) % 256;
+  73   1        
+  74   1        ET0 = 1;
+  75   1        EA = 1;
+  76   1        TR0 = 1;
+  77   1      }
+  78          
+  79          void ServiceTimer0() interrupt 1
+  80          {
+  81   1        TH0 = (65535 - 50000) / 256; //   50ms
+  82   1        TL0 = (65535 - 50000) % 256;
+  83   1        
+  84   1        t_005s++;
+  85   1        if(t_005s == 20)
+  86   1        {
+  87   2          t_s++;
+  88   2          t_005s = 0;
+  89   2          if(t_s == 60)
+  90   2          {
+  91   3            t_m++;
+  92   3            t_s = 0;
+  93   3            if(t_m == 99)
+  94   3              t_m = 0;
+  95   3          }
+  96   2        }
+  97   1      }
+  98          //========================================
+  99          
+ 100          void DeleyKey(unsigned int t)
+ 101          {
+ 102   1        while(t--);
+ 103   1      }
+ 104          
+ 105          void Scan_Keys()
+ 106          {
+ 107   1        if(S4 == 0)//秒表启动/暂停
+ 108   1        {
+ 109   2          DeleyKey(100);
+ 110   2          if(S4 == 0)
+ 111   2          {
+ 112   3            TR0 =~TR0;
+ 113   3            while(S4 == 0)
+ 114   3            {
+ 115   4              DisplayTime();
+ 116   4            }
+C51 COMPILER V9.59.0.0   ____                                                              03/02/2023 17:36:51 PAGE 3   
+
+ 117   3          }
+ 118   2        }
+ 119   1        if(S5 == 0)//秒表清零
+ 120   1        {
+ 121   2          DeleyKey(100);
+ 122   2          if(S5 == 0)
+ 123   2          {
+ 124   3            t_m = 0;
+ 125   3            t_s = 0;
+ 126   3            t_005s = 0;
+ 127   3            while(S5 == 0)
+ 128   3            {
+ 129   4              DisplayTime();
+ 130   4            }
+ 131   3          }
+ 132   2        }
+ 133   1      }
+ 134          
+ 135          void main()
+ 136          {
+ 137   1        
+ 138   1        Init_Timer0();
+ 139   1        while(1)
+ 140   1        {
+ 141   2          SelectHC573(4);
+ 142   2          P0 = 0xff;
+ 143   2          
+ 144   2          DisplayTime();
+ 145   2          Scan_Keys();
+ 146   2        }
+ 147   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    335    ----
+   CONSTANT SIZE    =     18    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      3    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

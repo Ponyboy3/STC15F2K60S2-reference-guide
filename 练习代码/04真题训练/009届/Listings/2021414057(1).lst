@@ -1,0 +1,467 @@
+C51 COMPILER V9.59.0.0   2021414057_1_                                                     03/20/2023 12:02:48 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE 2021414057_1_
+OBJECT MODULE PLACED IN .\Objects\2021414057(1).obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE 2021414057(1).c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\List
+                    -ings\2021414057(1).lst) TABS(2) OBJECT(.\Objects\2021414057(1).obj)
+
+line level    source
+
+   1          #include "reg52.h"
+   2          #include "iic.h"
+   3          
+   4          #define uchar unsigned char
+   5          
+   6          unsigned char type1[] = {0xc0,0xf9,0xa4,0xb0,0x99,0x92,0x82,0xf8,0x80,0x90,0xff,0xbf};
+   7          unsigned char type2[] = {0x01,0x02,0x04,0x08,0x10,0x20,0x40,0x80};
+   8          
+   9          unsigned char type3[] = {0xfe,0xfd,0xfb,0xf7,0xef,0xdf,0xbf,0x7f};
+  10          unsigned char type4[] = {0x7f,0xbf,0xdf,0xef,0xf7,0xfb,0xfd,0xfe};
+  11          unsigned char type5[] = {0x7e,0xbd,0xdb,0xe7};
+  12          unsigned char type6[] = {0xe7,0xdb,0xbd,0x7e};
+  13          
+  14          uchar num1,num2,num3,num4,num5,num6,num7,num8;
+  15          uchar GN;
+  16          uchar f_2ms;//2ms标准
+  17          uchar t_10ms;
+  18          unsigned int t_2ms,tt_2ms;
+  19          
+  20          uchar led1,led2,led3,led4;
+  21          uchar model,led_mod;//S6按键模式
+  22          unsigned int gap = 400;
+  23          uchar a,b;  
+  24          bit f_led;
+  25          bit shanshuo;
+  26          
+  27          void Delay_Smg(unsigned int t)
+  28          {
+  29   1        while(t--);
+  30   1      }
+  31          void Dispaly_Smg(uchar n1,uchar n2,uchar n3,uchar n4,uchar n5,uchar n6,uchar n7,uchar n8)
+  32          {
+  33   1        char i;
+  34   1        P0 = 0xff;
+  35   1        P2 = (P2 & 0x1f) | 0xc0;
+  36   1        P0 = type2[i];
+  37   1        P2 &= 0x1f;
+  38   1        switch(i)
+  39   1        {
+  40   2          case 0: P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n1];P2 &= 0x1f;break;
+  41   2          case 1: P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n2];P2 &= 0x1f;break;
+  42   2          case 2: P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n3];P2 &= 0x1f;break;
+  43   2          case 3: P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n4];P2 &= 0x1f;break;
+  44   2          case 4: P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n5];P2 &= 0x1f;break;
+  45   2          case 5: P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n6];P2 &= 0x1f;break;
+  46   2          case 6: P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n7];P2 &= 0x1f;break;
+  47   2          case 7: P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n8];P2 &= 0x1f;break;
+  48   2        }
+  49   1        if(++i == 8)
+  50   1          i = 0;
+  51   1      }
+  52          
+  53          unsigned char Scan_Keys()
+  54          {
+C51 COMPILER V9.59.0.0   2021414057_1_                                                     03/20/2023 12:02:48 PAGE 2   
+
+  55   1        char tmp;
+  56   1        tmp = (~P3) & 0x0f;
+  57   1        if(tmp == 0) return 0;
+  58   1        Delay_Smg(100);
+  59   1        tmp = (~P3) & 0x0f;
+  60   1        if(tmp == 0) return 0;
+  61   1        return tmp;
+  62   1      }
+  63          
+  64          void Keys_Change()
+  65          {
+  66   1        char d;
+  67   1        d = Scan_Keys();
+  68   1        switch(d)
+  69   1        {
+  70   2          case 8: GN = 1;break;//S4
+  71   2          case 4: GN = 2;break;//S5
+  72   2          case 2: GN = 3;break;//S6
+  73   2          case 1: GN = 4;break;//S7
+  74   2          case 0: GN = 0;break;
+  75   2        }
+  76   1      }
+  77          
+  78          //=====ADC电压采集===
+  79          void Init_ADC()
+  80          {
+  81   1        IIC_Start();
+  82   1        IIC_SendByte(0x90);
+  83   1        IIC_WaitAck();
+  84   1        IIC_SendByte(0x03);//选择RB2
+  85   1        IIC_WaitAck();
+  86   1        IIC_Stop();
+  87   1      }
+  88          
+  89          unsigned char Read_ADc()
+  90          {
+  91   1        uchar tmp;
+  92   1        IIC_Start();
+  93   1        IIC_SendByte(0x91);
+  94   1        IIC_WaitAck();
+  95   1        tmp = IIC_RecByte();
+  96   1        IIC_SendAck(1);
+  97   1        IIC_Stop();
+  98   1        return tmp;
+  99   1      }
+ 100          
+ 101          uchar ADc_Change()
+ 102          {
+ 103   1        uchar d,f;
+ 104   1        d = Read_ADc();
+ 105   1        if(d < 64)
+ 106   1        {
+ 107   2          f = 1;a = 1;
+ 108   2        }
+ 109   1        else if((d >= 64) && (d < 128))
+ 110   1        {
+ 111   2          f = 3;a = 2;
+ 112   2        }
+ 113   1        else if((d >= 128) && (d < 192))
+ 114   1        {
+ 115   2          f = 5;a = 3;
+ 116   2        }
+C51 COMPILER V9.59.0.0   2021414057_1_                                                     03/20/2023 12:02:48 PAGE 3   
+
+ 117   1        else if((d >= 192) && (d < 256))
+ 118   1        {
+ 119   2          f = 7;a = 4;
+ 120   2        }
+ 121   1        return f;
+ 122   1      }
+ 123          //=====24C02存储器===
+ 124          void Write_24c02(uchar addr,uchar dat)
+ 125          {
+ 126   1        IIC_Start();
+ 127   1        IIC_SendByte(0xa0);
+ 128   1        IIC_WaitAck();
+ 129   1        IIC_SendByte(addr);
+ 130   1        IIC_WaitAck();
+ 131   1        IIC_SendByte(dat);
+ 132   1        IIC_WaitAck();
+ 133   1        IIC_Stop();
+ 134   1      }
+ 135          unsigned char Read_24c02(uchar addr)
+ 136          {
+ 137   1        uchar tmp;
+ 138   1        IIC_Start();
+ 139   1        IIC_SendByte(0xa0);
+ 140   1        IIC_WaitAck();
+ 141   1        IIC_SendByte(addr);
+ 142   1        IIC_WaitAck();
+ 143   1        IIC_Stop();
+ 144   1        
+ 145   1        IIC_Start();
+ 146   1        IIC_SendByte(0xa1);
+ 147   1        IIC_WaitAck();
+ 148   1        tmp = IIC_RecByte();
+ 149   1        IIC_SendAck(1);
+ 150   1        IIC_Stop();
+ 151   1        return tmp;
+ 152   1      }
+ 153          
+ 154          //=========定时器1====
+ 155          void Init_T1()         //定时2ms刷新数码管
+ 156          {
+ 157   1        TMOD = 0x10;
+ 158   1        TH1 = (65536 - 2000) / 256;
+ 159   1        TH1 = (65536 - 2000) / 256;
+ 160   1        
+ 161   1        EA = 1;
+ 162   1        ET1 = 1;
+ 163   1        TR1 = 1;
+ 164   1      }
+ 165          //=======led、数码管控制============================
+ 166          void control()
+ 167          {
+ 168   1        if(f_2ms == 1)
+ 169   1        {
+ 170   2          f_2ms = 0;
+ 171   2          Keys_Change();
+ 172   2          if(GN == 4)
+ 173   2          {
+ 174   3            f_led = ~f_led;
+ 175   3            while(Scan_Keys());
+ 176   3          }
+ 177   2          if(f_led == 0)//熄灭暂停
+ 178   2          {
+C51 COMPILER V9.59.0.0   2021414057_1_                                                     03/20/2023 12:02:48 PAGE 4   
+
+ 179   3            P0 = 0xff;
+ 180   3            P2 = (P2 & 0x1f) | 0x80;
+ 181   3            P0 = 0xff;
+ 182   3            P2 &= 0x1f;
+ 183   3            b = ADc_Change();//获取RB2的值对应的亮度值
+ 184   3            if(GN == 1)
+ 185   3            {
+ 186   4              num1=10,num2=10,num3=10,num4=10,num5=10,num6=10,num7=11,num8=a;//a指亮度
+ 187   4              while(Scan_Keys());
+ 188   4              num1=10,num2=10,num3=10,num4=10,num5=10,num6=10,num7=10,num8=10;
+ 189   4            }
+ 190   3          }
+ 191   2          if(f_led == 1)
+ 192   2          {
+ 193   3            if(GN == 3)
+ 194   3            {
+ 195   4              model++;
+ 196   4              if(model == 3)
+ 197   4                model = 0;
+ 198   4              while(Scan_Keys());
+ 199   4            }
+ 200   3            switch(model)
+ 201   3            {
+ 202   4              case 0://led显示
+ 203   4                if(GN == 1)//S4按下显示led亮度
+ 204   4                {
+ 205   5                  num1=10;num2=10;num3=10;num4=10;num5=10;num6=10;num7=11;num8=a;//a指亮度
+ 206   5                  while(Scan_Keys());
+ 207   5                }
+ 208   4                num1=10;num2=10;num3=10;num4=10;num5=10;num6=10;num7=10;num8=10;
+ 209   4                if(led_mod == 0)
+ 210   4                {
+ 211   5                  if(++t_10ms == 10)
+ 212   5                  {
+ 213   6                    t_10ms = 0;
+ 214   6                    P0 = 0xff;
+ 215   6                    P2 = (P2 & 0x1f) | 0x80;
+ 216   6                    P0 = type3[led1];
+ 217   6                    P2 &= 0x1f;
+ 218   6                  }
+ 219   5                  if(t_10ms == ADc_Change())
+ 220   5                  {
+ 221   6                    P0 = 0xff;
+ 222   6                    P2 = (P2 & 0x1f) | 0x80;
+ 223   6                    P0 = 0xff;
+ 224   6                    P2 &= 0x1f;
+ 225   6                  }
+ 226   5                  if(++t_2ms == gap/2)//一个led亮灭时间
+ 227   5                  {
+ 228   6                    t_2ms = 0;
+ 229   6                    led1++;
+ 230   6                    if(led1 == 8)
+ 231   6                    led1 = 0;
+ 232   6                  }
+ 233   5                }
+ 234   4                if(led_mod == 1)
+ 235   4                {
+ 236   5                  if(++t_10ms == 10)
+ 237   5                  {
+ 238   6                    t_10ms = 0;
+ 239   6                    P0 = 0xff;
+ 240   6                    P2 = (P2 & 0x1f) | 0x80;
+C51 COMPILER V9.59.0.0   2021414057_1_                                                     03/20/2023 12:02:48 PAGE 5   
+
+ 241   6                    P0 = type4[led2];
+ 242   6                    P2 &= 0x1f;
+ 243   6                  }
+ 244   5                  if(t_10ms == ADc_Change())
+ 245   5                  {
+ 246   6                    P0 = 0xff;
+ 247   6                    P2 = (P2 & 0x1f) | 0x80;
+ 248   6                    P0 = 0xff;
+ 249   6                    P2 &= 0x1f;
+ 250   6                  }
+ 251   5                  if(++t_2ms == gap/2)//一个led亮灭时间
+ 252   5                  {
+ 253   6                    t_2ms = 0;
+ 254   6                    led2++;
+ 255   6                    if(led2 == 8)
+ 256   6                    led2 = 0;
+ 257   6                  }
+ 258   5                }
+ 259   4                if(led_mod == 2)
+ 260   4                {
+ 261   5                  if(++t_10ms == 10)
+ 262   5                  {
+ 263   6                    t_10ms = 0;
+ 264   6                    P0 = 0xff;
+ 265   6                    P2 = (P2 & 0x1f) | 0x80;
+ 266   6                    P0 = type5[led3];
+ 267   6                    P2 &= 0x1f;
+ 268   6                  }
+ 269   5                  if(t_10ms == ADc_Change())
+ 270   5                  {
+ 271   6                    P0 = 0xff;
+ 272   6                    P2 = (P2 & 0x1f) | 0x80;
+ 273   6                    P0 = 0xff;
+ 274   6                    P2 &= 0x1f;
+ 275   6                  }
+ 276   5                  if(++t_2ms == gap/2)//一个led亮灭时间
+ 277   5                  {
+ 278   6                    t_2ms = 0;
+ 279   6                    led3++;
+ 280   6                    if(led3 == 4)
+ 281   6                    led3 = 0;
+ 282   6                  }
+ 283   5                }
+ 284   4                if(led_mod == 3)
+ 285   4                {
+ 286   5                  if(++t_10ms == 10)
+ 287   5                  {
+ 288   6                    t_10ms = 0;
+ 289   6                    P0 = 0xff;
+ 290   6                    P2 = (P2 & 0x1f) | 0x80;
+ 291   6                    P0 = type6[led4];
+ 292   6                    P2 &= 0x1f;
+ 293   6                  }
+ 294   5                  if(t_10ms == ADc_Change())
+ 295   5                  {
+ 296   6                    P0 = 0xff;
+ 297   6                    P2 = (P2 & 0x1f) | 0x80;
+ 298   6                    P0 = 0xff;
+ 299   6                    P2 &= 0x1f;
+ 300   6                  }
+ 301   5                  if(++t_2ms == gap/2)//一个led亮灭时间
+ 302   5                  {
+C51 COMPILER V9.59.0.0   2021414057_1_                                                     03/20/2023 12:02:48 PAGE 6   
+
+ 303   6                    t_2ms = 0;
+ 304   6                    led4++;
+ 305   6                    if(led4 == 4)
+ 306   6                    led4 = 0;
+ 307   6                  }
+ 308   5                }
+ 309   4              break;
+ 310   4              
+ 311   4              case 1://led显示模式选择
+ 312   4                if(GN == 2)
+ 313   4                {
+ 314   5                  if(led_mod == 3)
+ 315   5                    led_mod = 3;
+ 316   5                  else
+ 317   5                    led_mod++;
+ 318   5                  while(Scan_Keys());
+ 319   5                }
+ 320   4                if(GN == 1)
+ 321   4                {
+ 322   5                  if(led_mod == 0)
+ 323   5                    led_mod = 0;
+ 324   5                  else
+ 325   5                    led_mod--;
+ 326   5                  while(Scan_Keys());
+ 327   5                }
+ 328   4                if(++tt_2ms == 300)
+ 329   4                {
+ 330   5                  tt_2ms = 0;
+ 331   5                  shanshuo = ~shanshuo;
+ 332   5                }
+ 333   4                if(shanshuo == 0)
+ 334   4                {
+ 335   5                  num1=11;num2=led_mod+1;num3=11;
+ 336   5                }
+ 337   4                else
+ 338   4                {
+ 339   5                  num1=10;num2=10;num3=10;
+ 340   5                }
+ 341   4                num4=10;
+ 342   4                if(gap > 999)
+ 343   4                {
+ 344   5                  num5=gap/1000;num6=(gap/100%10);num7=(gap/10%10);num8=gap%10;
+ 345   5                }
+ 346   4                else
+ 347   4                {
+ 348   5                  num5=10;num6=gap/100;num7=gap/10%10;num8=gap%10;
+ 349   5                }
+ 350   4              break;
+ 351   4              
+ 352   4              case 2://led流转间隔时间
+ 353   4                if(GN == 2)
+ 354   4                {
+ 355   5                  if(gap > 1100)
+ 356   5                    gap = 1200;
+ 357   5                  else
+ 358   5                    gap+=100;
+ 359   5                  Write_24c02(0,gap/10);
+ 360   5                  while(Scan_Keys());
+ 361   5                }
+ 362   4                if(GN == 1)
+ 363   4                {
+ 364   5                  if(gap < 500)
+C51 COMPILER V9.59.0.0   2021414057_1_                                                     03/20/2023 12:02:48 PAGE 7   
+
+ 365   5                    gap = 400;
+ 366   5                  else
+ 367   5                    gap-=100;
+ 368   5                  Write_24c02(0,gap/10);
+ 369   5                  while(Scan_Keys());
+ 370   5                }
+ 371   4                if(++tt_2ms == 300)
+ 372   4                {
+ 373   5                  tt_2ms = 0;
+ 374   5                  shanshuo = ~shanshuo;
+ 375   5                }
+ 376   4                if(shanshuo == 0)
+ 377   4                {
+ 378   5                  if(gap > 999)
+ 379   5                  {
+ 380   6                    num5=gap/1000;num6=(gap/100%10);num7=(gap/10%10);num8=gap%10;
+ 381   6                  }
+ 382   5                  else
+ 383   5                  {
+ 384   6                    num5=10;num6=gap/100;num7=(gap/10%10);num8=gap%10;
+ 385   6                  }
+ 386   5                }
+ 387   4                else
+ 388   4                {
+ 389   5                  num5=10;num6=10;num7=10;num8=10;
+ 390   5                }
+ 391   4                num1=11;num2=led_mod+1;num3=11;num4=10;
+ 392   4              break;
+ 393   4            }
+ 394   3          }
+ 395   2        }
+ 396   1      }
+ 397          //==========================================
+ 398          void Init_Sys()
+ 399          {
+ 400   1        P2 = (P2 & 0x1f) | 0x80;
+ 401   1        P0 = 0xff;
+ 402   1        P2 &= 0x1f;
+ 403   1        
+ 404   1        P2 = (P2 & 0x1f) | 0xa0;
+ 405   1        P0 = 0xff;
+ 406   1        P2 &= 0x1f;
+ 407   1        
+ 408   1        Init_ADC();
+ 409   1        Init_T1();
+ 410   1        
+ 411   1        gap = Read_24c02(0)*10;
+ 412   1        num1=10;num2=10;num3=10;num4=10;num5=10;num6=10;num7=10;num8=10;
+ 413   1      }
+ 414          void main()
+ 415          {
+ 416   1        Init_Sys();
+ 417   1        while(1)
+ 418   1        {
+ 419   2          control();
+ 420   2        }
+ 421   1      }
+ 422          void Service_T1() interrupt 3
+ 423          {
+ 424   1        TH1 = (65536 - 2000) / 256;
+ 425   1        TH1 = (65536 - 2000) / 256;
+ 426   1        
+C51 COMPILER V9.59.0.0   2021414057_1_                                                     03/20/2023 12:02:48 PAGE 8   
+
+ 427   1        Dispaly_Smg(num1,num2,num3,num4,num5,num6,num7,num8);
+ 428   1        f_2ms = 1;
+ 429   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1786    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     69      15
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      2    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

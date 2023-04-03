@@ -1,0 +1,134 @@
+C51 COMPILER V9.59.0.0   ______________                                                    03/14/2023 19:49:06 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE ______________
+OBJECT MODULE PLACED IN .\Objects\定时器实现秒表.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE 定时器实现秒表.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Lis
+                    -tings\定时器实现秒表.lst) TABS(2) OBJECT(.\Objects\定时器实现秒表.obj)
+
+line level    source
+
+   1          #include "reg52.h"
+   2          
+   3          unsigned char code SMG_NUM[11] = {0xc0,0xf9,0xa4,0xb0,0x99,0x92,0x82,0xf8,0x80,0x90,0xbf};
+   4          
+   5          unsigned int T_h = 0;
+   6          unsigned int T_m = 0;
+   7          unsigned int T_s = 0;
+   8          unsigned int count = 0;
+   9          
+  10          void Delay_SMG(unsigned int t)
+  11          {
+  12   1        while(t--);
+  13   1      }
+  14          
+  15          void Display_SMG_Bit(unsigned char pos,unsigned char value)
+  16          {
+  17   1        P2 = (P2 & 0x1f) | 0xc0;
+  18   1        P0 = 0x01 << pos;
+  19   1        P2 &= 0x1f;
+  20   1        
+  21   1        P2 = (P2 & 0x1f) | 0xe0;
+  22   1        P0 = value;
+  23   1        P2 &= 0x1f;
+  24   1        
+  25   1        Delay_SMG(500);
+  26   1        
+  27   1        P2 = (P2 & 0x1f) | 0xc0;
+  28   1        P0 = 0x01 << pos;
+  29   1        P2 &= 0x1f;
+  30   1        
+  31   1        P2 = (P2 & 0x1f) | 0xe0;
+  32   1        P0 = 0xff;
+  33   1        P2 &= 0x1f;
+  34   1      }
+  35          
+  36          void Display_SMG_All()
+  37          {
+  38   1        Display_SMG_Bit(0,SMG_NUM[T_h / 10]);
+  39   1        Display_SMG_Bit(1,SMG_NUM[T_h % 10]);
+  40   1        
+  41   1        Display_SMG_Bit(2,0xbf);
+  42   1        
+  43   1        Display_SMG_Bit(3,SMG_NUM[T_m / 10]);
+  44   1        Display_SMG_Bit(4,SMG_NUM[T_m % 10]);
+  45   1        
+  46   1        Display_SMG_Bit(5,0xbf);
+  47   1        
+  48   1        Display_SMG_Bit(6,SMG_NUM[T_s / 10]);
+  49   1        Display_SMG_Bit(7,SMG_NUM[T_s % 10]);
+  50   1      }
+  51          
+  52          void Init_T0()
+  53          {
+  54   1        TMOD = 0x01;
+C51 COMPILER V9.59.0.0   ______________                                                    03/14/2023 19:49:06 PAGE 2   
+
+  55   1        TH0 = (0 - 50000) / 256;
+  56   1        TL0 = (0 - 50000) % 256;
+  57   1        
+  58   1        EA = 1;
+  59   1        ET0 = 1;
+  60   1        TR0 = 1;
+  61   1      }
+  62          
+  63          void Service_T0() interrupt 1
+  64          {
+  65   1        TH0 = (0 - 50000) / 256;
+  66   1        TL0 = (0 - 50000) % 256;
+  67   1        
+  68   1        count++;
+  69   1        if(count == 20)
+  70   1        {
+  71   2          T_s++;
+  72   2          count = 0;
+  73   2        }
+  74   1        if(T_s == 60)
+  75   1        {
+  76   2          T_s = 0;
+  77   2          T_m++;
+  78   2          if(T_m == 60)
+  79   2          {
+  80   3            T_m = 0;
+  81   3            T_h++;
+  82   3            if(T_h == 24) T_h = 0;
+  83   3          }
+  84   2        }
+  85   1      }
+  86          
+  87          void Init_Sys()
+  88          {
+  89   1        P2 = (P2 & 0x1f) | 0x80;
+  90   1        P0 = 0xff;
+  91   1        P2 &= 0x1f;
+  92   1        
+  93   1        P2 = (P2 & 0x1f) | 0xa0;
+  94   1        P0 = 0x00;
+  95   1        P2 &= 0x1f;
+  96   1      }
+  97          
+  98          void main()
+  99          {
+ 100   1        Init_Sys();
+ 101   1        Init_T0();
+ 102   1        while(1)
+ 103   1        {
+ 104   2          Display_SMG_All();
+ 105   2        }
+ 106   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    426    ----
+   CONSTANT SIZE    =     11    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      8    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+C51 COMPILER V9.59.0.0   ______________                                                    03/14/2023 19:49:06 PAGE 3   
+
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

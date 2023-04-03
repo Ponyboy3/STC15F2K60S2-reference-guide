@@ -1,0 +1,4 @@
+".\Objects\STARTUP.obj",
+".\Objects\按键复用.obj" 
+TO ".\Objects\按键复用" 
+PRINT(".\Listings\按键复用.m51") RAMSIZE(256) 

@@ -1,0 +1,155 @@
+C51 COMPILER V9.60.0.0   MAIN                                                              07/19/2022 14:34:15 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\keilc\pack_file\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listi
+                    -ngs\main.lst) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          /******************************
+   2          LED流水并且不影响继电器动作
+   3          *******************************/
+   4          
+   5          
+   6          #include <STC15F2K60S2.H>
+   7          #include <intrins.h>
+   8          #define uchar unsigned char 
+   9          #define uint unsigned int 
+  10            
+  11          uchar code type1[]={0xfe,0xfd,0xfb,0xf7,0xef,0xdf,0xbf,0x7f};
+  12          uchar f_2ms;
+  13          uint t_2ms,tt_2ms;
+  14          bit flag;
+  15          
+  16          
+  17          uchar bdata U6=0xff;
+  18          sbit led1=U6^0;
+  19          sbit led2=U6^1;
+  20          sbit led3=U6^2;
+  21          sbit led4=U6^3;
+  22          sbit led5=U6^4;
+  23          sbit led6=U6^5;
+  24          sbit led7=U6^6;
+  25          sbit led8=U6^7;
+  26          
+  27          uchar bdata U9;
+  28          sbit beep= U9^6;
+  29          sbit relay=U9^4;
+  30          
+  31          
+  32          
+  33          
+  34          void time1_int1()
+  35          {
+  36   1        EA=1;
+  37   1        ET1=1;
+  38   1        TR1=1;
+  39   1        TMOD=(TMOD%0x0f)|0x10;
+  40   1        TH1=(65536-2000)/256;
+  41   1        TL1=(65536-2000)%256;
+  42   1      }
+  43          void initial_all()
+  44          {
+  45   1        P2=(P2&0x1f)|0xa0;
+  46   1        P0=0x00;
+  47   1        P2=(P2&0x1f);
+  48   1        P2=(P2&0x1f)|0x80;
+  49   1        P0=0xff;
+  50   1        P2=(P2&0x1f); 
+  51   1        P2=(P2&0x1f)|0xc0;
+  52   1        P0=0x00;
+  53   1        P2=(P2&0x1f); 
+  54   1        P2=(P2&0x1f)|0xe0;
+C51 COMPILER V9.60.0.0   MAIN                                                              07/19/2022 14:34:15 PAGE 2   
+
+  55   1        P0=0xff;
+  56   1        P2=(P2&0x1f); 
+  57   1      }
+  58          
+  59          void main()
+  60          {
+  61   1      
+  62   1        initial_all();
+  63   1        time1_int1();
+  64   1        while(1)
+  65   1        {
+  66   2         if(f_2ms==1)
+  67   2         {
+  68   3          f_2ms=0;
+  69   3        
+  70   3          if(++t_2ms==250)
+  71   3          {
+  72   4            t_2ms=0;
+  73   4           beep=~beep;
+  74   4          // relay=~relay;
+  75   4           P2=(P2&0x1f)|0xa0;
+  76   4           P0=U9;
+  77   4           P2=(P2&0x1f);     
+  78   4          }     
+  79   3      
+  80   3      
+  81   3      //    tt_2ms++;
+  82   3      //    if(tt_2ms==1000)
+  83   3      //    {
+  84   3      //      tt_2ms=0; 
+  85   3      //      led1=0;led2=1;
+  86   3      //    }   
+  87   3      //    
+  88   3      //    if(tt_2ms==500)
+  89   3      //    {
+  90   3      //      led1=1;led2=0;    
+  91   3      //    }
+  92   3      //  
+  93   3      //     P2=(P2&0x1f)|0x80;
+  94   3      //     P0=U6;
+  95   3      //     P2=(P2&0x1f);      
+  96   3          
+  97   3              led1=0;
+  98   3              P2=(P2&0x1f)|0x80;
+  99   3              P0=U6;
+ 100   3              P2=(P2&0x1f);     
+ 101   3          
+ 102   3      
+ 103   3        
+ 104   3         }//f_2ms
+ 105   2        }
+ 106   1      }
+ 107          
+ 108          void cl_time1_int1() interrupt 3
+ 109          {
+ 110   1        TH1=(65536-2000)/256;
+ 111   1        TL1=(65536-2000)%256; 
+ 112   1         
+ 113   1        f_2ms=1;
+ 114   1        
+ 115   1      
+ 116   1      }
+C51 COMPILER V9.60.0.0   MAIN                                                              07/19/2022 14:34:15 PAGE 3   
+
+ 117          
+ 118          
+ 119          
+ 120          
+ 121          
+ 122          
+ 123          
+ 124          
+ 125          
+ 126          
+ 127          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    158    ----
+   CONSTANT SIZE    =      8    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      7    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      1    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

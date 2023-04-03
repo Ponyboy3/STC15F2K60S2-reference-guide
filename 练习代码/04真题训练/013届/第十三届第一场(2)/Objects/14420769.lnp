@@ -1,0 +1,6 @@
+".\Objects\STARTUP.obj",
+".\Objects\main.obj",
+".\Objects\ds1302.obj",
+".\Objects\onewire.obj" 
+TO ".\Objects\14420769" 
+PRINT(".\Listings\14420769.m51") RAMSIZE(256) 

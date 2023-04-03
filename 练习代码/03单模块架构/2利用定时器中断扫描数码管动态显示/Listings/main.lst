@@ -1,0 +1,148 @@
+C51 COMPILER V9.55   MAIN                                                                  06/05/2022 19:47:23 PAGE 1   
+
+
+C51 COMPILER V9.55, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\keilc\pack_file\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listi
+                    -ngs\main.lst) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          /****************************************
+   2          利用定时器1实现对数码管动态扫描 显示
+   3          *********************************************/
+   4          #include <STC15F2K60S2.H>
+   5          #include <intrins.h>
+   6          #define uchar unsigned char 
+   7          #define uint unsigned int 
+   8            
+   9          uchar code type1[]={  0xC0,
+  10                                0xF9,
+  11                                0xA4,
+  12                                0xB0,
+  13                                0x99,
+  14                                0x92,
+  15                                0x82,
+  16                                0xF8,
+  17                                0x80,
+  18                                0x90,0xff};
+  19          uchar code type2[]={0x01,0x02,0x04,0x08,0x10,0x20,0x40,0x80};
+  20          
+  21          uchar num1,num2,num3,num4,num5,num6,num7,num8;
+  22          bit f_2ms;
+  23          uchar t_2ms;
+  24          uchar GN;
+  25          
+  26          
+  27          
+  28          void smg_display(char n1,char n2,char n3,char n4,char n5,char n6,char n7,char n8)
+  29          {
+  30   1        char i;
+  31   1        P0=0xff;
+  32   1        P2=(P2&0x1f)|0xc0;
+  33   1        P0=type2[i];
+  34   1        P2=(P2&0x1f);
+  35   1        switch(i)
+  36   1        {
+  37   2          case 0:P2=(P2&0x1f)|0xe0; P0=type1[n1]; P2=(P2&0x1f);break;
+  38   2          case 1:P2=(P2&0x1f)|0xe0; P0=type1[n2]; P2=(P2&0x1f);break;   
+  39   2          case 2:P2=(P2&0x1f)|0xe0; P0=type1[n3]; P2=(P2&0x1f);break;   
+  40   2          case 3:P2=(P2&0x1f)|0xe0; P0=type1[n4]; P2=(P2&0x1f);break;   
+  41   2          case 4:P2=(P2&0x1f)|0xe0; P0=type1[n5]; P2=(P2&0x1f);break;   
+  42   2          case 5:P2=(P2&0x1f)|0xe0; P0=type1[n6]; P2=(P2&0x1f);break;   
+  43   2          case 6:P2=(P2&0x1f)|0xe0; P0=type1[n7]; P2=(P2&0x1f);break;   
+  44   2          case 7:P2=(P2&0x1f)|0xe0; P0=type1[n8]; P2=(P2&0x1f);break;   
+  45   2          
+  46   2        }
+  47   1        if(++i==8)
+  48   1          i=0;
+  49   1      }
+  50          
+  51          void time1_int1()
+  52          {
+  53   1        EA=1;
+  54   1        ET1=1;
+C51 COMPILER V9.55   MAIN                                                                  06/05/2022 19:47:23 PAGE 2   
+
+  55   1        TR1=1;
+  56   1        TMOD=(TMOD&0x0f)|0x10;
+  57   1        TH1=(65536-2000)/256;
+  58   1        TL1=(65536-2000)%256;   
+  59   1      }
+  60          
+  61          void initial_all()
+  62          {
+  63   1        P2=(P2&0x1f)|0xa0;
+  64   1        P0=0x00;
+  65   1        P2=(P2&0x1f); 
+  66   1        P2=(P2&0x1f)|0x80;
+  67   1        P0=0xff;
+  68   1        P2=(P2&0x1f); 
+  69   1        P2=(P2&0x1f)|0xc0;
+  70   1        P0=0xff;
+  71   1        P2=(P2&0x1f);   
+  72   1        P2=(P2&0x1f)|0xe0;
+  73   1        P0=0xff;
+  74   1        P2=(P2&0x1f);   
+  75   1      }
+  76          
+  77          void main()
+  78          {
+  79   1        initial_all();  
+  80   1        time1_int1();
+  81   1        
+  82   1        while(1)
+  83   1        {
+  84   2         if(f_2ms==1)
+  85   2         {
+  86   3           f_2ms=0;
+  87   3        
+  88   3           
+  89   3        
+  90   3           
+  91   3           
+  92   3           
+  93   3          num1=1; num2=2;num3=3;num4=4;num5=5;num6=6;num7=7;num8=8;
+  94   3        
+  95   3         }//f_2ms
+  96   2        }
+  97   1      }
+  98          
+  99          
+ 100          
+ 101          void cl_time1_int1() interrupt 3
+ 102          {
+ 103   1        TH1=(65536-2000)/256;
+ 104   1        TL1=(65536-2000)%256;   
+ 105   1        
+ 106   1        smg_display(num1,num2,num3,num4,num5,num6,num7,num8);
+ 107   1        f_2ms=1;
+ 108   1      }
+ 109          
+ 110          
+ 111          
+ 112          
+ 113          
+ 114          
+ 115          
+ 116          
+C51 COMPILER V9.55   MAIN                                                                  06/05/2022 19:47:23 PAGE 3   
+
+ 117          
+ 118          
+ 119          
+ 120          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    392    ----
+   CONSTANT SIZE    =     19    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     10       9
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      1    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

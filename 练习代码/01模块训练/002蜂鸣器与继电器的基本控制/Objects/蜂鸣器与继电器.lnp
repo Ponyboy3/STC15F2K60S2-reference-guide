@@ -1,0 +1,4 @@
+".\Objects\STARTUP.obj",
+".\Objects\蜂鸣器与继电器.obj" 
+TO ".\Objects\蜂鸣器与继电器" 
+PRINT(".\Listings\蜂鸣器与继电器.m51") RAMSIZE(256) 

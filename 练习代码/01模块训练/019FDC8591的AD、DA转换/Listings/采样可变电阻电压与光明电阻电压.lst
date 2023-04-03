@@ -1,0 +1,160 @@
+C51 COMPILER V9.59.0.0   ______________________________                                    03/09/2023 17:50:22 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE ______________________________
+OBJECT MODULE PLACED IN .\Objects\采样可变电阻电压与光明电阻电压.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE 采样可变电阻电压与光明电阻电压.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEX
+                    -TEND PRINT(.\Listings\采样可变电阻电压与光明电阻电压.lst) TABS(2) OBJECT(.\Objects\采样可变电阻电压与光明电阻电压.obj)
+
+line level    source
+
+   1          #include "reg52.h"
+   2          #include "iic.h"
+   3          
+   4          sbit S4 = P3^3;
+   5          
+   6          unsigned char code SMG_NUM[10] = {0xc0,0xf9,0xa4,0xb0,0x99,0x92,0x82,0xf8,0x80,0x90};
+   7          
+   8          unsigned char stat = 0 ;
+   9          unsigned char dat_rd1;
+  10          unsigned char dat_rb2;
+  11          
+  12          void Delay_SMG(unsigned int t)
+  13          {
+  14   1        while(t--);
+  15   1      }
+  16          void Display_SMG_Bit(unsigned char pos,unsigned char value)
+  17          {
+  18   1        P2 = (P2 & 0x1f) | 0xc0;
+  19   1        P0 = 0x01 << pos;
+  20   1        P2 &= 0x1f;
+  21   1        
+  22   1        P2 = (P2 & 0x1f) | 0xe0;
+  23   1        P0 = value;
+  24   1        P2 &= 0x1f;
+  25   1      }
+  26          
+  27          void Display_SMG_Rd(unsigned char channel,unsigned char dat)
+  28          { 
+  29   1        Display_SMG_Bit(0,0xbf);
+  30   1        Delay_SMG(500);
+  31   1        Display_SMG_Bit(1,SMG_NUM[channel]);
+  32   1        Delay_SMG(500);
+  33   1        Display_SMG_Bit(2,0xbf);
+  34   1        Delay_SMG(500);
+  35   1        
+  36   1        Display_SMG_Bit(5,SMG_NUM[dat / 100]);
+  37   1        Delay_SMG(500);
+  38   1        Display_SMG_Bit(6,SMG_NUM[(dat % 100) / 10]);
+  39   1        Delay_SMG(500);
+  40   1        Display_SMG_Bit(7,SMG_NUM[dat % 10]);
+  41   1        Delay_SMG(500);
+  42   1        
+  43   1      }
+  44          
+  45          void Read_Rd1()
+  46          {
+  47   1        IIC_Start(); 
+  48   1        IIC_SendByte(0x90);
+  49   1        IIC_WaitAck();  
+  50   1        IIC_SendByte(0x01);
+  51   1        IIC_WaitAck();
+  52   1        IIC_Stop();
+  53   1        
+  54   1        Display_SMG_Rd(1,dat_rd1);
+C51 COMPILER V9.59.0.0   ______________________________                                    03/09/2023 17:50:22 PAGE 2   
+
+  55   1        
+  56   1        IIC_Start(); 
+  57   1        IIC_SendByte(0x91);
+  58   1        IIC_WaitAck();  
+  59   1        dat_rd1 = IIC_RecByte();
+  60   1        IIC_SendAck(1);
+  61   1        IIC_Stop();
+  62   1        Display_SMG_Rd(1,dat_rd1);
+  63   1      }
+  64          
+  65          void Read_Rb2()
+  66          {
+  67   1        IIC_Start(); 
+  68   1        IIC_SendByte(0x90);
+  69   1        IIC_WaitAck();  
+  70   1        IIC_SendByte(0x03);
+  71   1        IIC_WaitAck();
+  72   1        IIC_Stop();
+  73   1        
+  74   1        Display_SMG_Rd(3,dat_rb2);
+  75   1        
+  76   1        IIC_Start(); 
+  77   1        IIC_SendByte(0x91);
+  78   1        IIC_WaitAck();  
+  79   1        dat_rb2 = IIC_RecByte();
+  80   1        IIC_SendAck(1);
+  81   1        IIC_Stop();
+  82   1        Display_SMG_Rd(3,dat_rb2);
+  83   1      }
+  84          
+  85          void Scan_Keys()
+  86          {
+  87   1        if(S4 == 0)
+  88   1        {
+  89   2          Delay_SMG(100);
+  90   2          if(S4 == 0)
+  91   2          {
+  92   3            if(stat == 0)
+  93   3            {
+  94   4              stat = 1;
+  95   4              Display_SMG_Rd(1,dat_rd1);
+  96   4            }
+  97   3            else if(stat == 1)
+  98   3            {
+  99   4              stat = 0;
+ 100   4              Display_SMG_Rd(3,dat_rb2);
+ 101   4            }
+ 102   3          }
+ 103   2        }
+ 104   1      }
+ 105          
+ 106          void Init_Sys()
+ 107          {
+ 108   1        P2 = (P2 & 0x1f) | 0x80;
+ 109   1        P0 = 0xff;
+ 110   1        P2 &= 0x1f;
+ 111   1        
+ 112   1        P2 = (P2 & 0x1f) | 0xa0;
+ 113   1        P0 = 0x00;
+ 114   1        P2 &= 0x1f;
+ 115   1      }
+ 116          void main()
+C51 COMPILER V9.59.0.0   ______________________________                                    03/09/2023 17:50:22 PAGE 3   
+
+ 117          {
+ 118   1        Init_Sys();
+ 119   1        while(1)
+ 120   1        {
+ 121   2          Scan_Keys();
+ 122   2          
+ 123   2          if(stat == 0)
+ 124   2          {
+ 125   3            Read_Rd1();
+ 126   3          }
+ 127   2          else if(stat == 1)
+ 128   2          {
+ 129   3            Read_Rb2();
+ 130   3          }
+ 131   2        }
+ 132   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    350    ----
+   CONSTANT SIZE    =     10    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      3    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

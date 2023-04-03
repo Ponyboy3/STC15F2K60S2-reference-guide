@@ -1,0 +1,4 @@
+".\Objects\STARTUP.obj",
+".\Objects\存储器扩展.obj" 
+TO ".\Objects\存储器的映射扩展" 
+PRINT(".\Listings\存储器的映射扩展.m51") RAMSIZE(256) 

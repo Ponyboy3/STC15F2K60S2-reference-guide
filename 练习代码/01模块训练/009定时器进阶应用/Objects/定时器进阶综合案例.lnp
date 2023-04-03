@@ -1,0 +1,4 @@
+".\Objects\STARTUP.obj",
+".\Objects\秒表.obj" 
+TO ".\Objects\定时器进阶综合案例" 
+PRINT(".\Listings\定时器进阶综合案例.m51") RAMSIZE(256) 

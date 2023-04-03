@@ -1,0 +1,380 @@
+C51 COMPILER V9.55   MAIN                                                                  05/01/2022 17:24:56 PAGE 1   
+
+
+C51 COMPILER V9.55, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\keilc\pack_file\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listi
+                    -ngs\main.lst) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          /****************************
+   2          利用独立键盘实现数码管显示（S4则+1；S5则-1；S6则+2；S7则-2）
+   3          ****************************
+   4          #include <STC15F2K60S2.H>
+   5          #include <intrins.h>
+   6          #define uchar unsigned char 
+   7          #define uint unsigned int 
+   8            
+   9          uchar code type1[]={  0xC0,
+  10                            0xF9,
+  11                            0xA4,
+  12                            0xB0,
+  13                            0x99,
+  14                            0x92,
+  15                            0x82,
+  16                            0xF8,
+  17                            0x80,
+  18                            0x90,0xff
+  19                                      };
+  20          uchar code type2[]={0x01,0x02,0x04,0x08,0x10,0x20,0x40,0x80}; 
+  21          uchar num1,num2,num3,num4,num5,num6,num7,num8;
+  22          uchar GN;
+  23          uchar num;
+  24          uchar f_2ms;
+  25          uchar t_2ms;
+  26          
+  27          
+  28          
+  29          
+  30          
+  31          void Delay10ms()    //@12.000MHz
+  32          {
+  33            unsigned char i, j;
+  34          
+  35            i = 117;
+  36            j = 184;
+  37            do
+  38            {
+  39              while (--j);
+  40            } while (--i);
+  41          }
+  42          
+  43          void smg_display(char n1,char n2,char n3,char n4,char n5,char n6,char n7,char n8)
+  44          {
+  45            char i;
+  46            P0=0xff;
+  47            P2=(P2&0x1f)|0xc0;
+  48            P0=type2[i];
+  49            P2=(P2&0x1f);
+  50            switch(i)
+  51            {
+  52              case 0:P2=(P2&0x1f)|0xe0; P0=type1[n1]; P2=(P2&0x1f);break;
+  53              case 1:P2=(P2&0x1f)|0xe0; P0=type1[n2]; P2=(P2&0x1f);break;   
+  54              case 2:P2=(P2&0x1f)|0xe0; P0=type1[n3]; P2=(P2&0x1f);break;   
+C51 COMPILER V9.55   MAIN                                                                  05/01/2022 17:24:56 PAGE 2   
+
+  55              case 3:P2=(P2&0x1f)|0xe0; P0=type1[n4]; P2=(P2&0x1f);break;   
+  56              case 4:P2=(P2&0x1f)|0xe0; P0=type1[n5]; P2=(P2&0x1f);break;   
+  57              case 5:P2=(P2&0x1f)|0xe0; P0=type1[n6]; P2=(P2&0x1f);break;   
+  58              case 6:P2=(P2&0x1f)|0xe0; P0=type1[n7]; P2=(P2&0x1f);break;
+  59              case 7:P2=(P2&0x1f)|0xe0; P0=type1[n8]; P2=(P2&0x1f);break;   
+  60            }
+  61            if(++i==8)
+  62              i=0;  
+  63          }
+  64          ////////////////////////独立按键
+  65          uchar key_scan()
+  66          {
+  67            uchar temp;
+  68            temp=(~P3)&0x0f;
+  69            if(temp==0) return 0;
+  70            Delay10ms();
+  71            temp=(~P3)&0x0f;
+  72            if(temp==0) return 0; 
+  73            return temp;  
+  74          }
+  75          void key_change()
+  76          {
+  77            uchar D;
+  78            D=key_scan();
+  79            switch(D)
+  80            {
+  81              case 8:GN=4;break;
+  82              case 4:GN=5;break;
+  83              case 2:GN=6;break;
+  84              case 1:GN=7;break;  
+  85              case 0:GN=0;break;
+  86            }
+  87          }
+  88          
+  89          void time1_int1()
+  90          {
+  91            EA=1;
+  92            ET1=1;
+  93            TR1=1;
+  94            TMOD=(TMOD%0x0f)|0x10;
+  95            TH1=(65536-2000)/256;
+  96            TL1=(65536-2000)%256;
+  97          }
+  98          void initial_all()
+  99          {
+ 100            P2=(P2&0x1f)|0xa0;
+ 101            P0=0x00;
+ 102            P2=(P2&0x1f); 
+ 103            P2=(P2&0x1f)|0x80;
+ 104            P0=0xff;
+ 105            P2=(P2&0x1f); 
+ 106            P2=(P2&0x1f)|0xc0;
+ 107            P0=0xff;
+ 108            P2=(P2&0x1f); 
+ 109            P2=(P2&0x1f)|0xe0;
+ 110            P0=0xff;
+ 111            P2=(P2&0x1f);   
+ 112          }
+ 113          void main()
+ 114          {
+ 115            initial_all();
+ 116            time1_int1();
+C51 COMPILER V9.55   MAIN                                                                  05/01/2022 17:24:56 PAGE 3   
+
+ 117            while(1)
+ 118            {
+ 119             if(f_2ms==1)
+ 120             {
+ 121              f_2ms=0;
+ 122              key_change(); 
+ 123               
+ 124              if(GN==4) 
+ 125              {     
+ 126                if(num==100)
+ 127                  num=0;
+ 128                else
+ 129                  num++;    
+ 130                while(key_scan());
+ 131              }
+ 132              if(GN==5) 
+ 133              {     
+ 134                if(num==0)
+ 135                  num=100;
+ 136                else
+ 137                  num--;    
+ 138                while(key_scan());
+ 139              }    
+ 140              if(GN==6) 
+ 141              {     
+ 142                if(num>98)
+ 143                  num=100;
+ 144                else
+ 145                  num=num+2;    
+ 146                while(key_scan());
+ 147              }    
+ 148              if(GN==7) 
+ 149              {     
+ 150                if(num<2)
+ 151                  num=0;
+ 152                else
+ 153                  num=num-2;    
+ 154                while(key_scan());
+ 155              }    
+ 156              num1=num/100;num2=num%100/10;num3=num%10;num4=10;num5=10;num6=10;num7=10;num8=10; 
+ 157               
+ 158          
+ 159             }//f_2ms
+ 160            }
+ 161          }
+ 162          void cl_time1_int1() interrupt 3
+ 163          {
+ 164            TH1=(65536-2000)/256;
+ 165            TL1=(65536-2000)%256; 
+ 166            smg_display(num1,num2,num3,num4,num5,num6,num7,num8);
+ 167            f_2ms=1;
+ 168            
+ 169          
+ 170          }
+ 171          
+ 172          *****************************/
+ 173          
+ 174          
+ 175          
+ 176          
+ 177          
+ 178          
+C51 COMPILER V9.55   MAIN                                                                  05/01/2022 17:24:56 PAGE 4   
+
+ 179          
+ 180          
+ 181          
+ 182          
+ 183          /**************************************
+ 184          扫描矩阵按键键值利用数码管进行显示
+ 185          **************************************/
+ 186          #include <STC15F2K60S2.H>
+ 187          #include <intrins.h>
+ 188          #define uchar unsigned char 
+ 189          #define uint unsigned int 
+ 190            
+ 191          uchar code type1[]={  0xC0,
+ 192                            0xF9,
+ 193                            0xA4,
+ 194                            0xB0,
+ 195                            0x99,
+ 196                            0x92,
+ 197                            0x82,
+ 198                            0xF8,
+ 199                            0x80,
+ 200                            0x90,0xff
+ 201                                      };
+ 202          uchar code type2[]={0x01,0x02,0x04,0x08,0x10,0x20,0x40,0x80}; 
+ 203          uchar num1,num2,num3,num4,num5,num6,num7,num8;
+ 204          uchar GN;
+ 205          uchar num;
+ 206          uchar f_2ms;
+ 207          uchar t_2ms;
+ 208          
+ 209          
+ 210          
+ 211          
+ 212          
+ 213          void Delay10ms()    //@12.000MHz
+ 214          {
+ 215   1        unsigned char i, j;
+ 216   1      
+ 217   1        i = 117;
+ 218   1        j = 184;
+ 219   1        do
+ 220   1        {
+ 221   2          while (--j);
+ 222   2        } while (--i);
+ 223   1      }
+ 224          
+ 225          void smg_display(char n1,char n2,char n3,char n4,char n5,char n6,char n7,char n8)
+ 226          {
+ 227   1        char i;
+ 228   1        P0=0xff;
+ 229   1        P2=(P2&0x1f)|0xc0;
+ 230   1        P0=type2[i];
+ 231   1        P2=(P2&0x1f);
+ 232   1        switch(i)
+ 233   1        {
+ 234   2          case 0:P2=(P2&0x1f)|0xe0; P0=type1[n1]; P2=(P2&0x1f);break;
+ 235   2          case 1:P2=(P2&0x1f)|0xe0; P0=type1[n2]; P2=(P2&0x1f);break;   
+ 236   2          case 2:P2=(P2&0x1f)|0xe0; P0=type1[n3]; P2=(P2&0x1f);break;   
+ 237   2          case 3:P2=(P2&0x1f)|0xe0; P0=type1[n4]; P2=(P2&0x1f);break;   
+ 238   2          case 4:P2=(P2&0x1f)|0xe0; P0=type1[n5]; P2=(P2&0x1f);break;   
+ 239   2          case 5:P2=(P2&0x1f)|0xe0; P0=type1[n6]; P2=(P2&0x1f);break;   
+ 240   2          case 6:P2=(P2&0x1f)|0xe0; P0=type1[n7]; P2=(P2&0x1f);break;
+C51 COMPILER V9.55   MAIN                                                                  05/01/2022 17:24:56 PAGE 5   
+
+ 241   2          case 7:P2=(P2&0x1f)|0xe0; P0=type1[n8]; P2=(P2&0x1f);break;   
+ 242   2        }
+ 243   1        if(++i==8)
+ 244   1          i=0;  
+ 245   1      }
+ 246          ////////////////////////矩阵按键
+ 247          uchar key_scan()
+ 248          {
+ 249   1        uchar L,H;
+ 250   1        P3=0xcf;P44=0;P42=0;H=(~P3)&0x0f;
+ 251   1        if(H==0) return 0;
+ 252   1        Delay10ms();
+ 253   1        P3=0x0f;P44=0;P42=0;H=(~P3)&0x0f;
+ 254   1        if(H==0) return 0;
+ 255   1        P3=0xf0;P44=1;P42=1;L=(~P3)&0x30; 
+ 256   1        if(P44==0) L|=0x80;
+ 257   1        if(P42==0) L|=0x40;
+ 258   1        return (L+H); 
+ 259   1      }
+ 260          void key_change()
+ 261          {
+ 262   1        uchar D;
+ 263   1        D=key_scan();
+ 264   1        switch(D)
+ 265   1        {
+ 266   2          case 0x88:GN=4;break;
+ 267   2          case 0x84:GN=5;break;
+ 268   2          case 0x82:GN=6;break;
+ 269   2          case 0x81:GN=7;break;
+ 270   2          case 0x48:GN=8;break;
+ 271   2          case 0x44:GN=9;break;
+ 272   2          case 0x42:GN=10;break;
+ 273   2          case 0x41:GN=11;break;
+ 274   2          case 0x28:GN=12;break;
+ 275   2          case 0x24:GN=13;break;
+ 276   2          case 0x22:GN=14;break;
+ 277   2          case 0x21:GN=15;break;
+ 278   2          case 0x18:GN=16;break;
+ 279   2          case 0x14:GN=17;break;
+ 280   2          case 0x12:GN=18;break;
+ 281   2          case 0x11:GN=19;break;    
+ 282   2      //    case 0:GN=0;break;    
+ 283   2        }
+ 284   1      }
+ 285          
+ 286          void time1_int1()
+ 287          {
+ 288   1        EA=1;
+ 289   1        ET1=1;
+ 290   1        TR1=1;
+ 291   1        TMOD=(TMOD%0x0f)|0x10;
+ 292   1        TH1=(65536-2000)/256;
+ 293   1        TL1=(65536-2000)%256;
+ 294   1      }
+ 295          void initial_all()
+ 296          {
+ 297   1        P2=(P2&0x1f)|0xa0;
+ 298   1        P0=0x00;
+ 299   1        P2=(P2&0x1f); 
+ 300   1        P2=(P2&0x1f)|0x80;
+ 301   1        P0=0xff;
+ 302   1        P2=(P2&0x1f); 
+C51 COMPILER V9.55   MAIN                                                                  05/01/2022 17:24:56 PAGE 6   
+
+ 303   1        P2=(P2&0x1f)|0xc0;
+ 304   1        P0=0xff;
+ 305   1        P2=(P2&0x1f); 
+ 306   1        P2=(P2&0x1f)|0xe0;
+ 307   1        P0=0xff;
+ 308   1        P2=(P2&0x1f);   
+ 309   1      }
+ 310          void main()
+ 311          {
+ 312   1        initial_all();
+ 313   1        time1_int1();
+ 314   1        while(1)
+ 315   1        {
+ 316   2         if(f_2ms==1)
+ 317   2         {
+ 318   3          f_2ms=0;
+ 319   3          key_change(); 
+ 320   3      
+ 321   3      
+ 322   3      
+ 323   3      
+ 324   3      
+ 325   3           
+ 326   3          num1=GN/10;num2=GN%10;num3=10;num4=10;num5=10;num6=10;num7=10;num8=10; 
+ 327   3           
+ 328   3      
+ 329   3         }//f_2ms
+ 330   2        }
+ 331   1      }
+ 332          void cl_time1_int1() interrupt 3
+ 333          {
+ 334   1        TH1=(65536-2000)/256;
+ 335   1        TL1=(65536-2000)%256; 
+ 336   1        smg_display(num1,num2,num3,num4,num5,num6,num7,num8);
+ 337   1        f_2ms=1;
+ 338   1        
+ 339   1      
+ 340   1      }
+ 341          
+ 342          
+ 343          /*****************************************
+ 344          此程序为矩阵按键最终版，按键按下松开，数码管显示最终值
+ 345          ******************************************/
+ 346          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    612    ----
+   CONSTANT SIZE    =     19    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     12       9
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,562 @@
+C51 COMPILER V9.55   MAIN                                                                  06/15/2022 16:28:27 PAGE 1   
+
+
+C51 COMPILER V9.55, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\keilc\pack_file\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listi
+                    -ngs\main.lst) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include <STC15F2K60S2.H>
+   2          #include "onewire.h"
+   3          #include "iic.h"
+   4          #include <intrins.h>
+   5          #include <stdio.h>
+   6          #include <string.h>
+   7          
+   8          #define uchar unsigned char 
+   9          #define uint unsigned int 
+  10            
+  11          uchar code type1[]={  0xC0,
+  12                                0xF9,
+  13                                0xA4,
+  14                                0xB0,
+  15                                0x99,
+  16                                0x92,
+  17                                0x82,
+  18                                0xF8,
+  19                                0x80,
+  20                                0x90,0xff,0xc6,0xc3,0x98,0x8c};
+  21          uchar code type2[]={0x01,0x02,0x04,0x08,0x10,0x20,0x40,0x80};
+  22          uchar num1,num2,num3,num4,num5,num6,num7,num8;
+  23          bit f_2ms;
+  24          uchar t_2ms;
+  25          uchar GN;
+  26          sbit trig=P1^0;
+  27          sbit echo=P1^1;
+  28          uchar bdata U6=0xff;
+  29          sbit led1=U6^0;
+  30          sbit led2=U6^1;
+  31          sbit led3=U6^2;
+  32          //--------------
+  33          uchar model_jm;
+  34          uchar model_sj;
+  35          uchar model_cs;
+  36          //--------------
+  37          uint temprature,time_c;
+  38          uchar distance,time_l;
+  39          //--------------
+  40          uint cishu=6524;
+  41          //--------------
+  42          uchar temprature_canshuo=30;
+  43          uchar distance_canshuo=35;
+  44          //-------------------------
+  45          bit f_canshuo=0;
+  46          uint t_cs;
+  47          bit f_dac=0,output=0;
+  48          uint t_dac;
+  49          //-------------------------
+  50          uchar a,b,c;
+  51          
+  52          
+  53          
+  54          
+C51 COMPILER V9.55   MAIN                                                                  06/15/2022 16:28:27 PAGE 2   
+
+  55          
+  56          void Delay10ms()    //@12.000MHz
+  57          {
+  58   1        unsigned char i, j;
+  59   1      
+  60   1        i = 117;
+  61   1        j = 184;
+  62   1        do
+  63   1        {
+  64   2          while (--j);
+  65   2        } while (--i);
+  66   1      }
+  67          
+  68          void smg_display(char n1,char n2,char n3,char n4,char n5,char n6,char n7,char n8)
+  69          {
+  70   1        char i;
+  71   1        P0=0xff;
+  72   1        P2=(P2&0x1f)|0xc0;
+  73   1        P0=type2[i];
+  74   1        P2=(P2&0x1f);
+  75   1        switch(i)
+  76   1        {
+  77   2          case 0:P2=(P2&0x1f)|0xe0; P0=type1[n1]; P2=(P2&0x1f);break;
+  78   2          case 1:P2=(P2&0x1f)|0xe0; P0=type1[n2]; P2=(P2&0x1f);break;   
+  79   2          case 2:P2=(P2&0x1f)|0xe0; P0=type1[n3]; P2=(P2&0x1f);break;   
+  80   2          case 3:P2=(P2&0x1f)|0xe0; P0=type1[n4]; P2=(P2&0x1f);break;   
+  81   2          case 4:P2=(P2&0x1f)|0xe0; P0=type1[n5]; P2=(P2&0x1f);break;   
+  82   2          case 5:P2=(P2&0x1f)|0xe0; P0=type1[n6]; P2=(P2&0x1f);break;   
+  83   2          case 6:P2=(P2&0x1f)|0xe0; P0=type1[n7]; P2=(P2&0x1f);break;   
+  84   2          case 7:P2=(P2&0x1f)|0xe0; P0=type1[n8]; P2=(P2&0x1f);break;   
+  85   2          
+  86   2        }
+  87   1        if(++i==8)
+  88   1          i=0;
+  89   1      }
+  90          //=============================================超声波
+  91          char f_count=10;
+  92          uchar csb_x;
+  93          uchar csb_send()
+  94            {
+  95   1          f_count=10;
+  96   1          trig=0;
+  97   1          TR0=1;
+  98   1          while(f_count--)
+  99   1          {
+ 100   2            while(!TF0);
+ 101   2            trig ^= 1;
+ 102   2            TH0=(65536-12)/256;
+ 103   2            TL0=(65536-12)%256;   
+ 104   2            TF0=0;
+ 105   2          }
+ 106   1          TR0=0;
+ 107   1          TH0=0;
+ 108   1          TL0=0;
+ 109   1          TR0=1;
+ 110   1          while(echo && !TF0);
+ 111   1           TR0=0;
+ 112   1          if(TF0)
+ 113   1          {
+ 114   2            TF0=0;
+ 115   2            return 99;
+ 116   2          }
+C51 COMPILER V9.55   MAIN                                                                  06/15/2022 16:28:27 PAGE 3   
+
+ 117   1          else
+ 118   1          {
+ 119   2            csb_x=((TH0<<8)+TL0)*0.017;
+ 120   2            if(csb_x>99)
+ 121   2              csb_x=99;
+ 122   2            return csb_x;
+ 123   2          }         
+ 124   1        }
+ 125          //=========================================键盘
+ 126          uchar key_scan()
+ 127            {
+ 128   1          uchar H,L;
+ 129   1          P3=0xcf;P44=0;P42=0;H=(~P3)&0x0f;
+ 130   1          if(H==0) return 0;
+ 131   1          Delay10ms();
+ 132   1          P3=0x0f;P44=0;P42=0;H=(~P3)&0x0f;
+ 133   1          if(H==0) return 0;    
+ 134   1          P3=0xf0;P44=1;P42=1;L=(~P3)&0x30;
+ 135   1          if(P44==0) L|=0x80;
+ 136   1          if(P42==0) L|=0x40;
+ 137   1          return H+L;
+ 138   1        }
+ 139            
+ 140          void key_change()
+ 141          {
+ 142   1        uchar D;
+ 143   1        D=key_scan();
+ 144   1        switch(D)
+ 145   1        {
+ 146   2          case 0x28:GN=12;break;
+ 147   2          case 0x24:GN=13;break;
+ 148   2          case 0x18:GN=16;break;
+ 149   2          case 0x14:GN=17;break;
+ 150   2          case 0:GN=0;break;
+ 151   2        }
+ 152   1      } 
+ 153          //====================================24c02
+ 154          void xie_24c02(uchar addr,uchar dat)
+ 155          {
+ 156   1        IIC_Start( );
+ 157   1        IIC_SendByte(0xa0+0);
+ 158   1        IIC_WaitAck( );
+ 159   1        IIC_SendByte(addr);
+ 160   1        IIC_WaitAck( ); 
+ 161   1        IIC_SendByte(dat);
+ 162   1        IIC_WaitAck( );   
+ 163   1        IIC_Stop( );  
+ 164   1      }
+ 165          uchar du_24c02(uchar addr)
+ 166          {
+ 167   1        uchar D;
+ 168   1        IIC_Start( );
+ 169   1        IIC_SendByte(0xa0+0);
+ 170   1        IIC_WaitAck( );
+ 171   1        IIC_SendByte(addr);
+ 172   1        IIC_WaitAck( ); 
+ 173   1      
+ 174   1        IIC_Start( );
+ 175   1        IIC_SendByte(0xa0+1);
+ 176   1        IIC_WaitAck( ); 
+ 177   1        D=IIC_RecByte( );
+ 178   1        IIC_SendAck(1);
+C51 COMPILER V9.55   MAIN                                                                  06/15/2022 16:28:27 PAGE 4   
+
+ 179   1        IIC_Stop( );
+ 180   1        
+ 181   1        return D; 
+ 182   1      }
+ 183          //======================================串口通信
+ 184          uchar busy;
+ 185          uchar pass_word1[]="ST\r\n",len_word1;
+ 186          uchar pass_word2[]="PARA\r\n",len_word2;
+ 187          uchar idata str1[40];
+ 188          uchar idata str2[40];
+ 189          uint c1,c2,c3,c4,c5;
+ 190          void send_byte(uchar *byte,uchar len)
+ 191          {
+ 192   1        while(len--)
+ 193   1        {
+ 194   2          SBUF=*byte;
+ 195   2          byte++;
+ 196   2          busy=1;
+ 197   2          while(busy);        
+ 198   2        } 
+ 199   1      }
+ 200          //===========================================DAC输出
+ 201          void xie_dac(uchar dat)
+ 202          {
+ 203   1        IIC_Start( );
+ 204   1        IIC_SendByte(0x90+0);
+ 205   1        IIC_WaitAck( );
+ 206   1        IIC_SendByte(0x40);
+ 207   1        IIC_WaitAck( );   
+ 208   1        IIC_SendByte(dat);
+ 209   1        IIC_WaitAck( );   
+ 210   1        IIC_Stop(); 
+ 211   1      }
+ 212          //=====================================显示处理
+ 213          void xs_display(uint D)
+ 214          {
+ 215   1        if(D<10)
+ 216   1        {
+ 217   2          num4=num5=num6=num7=10;
+ 218   2          num8=D;
+ 219   2        }
+ 220   1        if(9<D && D<100)
+ 221   1        {
+ 222   2          num4=num5=num6=10;
+ 223   2          num7=D/10;num8=D%10;      
+ 224   2        }
+ 225   1        if(99<D && D<1000)
+ 226   1        {
+ 227   2          num4=num5=10;
+ 228   2          num6=D/100;num7=D%100/10;num8=D%10;     
+ 229   2        }
+ 230   1        if(999<D && D<10000)
+ 231   1        {
+ 232   2          num4=10;
+ 233   2          num5=D/1000;num6=D%1000/100;num7=D%100/10;num8=D%10;      
+ 234   2        } 
+ 235   1        if(D>9999)
+ 236   1        {
+ 237   2          num4=D/10000;num5=D%10000/1000;num6=D%1000/100;num7=D%100/10;num8=D%10;         
+ 238   2        } 
+ 239   1      }
+ 240          
+C51 COMPILER V9.55   MAIN                                                                  06/15/2022 16:28:27 PAGE 5   
+
+ 241          void UartInit(void)   //4800bps@12.000MHz
+ 242          {
+ 243   1        SCON = 0x50;    //8位数据,可变波特率
+ 244   1        AUXR |= 0x01;   //串口1选择定时器2为波特率发生器
+ 245   1        AUXR |= 0x04;   //定时器2时钟为Fosc,即1T
+ 246   1        T2L = 0x8F;   //设定定时初值
+ 247   1        T2H = 0xFD;   //设定定时初值
+ 248   1        AUXR |= 0x10;   //启动定时器2
+ 249   1        EA=1;
+ 250   1        ES=1;
+ 251   1      }
+ 252          
+ 253          void time0()
+ 254          {
+ 255   1        TMOD=(TMOD&0xf0)|0x01;
+ 256   1        TH0=(65536-12)/256;
+ 257   1        TL0=(65536-12)%256;       
+ 258   1      }
+ 259          void time1_int1()
+ 260          {
+ 261   1        EA=1;
+ 262   1        ET1=1;
+ 263   1        TR1=1;
+ 264   1        TMOD=(TMOD&0x0f)|0x10;
+ 265   1        TH1=(65536-2000)/256;
+ 266   1        TL1=(65536-2000)%256;   
+ 267   1      }
+ 268          
+ 269          void initial_all()
+ 270          {
+ 271   1        P2=(P2&0x1f)|0xa0;
+ 272   1        P0=0x00;
+ 273   1        P2=(P2&0x1f); 
+ 274   1        P2=(P2&0x1f)|0x80;
+ 275   1        P0=0xff;
+ 276   1        P2=(P2&0x1f); 
+ 277   1        P2=(P2&0x1f)|0xc0;
+ 278   1        P0=0xff;
+ 279   1        P2=(P2&0x1f);   
+ 280   1        P2=(P2&0x1f)|0xe0;
+ 281   1        P0=0xff;
+ 282   1        P2=(P2&0x1f);   
+ 283   1      }
+ 284          
+ 285          void main()
+ 286          {
+ 287   1        initial_all();  
+ 288   1        time1_int1();
+ 289   1        time0();
+ 290   1        initial_18b20();
+ 291   1        UartInit( );
+ 292   1        xie_24c02(0,9);
+ 293   1        
+ 294   1        
+ 295   1        while(1)
+ 296   1        {
+ 297   2         if(f_2ms==1)
+ 298   2         {
+ 299   3           f_2ms=0;
+ 300   3           key_change();
+ 301   3           //--------------
+ 302   3           if(++time_c==100)
+C51 COMPILER V9.55   MAIN                                                                  06/15/2022 16:28:27 PAGE 6   
+
+ 303   3           {
+ 304   4             time_c=0;
+ 305   4             temprature=rd_temperature();
+ 306   4           }
+ 307   3           if(++time_l==100)
+ 308   3           {
+ 309   4             time_l=0;
+ 310   4             distance=csb_send();
+ 311   4           }  
+ 312   3           //-----------------
+ 313   3          if(GN==13)
+ 314   3          {
+ 315   4            f_dac=1;
+ 316   4            b=0;     
+ 317   4           while(key_scan());
+ 318   4            f_dac=0; t_dac=0;
+ 319   4              if(b!=1)
+ 320   4              {
+ 321   5                model_jm++;
+ 322   5                if(model_jm==2)
+ 323   5                  model_jm=0;
+ 324   5                model_sj=0;model_cs=0;            
+ 325   5              }
+ 326   4          }     
+ 327   3          
+ 328   3        
+ 329   3      //--------------------  
+ 330   3      if(output==0)
+ 331   3      {
+ 332   4      //  xie_dac(100);
+ 333   4        a=0;
+ 334   4        led1=0;led2=1;
+ 335   4        P2=(P2&0x1f)|0x80;
+ 336   4        P0=U6;
+ 337   4        P2=(P2&0x1f);
+ 338   4      }
+ 339   3      if(output==1)
+ 340   3      {
+ 341   4      //  xie_dac(255);
+ 342   4        a=0;
+ 343   4        led1=1;led2=0;
+ 344   4        P2=(P2&0x1f)|0x80;
+ 345   4        P0=U6;
+ 346   4        P2=(P2&0x1f);
+ 347   4      }
+ 348   3      
+ 349   3      //-----------------------   
+ 350   3        if(model_jm==0)  //数据显示界面  
+ 351   3        {
+ 352   4           if(GN==12)
+ 353   4            {
+ 354   5             f_canshuo=1; 
+ 355   5             a=0;       
+ 356   5             while(key_scan()); 
+ 357   5             f_canshuo=0; 
+ 358   5             t_cs=0;    
+ 359   5             if(a!=1)
+ 360   5             {
+ 361   6                model_sj++;
+ 362   6                if(model_sj==3)
+ 363   6                  model_sj=0; 
+ 364   6             }                      
+C51 COMPILER V9.55   MAIN                                                                  06/15/2022 16:28:27 PAGE 7   
+
+ 365   5            }   
+ 366   4          switch(model_sj)
+ 367   4          {
+ 368   5            case 0:
+ 369   5                   num1=11;num2=num3=num4=10;
+ 370   5                   num5=temprature/1000;num6=temprature%1000/100;
+ 371   5                   num7=temprature%100/10;num8=temprature%10;
+ 372   5                   break;
+ 373   5            case 1:
+ 374   5                   num1=12;num2=num3=num4=num5=num6=10;
+ 375   5                   num7=distance/10;num8=distance%10;
+ 376   5                   break;
+ 377   5            case 2:
+ 378   5                   num1=13;num2=num3=10;
+ 379   5                   xs_display(cishu);            
+ 380   5                   break;
+ 381   5          }
+ 382   4        }   //model_jm=0
+ 383   3      //-------------------------------------
+ 384   3        if(model_jm==1)  //参数显示界面   
+ 385   3        {
+ 386   4          if(GN==12)
+ 387   4            {
+ 388   5             f_canshuo=1; 
+ 389   5             a=0;                 
+ 390   5             while(key_scan());
+ 391   5             f_canshuo=0;
+ 392   5             t_cs=0;
+ 393   5              if(a!=1)
+ 394   5              {
+ 395   6                model_cs++;
+ 396   6                if(model_cs==2)
+ 397   6                  model_cs=0;                       
+ 398   6              }
+ 399   5            }     
+ 400   4      
+ 401   4          switch(model_cs)
+ 402   4          {
+ 403   5            case 0:
+ 404   5                   if(GN==17)
+ 405   5                   {
+ 406   6                    temprature_canshuo++;
+ 407   6                    if(temprature_canshuo==100)
+ 408   6                       temprature_canshuo=99;                              
+ 409   6                    while(key_scan()); 
+ 410   6                   }
+ 411   5                   if(GN==16)
+ 412   5                   {              
+ 413   6                    if(temprature_canshuo==0)
+ 414   6                      temprature_canshuo=0;
+ 415   6                    else
+ 416   6                      temprature_canshuo--;                            
+ 417   6                    while(key_scan()); 
+ 418   6                   }      
+ 419   5                   num1=14;num2=num3=10;num4=1;num5=num6=10;
+ 420   5                   num7=temprature_canshuo/10;num8=temprature_canshuo%10;
+ 421   5                   break;
+ 422   5            case 1:
+ 423   5                   if(GN==17)
+ 424   5                   {
+ 425   6                    distance_canshuo+=5;
+ 426   6                    if(distance_canshuo>99)
+C51 COMPILER V9.55   MAIN                                                                  06/15/2022 16:28:27 PAGE 8   
+
+ 427   6                       distance_canshuo=99;                              
+ 428   6                    while(key_scan()); 
+ 429   6                   }
+ 430   5                   if(GN==16)
+ 431   5                   {              
+ 432   6                    if(distance_canshuo<5)
+ 433   6                      distance_canshuo=0;
+ 434   6                    else
+ 435   6                      distance_canshuo-=5;                             
+ 436   6                    while(key_scan()); 
+ 437   6                   }      
+ 438   5                   num1=14;num2=num3=10;num4=2;num5=num6=10;
+ 439   5                   num7=distance_canshuo/10;num8=distance_canshuo%10;
+ 440   5                   break;
+ 441   5          }
+ 442   4        }//model_jm
+ 443   3      //-------------------------------------------------------------    
+ 444   3          
+ 445   3      
+ 446   3      
+ 447   3      
+ 448   3      
+ 449   3        
+ 450   3           
+ 451   3      //     num1=csb_send()/10; num2=csb_send()%10;
+ 452   3      //     num3=rd_temperature( )/10;num4=rd_temperature( )%10;
+ 453   3      //     num5=du_24c02(0);num6=6;num7=7;num8=8;
+ 454   3      //     
+ 455   3      //     xie_dac(100);
+ 456   3      //     if(len_word1==2)
+ 457   3      //     {
+ 458   3      //       len_word1=0;
+ 459   3      //       sprintf  (str1,"$%d,%d.%d\r\n", c1,c2,c3);
+ 460   3      //       send_byte(str1,strlen(str1));
+ 461   3      //     }
+ 462   3      //     if(len_word2==4)
+ 463   3      //     {
+ 464   3      //       len_word2=0;
+ 465   3      //       sprintf  (str2,"$#%d,%d\r\n", c4,c5);
+ 466   3      //       send_byte(str2,strlen(str2));
+ 467   3      //     }     
+ 468   3         }//f_2ms
+ 469   2        }
+ 470   1      }
+ 471          
+ 472          void cl_time1_int1() interrupt 3
+ 473          {
+ 474   1        TH1=(65536-2000)/256;
+ 475   1        TL1=(65536-2000)%256;     
+ 476   1        smg_display(num1,num2,num3,num4,num5,num6,num7,num8);
+ 477   1        f_2ms=1;
+ 478   1        //------------------------
+ 479   1        if(f_canshuo==1)
+ 480   1        {
+ 481   2          if(++t_cs > 500)
+ 482   2          {
+ 483   3            cishu=0;
+ 484   3            a=1;      
+ 485   3          }   
+ 486   2        }
+ 487   1      //--------------------------
+ 488   1        if(f_dac==1)
+C51 COMPILER V9.55   MAIN                                                                  06/15/2022 16:28:27 PAGE 9   
+
+ 489   1        {
+ 490   2          if(++t_dac>500)
+ 491   2          {     
+ 492   3            f_dac=0;
+ 493   3            output=~output;
+ 494   3            b=1;
+ 495   3          }
+ 496   2        }
+ 497   1      }
+ 498          
+ 499          void cl_UartInit( ) interrupt 4
+ 500          {
+ 501   1        if(RI)
+ 502   1        {
+ 503   2          RI=0;
+ 504   2          if(pass_word1[len_word1] == SBUF)
+ 505   2            len_word1++;
+ 506   2          else
+ 507   2            len_word1=0;
+ 508   2      //-------------------------
+ 509   2          if(pass_word2[len_word2] == SBUF)
+ 510   2            len_word2++;
+ 511   2          else
+ 512   2            len_word2=0;    
+ 513   2        }
+ 514   1        if(TI)
+ 515   1        {
+ 516   2          TI=0;
+ 517   2          busy=0;   
+ 518   2        } 
+ 519   1      }
+ 520          
+ 521          
+ 522          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1842    ----
+   CONSTANT SIZE    =     23    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     58      14
+   IDATA SIZE       =     80    ----
+   BIT SIZE         =      4    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,137 @@
+C51 COMPILER V9.59.0.0   DS1302                                                            04/01/2022 16:39:41 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE DS1302
+OBJECT MODULE PLACED IN .\Objects\ds1302.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE ds1302.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\ds
+                    -1302.lst) TABS(2) OBJECT(.\Objects\ds1302.obj)
+
+line level    source
+
+   1          #include "ds1302.h"
+   2          
+   3          
+   4          code unsigned char w_rtc_address[7]={0x80,0x82,0x84,0x86,0x88,0x8a,0x8c}; //???????
+   5          code unsigned char r_rtc_address[7]={0x81,0x83,0x85,0x87,0x89,0x8b,0x8d}; 
+   6          
+   7          unsigned char set[6] = {2,3,5,9,5,5};
+   8          unsigned char rtc[6];
+   9          
+  10          /*
+  11          */
+  12          void Write_Ds1302_Byte(unsigned  char temp) 
+  13          {
+  14   1        unsigned char i;
+  15   1        for (i=0;i<8;i++)       
+  16   1        { 
+  17   2          SCK=0;
+  18   2          SDA=temp&0x01;
+  19   2          temp>>=1; 
+  20   2          SCK=1;
+  21   2        }
+  22   1      }   
+  23          
+  24          void Write_Ds1302( unsigned char address,unsigned char dat )     
+  25          {
+  26   1        RST=0;
+  27   1        _nop_();
+  28   1        SCK=0;
+  29   1        _nop_();
+  30   1        RST=1;  
+  31   1          _nop_();  
+  32   1        Write_Ds1302_Byte(address); 
+  33   1        Write_Ds1302_Byte(dat);   
+  34   1        RST=0; 
+  35   1      }
+  36          
+  37          unsigned char Read_Ds1302 ( unsigned char address )
+  38          {
+  39   1        unsigned char i,temp=0x00;
+  40   1        RST=0;
+  41   1        _nop_();
+  42   1        SCK=0;
+  43   1        _nop_();
+  44   1        RST=1;
+  45   1        _nop_();
+  46   1        Write_Ds1302_Byte(address);
+  47   1        for (i=0;i<8;i++)   
+  48   1        {   
+  49   2          SCK=0;
+  50   2          temp>>=1; 
+  51   2          if(SDA)
+  52   2          temp|=0x80; 
+  53   2          SCK=1;
+  54   2        } 
+C51 COMPILER V9.59.0.0   DS1302                                                            04/01/2022 16:39:41 PAGE 2   
+
+  55   1        RST=0;
+  56   1        _nop_();
+  57   1        RST=0;
+  58   1        SCK=0;
+  59   1        _nop_();
+  60   1        SCK=1;
+  61   1        _nop_();
+  62   1        SDA=0;
+  63   1        _nop_();
+  64   1        SDA=1;
+  65   1        _nop_();
+  66   1        return (temp);      
+  67   1      }
+  68          
+  69          /*
+  70          */
+  71          unsigned char* ReadRTC(void)
+  72          {
+  73   1        unsigned char i, *p;
+  74   1        unsigned char tmp[3];
+  75   1        
+  76   1        p = (unsigned char *)r_rtc_address;   //????
+  77   1        
+  78   1        for(i=0;i<3;i++){
+  79   2            tmp[i]=Read_Ds1302(*p);
+  80   2            p++;
+  81   2        }
+  82   1        
+  83   1        rtc[0] = (tmp[2] >> 4);
+  84   1        rtc[1] = (tmp[2] & 0x0F);
+  85   1        
+  86   1        rtc[2] = (tmp[1] >> 4);
+  87   1        rtc[3] = (tmp[1] & 0x0F);
+  88   1        
+  89   1        rtc[4] = (tmp[0] >> 4);
+  90   1        rtc[5] = (tmp[0] & 0x0F);
+  91   1        
+  92   1        return rtc;
+  93   1      }
+  94          
+  95          /*
+  96          */
+  97          void SetRTC(void)
+  98          {
+  99   1        Write_Ds1302(0x8E,0X00);
+ 100   1        
+ 101   1        Write_Ds1302(w_rtc_address[0], (set[4]<<4) | (set[5]));
+ 102   1        Write_Ds1302(w_rtc_address[1], (set[2]<<4) | (set[3]));
+ 103   1        Write_Ds1302(w_rtc_address[2], (set[0]<<4) | (set[1]));
+ 104   1        
+ 105   1        Write_Ds1302(0x8E,0x80);
+ 106   1      }
+ 107          
+ 108          
+ 109          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    259    ----
+   CONSTANT SIZE    =     14    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+C51 COMPILER V9.59.0.0   DS1302                                                            04/01/2022 16:39:41 PAGE 3   
+
+   DATA SIZE        =     12       3
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,4 @@
+".\Objects\STARTUP.obj",
+".\Objects\工厂灯光控制系统.obj" 
+TO ".\Objects\基础技能综合实训案例" 
+PRINT(".\Listings\基础技能综合实训案例.m51") RAMSIZE(256) 

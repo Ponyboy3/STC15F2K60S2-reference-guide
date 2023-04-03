@@ -1,0 +1,79 @@
+C51 COMPILER V9.59.0.0   ____________                                                      03/14/2023 19:19:02 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE ____________
+OBJECT MODULE PLACED IN .\Objects\定时器控制灯.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE 定时器控制灯.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listi
+                    -ngs\定时器控制灯.lst) TABS(2) OBJECT(.\Objects\定时器控制灯.obj)
+
+line level    source
+
+   1          #include "reg52.h"
+   2          sbit L1 = P0^0;
+   3          sbit L8 = P0^7;
+   4          
+   5          unsigned int count = 0;
+   6          
+   7          void Init_T0()
+   8          {
+   9   1        TMOD = 0x01;
+  10   1        TH0 = (0 - 50000) / 256;
+  11   1        TL0 = (0 - 50000) % 256;
+  12   1        
+  13   1        EA = 1;
+  14   1        ET0 = 1;
+  15   1        TR0 = 1;
+  16   1      }
+  17          
+  18          void Service_T0() interrupt 1
+  19          {
+  20   1        TH0 = (0 - 50000) / 256;
+  21   1        TL0 = (0 - 50000) % 256;
+  22   1        
+  23   1        count++;
+  24   1        if(count % 10 == 0) L1 = ~L1;
+  25   1        if(count % 100 == 0)
+  26   1        {
+  27   2          count = 0;
+  28   2          L8 = ~L8;
+  29   2        }
+  30   1      }
+  31          
+  32          void Init_Sys()
+  33          {
+  34   1        P2 = (P2 & 0x1f) | 0x80;
+  35   1        P0 = 0xff;
+  36   1        P2 &= 0x1f;
+  37   1        
+  38   1        P2 = (P2 & 0x1f) | 0xa0;
+  39   1        P0 = 0x00;
+  40   1        P2 &= 0x1f;
+  41   1        
+  42   1        P2 = (P2 & 0x1f) | 0x80;
+  43   1        P0 = 0xff;
+  44   1        Init_T0();
+  45   1      }
+  46          void main()
+  47          {
+  48   1        Init_Sys();
+  49   1        while(1)
+  50   1        {
+  51   2          
+  52   2        }
+  53   1      }
+
+C51 COMPILER V9.59.0.0   ____________                                                      03/14/2023 19:19:02 PAGE 2   
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    150    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      2    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

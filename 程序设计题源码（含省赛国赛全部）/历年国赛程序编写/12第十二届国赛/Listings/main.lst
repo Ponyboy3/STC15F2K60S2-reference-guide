@@ -1,0 +1,279 @@
+C51 COMPILER V9.55   MAIN                                                                  06/16/2022 19:12:31 PAGE 1   
+
+
+C51 COMPILER V9.55, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\keilc\pack_file\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listi
+                    -ngs\main.lst) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include <STC15F2K60S2.H>
+   2          #include "ds1302.h"  
+   3          #include "iic.h"
+   4          #include <intrins.h>
+   5          #define uchar unsigned char 
+   6          #define uint unsigned int 
+   7            
+   8          uchar code type1[]={0xc0,
+   9                              0xf9,
+  10                              0xa4,
+  11                              0xb0, 
+  12                              0x99, 
+  13                              0x92, 
+  14                              0x82, 
+  15                              0xf8, 
+  16                              0x80, 
+  17                              0x90,0xff };
+  18          uchar code type2[]={0x01,0x02,0x04,0x08,0x10,0x20,0x40,0x80}; 
+  19          uchar num1,num2,num3,num4,num5,num6,num7,num8;
+  20          uchar GN;
+  21          uchar t_2ms;
+  22          bit f_2ms;
+  23          sbit trig=P1^0;
+  24          sbit echo=P1^1;
+  25          uchar hour,second,minute;
+  26          uchar bdata U6=0xff;
+  27          sbit led1=U6^0;
+  28          sbit led2=U6^1;
+  29          sbit led3=U6^2;
+  30          sbit led4=U6^3;
+  31          sbit led5=U6^4;
+  32          sbit led6=U6^5;
+  33          //---------------------------
+  34          
+  35          
+  36          
+  37          
+  38          
+  39          
+  40          
+  41          void Delay10ms()    //@12.000MHz
+  42          {
+  43   1        unsigned char i, j;
+  44   1      
+  45   1        i = 117;
+  46   1        j = 184;
+  47   1        do
+  48   1        {
+  49   2          while (--j);
+  50   2        } while (--i);
+  51   1      }
+  52          
+  53          void smg_display(char n1,char n2,char n3,char n4,char n5,char n6,char n7,char n8)
+  54          {
+C51 COMPILER V9.55   MAIN                                                                  06/16/2022 19:12:31 PAGE 2   
+
+  55   1        char i;
+  56   1        P2=(P2&0x1f)|0xc0;
+  57   1        P0=type2[i];
+  58   1        P2=(P2&0x1f);
+  59   1        P0=0xff;
+  60   1        switch(i)
+  61   1        {
+  62   2          case 0:P2=(P2&0x1f)|0xe0;P0=type1[n1];P2=(P2&0x1f);break;
+  63   2          case 1:P2=(P2&0x1f)|0xe0;P0=type1[n2];P2=(P2&0x1f);break;
+  64   2          case 2:P2=(P2&0x1f)|0xe0;P0=type1[n3];P2=(P2&0x1f);break;
+  65   2          case 3:P2=(P2&0x1f)|0xe0;P0=type1[n4];P2=(P2&0x1f);break;
+  66   2          case 4:P2=(P2&0x1f)|0xe0;P0=type1[n5];P2=(P2&0x1f);break;
+  67   2          case 5:P2=(P2&0x1f)|0xe0;P0=type1[n6];P2=(P2&0x1f);break;
+  68   2          case 6:P2=(P2&0x1f)|0xe0;P0=type1[n7];P2=(P2&0x1f);break;
+  69   2          case 7:P2=(P2&0x1f)|0xe0;P0=type1[n8];P2=(P2&0x1f);break;
+  70   2        }
+  71   1        if(++i==8)
+  72   1          i=0;
+  73   1      }
+  74          //====================================key
+  75          uchar key_scan()
+  76          {
+  77   1        uchar H,L;
+  78   1        P3=0xdf;P44=0;P42=0;H=(~P3)&0x0f;
+  79   1        if(H==0) return 0;
+  80   1        Delay10ms();
+  81   1        P3=0x0f;P44=0;P42=0;H=(~P3)&0x0f;
+  82   1        if(H==0) return 0;  
+  83   1        P3=0xf0;P44=1;P42=1;L=(~P3)&0x20;
+  84   1        if(P44==0) L|=0x80;
+  85   1        if(P42==0) L|=0x40;
+  86   1        return H+L;
+  87   1      }
+  88          void key_change()
+  89          {
+  90   1        uchar D;
+  91   1        D=key_scan();
+  92   1        switch(D)
+  93   1        {
+  94   2          case 0x88:GN=4;break;
+  95   2          case 0x84:GN=5;break;
+  96   2          case 0x48:GN=8;break;
+  97   2          case 0x44:GN=9;break;
+  98   2          case 0:GN=0;break;  
+  99   2        }
+ 100   1      }
+ 101          //======================================³¬Éù²¨
+ 102          uchar f_count=10;
+ 103          uchar csb_send()
+ 104          {
+ 105   1        f_count=10;
+ 106   1        trig=0;
+ 107   1        TR0=1;
+ 108   1        while(f_count--)
+ 109   1        {
+ 110   2          while(!TF0);
+ 111   2          trig^=1;
+ 112   2          TH0=(65535-12)/256;
+ 113   2          TL0=(65535-12)%256; 
+ 114   2          TF0=0;    
+ 115   2        }
+ 116   1        TR0=0;
+C51 COMPILER V9.55   MAIN                                                                  06/16/2022 19:12:31 PAGE 3   
+
+ 117   1        TH0=0;
+ 118   1        TL0=0;
+ 119   1        TR0=1;
+ 120   1        while(echo && !TF0);
+ 121   1        TR0=0;
+ 122   1        
+ 123   1        if(TF0)
+ 124   1        {
+ 125   2          TF0=0;
+ 126   2          return 99;    
+ 127   2        }
+ 128   1        else
+ 129   1          return ((TH0<<8)+TL0)*0.017;
+ 130   1      }
+ 131          //==================================1302
+ 132          void xie_1302()
+ 133          {
+ 134   1        Write_Ds1302_Byte( 0x8e,0x00 );
+ 135   1        Write_Ds1302_Byte( 0x84,0x23 );
+ 136   1        Write_Ds1302_Byte( 0x82,0x59 );
+ 137   1        Write_Ds1302_Byte( 0x80,0x50 ); 
+ 138   1      }
+ 139          void du_1302()
+ 140          {
+ 141   1        hour=Read_Ds1302_Byte( 0x85 );   hour=(hour>>4)*10+(hour&0x0f);
+ 142   1        minute=Read_Ds1302_Byte( 0x83 ); minute=(minute>>4)*10+(minute&0x0f);
+ 143   1        second=Read_Ds1302_Byte( 0x81 ); second=(second>>4)*10+(second&0x0f);
+ 144   1      }
+ 145          //====================================adc
+ 146          void initial_adc()
+ 147          {
+ 148   1        IIC_Start( );
+ 149   1        IIC_SendByte(0x90+0);
+ 150   1        IIC_WaitAck( );
+ 151   1        IIC_SendByte(0x1);
+ 152   1        IIC_WaitAck( ); 
+ 153   1        IIC_Stop( );  
+ 154   1      }
+ 155          uchar du_adc()
+ 156          {
+ 157   1        uchar D;
+ 158   1        IIC_Start( );
+ 159   1        IIC_SendByte(0x90+1);
+ 160   1        IIC_WaitAck( ); 
+ 161   1        D=IIC_RecByte( ); 
+ 162   1        IIC_SendAck(1);
+ 163   1        IIC_Stop( ); 
+ 164   1        
+ 165   1        return D; 
+ 166   1      }
+ 167          //==================================dac
+ 168          void xie_dac(uchar D)
+ 169          {
+ 170   1        IIC_Start( );
+ 171   1        IIC_SendByte(0x90+0);
+ 172   1        IIC_WaitAck( );
+ 173   1        IIC_SendByte(0x40);
+ 174   1        IIC_WaitAck( ); 
+ 175   1        IIC_SendByte(D);
+ 176   1        IIC_WaitAck( );   
+ 177   1        IIC_Stop( );    
+ 178   1      }
+C51 COMPILER V9.55   MAIN                                                                  06/16/2022 19:12:31 PAGE 4   
+
+ 179          
+ 180          void time0()
+ 181          {
+ 182   1        TMOD=(TMOD&0xf0)|0x01;
+ 183   1        TH0=(65535-12)/256;
+ 184   1        TL0=(65535-12)%256;     
+ 185   1      }
+ 186          
+ 187          void time1_int1()
+ 188          {
+ 189   1        EA=1;
+ 190   1        ET1=1;
+ 191   1        TR1=1;
+ 192   1        TMOD=(TMOD&0x0f)|0x10;
+ 193   1        TH1=(65535-2000)/256;
+ 194   1        TL1=(65535-2000)%256; 
+ 195   1      }
+ 196          void initial_all()
+ 197          {
+ 198   1        P2=(P2&0x1f)|0xa0;
+ 199   1        P0=0x00;
+ 200   1        P2=(P2&0x1f); 
+ 201   1        P2=(P2&0x1f)|0x80;
+ 202   1        P0=0xff;
+ 203   1        P2=(P2&0x1f);   
+ 204   1        P2=(P2&0x1f)|0xc0;
+ 205   1        P0=0xff;
+ 206   1        P2=(P2&0x1f);
+ 207   1        P2=(P2&0x1f)|0xe0;
+ 208   1        P0=0xff;
+ 209   1        P2=(P2&0x1f); 
+ 210   1      }
+ 211          void main()
+ 212          {
+ 213   1        initial_all();
+ 214   1        time1_int1();
+ 215   1        time0();
+ 216   1        xie_1302();
+ 217   1        initial_adc();
+ 218   1        while(1)
+ 219   1        {
+ 220   2         if(f_2ms)
+ 221   2         {
+ 222   3          f_2ms=0;
+ 223   3          key_change();
+ 224   3          du_1302();
+ 225   3        
+ 226   3          num1=hour/10; num2=hour%10;
+ 227   3           num3=minute/10; num4=minute%10;
+ 228   3           num5=second/10; num6=second%10;
+ 229   3           num7=du_adc()/10; num8=du_adc()%10;
+ 230   3        
+ 231   3         }//f_2ms
+ 232   2        }
+ 233   1      }
+ 234          void cl_time1_int1() interrupt 3
+ 235          {
+ 236   1        TH1=(65535-2000)/256;
+ 237   1        TL1=(65535-2000)%256;   
+ 238   1        smg_display( num1,num2,num3,num4,num5,num6,num7,num8);
+ 239   1        f_2ms=1;
+ 240   1      }
+C51 COMPILER V9.55   MAIN                                                                  06/16/2022 19:12:31 PAGE 5   
+
+ 241          
+ 242          
+ 243          
+ 244          
+ 245          
+ 246          
+ 247          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    859    ----
+   CONSTANT SIZE    =     19    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     15      11
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      1    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

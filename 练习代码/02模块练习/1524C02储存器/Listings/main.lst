@@ -1,0 +1,187 @@
+C51 COMPILER V9.59.0.0   MAIN                                                              03/31/2023 23:28:00 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\main
+                    -.lst) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include "reg52.h"
+   2          #include "ds1302.h"  
+   3          #include "iic.h"
+   4          
+   5          #define uchar unsigned char
+   6          #define uint unsigned int
+   7          
+   8          uchar code type1[] = {0xc0,0xf9,0xa4,0xb0,0x99,0x92,0x82,0xf8,0x80,0x90,0xff,0xbf};
+   9          uchar code type2[] = {0x01,0x02,0x04,0x08,0x10,0x20,0x40,0x80};
+  10          
+  11          uchar num1,num2,num3,num4,num5,num6,num7,num8;
+  12          bit f_2ms;
+  13          uchar GN;
+  14          uchar h,m,s;
+  15          
+  16          void Display_Smg(uchar n1,uchar n2,uchar n3,uchar n4,uchar n5,uchar n6,uchar n7,uchar n8)
+  17          {
+  18   1        uchar i;
+  19   1        P0 = 0xff;
+  20   1        P2 = (P2 & 0x1f) | 0xc0;
+  21   1        P0 = type2[i];
+  22   1        P2 &= 0x1f;
+  23   1        switch(i)
+  24   1        {
+  25   2          case 0:P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n1];P2 &= 0x1f;break;
+  26   2          case 1:P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n2];P2 &= 0x1f;break;
+  27   2          case 2:P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n3];P2 &= 0x1f;break;
+  28   2          case 3:P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n4];P2 &= 0x1f;break;
+  29   2          case 4:P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n5];P2 &= 0x1f;break;
+  30   2          case 5:P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n6];P2 &= 0x1f;break;
+  31   2          case 6:P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n7];P2 &= 0x1f;break;
+  32   2          case 7:P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n8];P2 &= 0x1f;break;
+  33   2        }
+  34   1        if(++i==8)
+  35   1          i=0;
+  36   1      }
+  37          void Delay_Keys(uint t)
+  38          {
+  39   1        while(t--);
+  40   1      }
+  41          uchar Scan_Keys()
+  42          {
+  43   1        uchar d;
+  44   1        d = (~P3)&0x0f;
+  45   1        if(d == 0) return 0;
+  46   1        Delay_Keys(100);
+  47   1        if(d == 0) return 0;
+  48   1        return d;
+  49   1      }
+  50          void Change_Keys()
+  51          {
+  52   1        switch(Scan_Keys())
+  53   1        {
+  54   2          case 8:GN = 1;break;//S4
+C51 COMPILER V9.59.0.0   MAIN                                                              03/31/2023 23:28:00 PAGE 2   
+
+  55   2          case 4:GN = 2;break;
+  56   2          case 2:GN = 3;break;
+  57   2          case 1:GN = 4;break;//S7
+  58   2          case 0:GN = 0;break;
+  59   2        }
+  60   1      }
+  61          
+  62          void Init_DS1302()
+  63          {
+  64   1        Write_Ds1302_Byte(0x80,0x45);
+  65   1        Write_Ds1302_Byte(0x82,0x59);
+  66   1        Write_Ds1302_Byte(0x84,0x23);
+  67   1      }
+  68          void Du_DS1302()
+  69          {
+  70   1        h = Read_Ds1302_Byte( 0x85 );
+  71   1        m = Read_Ds1302_Byte( 0x83 );
+  72   1        s = Read_Ds1302_Byte( 0x81 );
+  73   1      }
+  74          
+  75          uchar Du_24c02(uchar addr)
+  76          {
+  77   1        uchar d;
+  78   1        IIC_Start();
+  79   1        IIC_SendByte(0xa0);
+  80   1        IIC_WaitAck();
+  81   1        IIC_SendByte(addr);
+  82   1        IIC_WaitAck();
+  83   1        IIC_Stop(); 
+  84   1        
+  85   1        IIC_Start();
+  86   1        IIC_SendByte(0xa1);
+  87   1        IIC_WaitAck();
+  88   1        d = IIC_RecByte();
+  89   1        IIC_SendAck(1);
+  90   1        IIC_Stop();
+  91   1        return d;
+  92   1      }
+  93          void Xie_24c02(uchar addr,uchar dat)
+  94          {
+  95   1        IIC_Start();
+  96   1        IIC_SendByte(0xa0);
+  97   1        IIC_WaitAck();
+  98   1        IIC_SendByte(addr);
+  99   1        IIC_WaitAck();
+ 100   1        IIC_SendByte(dat);
+ 101   1        IIC_WaitAck();
+ 102   1        IIC_Stop(); 
+ 103   1      }
+ 104          void Init_T1()
+ 105          {
+ 106   1        TMOD = (TMOD & 0x0f) | 0x10;
+ 107   1        TH1 = (65536 - 2000) / 256;
+ 108   1        TL1 = (65536 - 2000) % 256;
+ 109   1        
+ 110   1        EA = 1;
+ 111   1        ET1 = 1;
+ 112   1        TR1 = 1;
+ 113   1      }
+ 114          void Init_Sys()
+ 115          {
+ 116   1        P2 = (P2 & 0x1f) | 0x80;
+C51 COMPILER V9.59.0.0   MAIN                                                              03/31/2023 23:28:00 PAGE 3   
+
+ 117   1        P0 = 0xff;
+ 118   1        P2 &= 0x1f;
+ 119   1        P2 = (P2 & 0x1f) | 0xa0;
+ 120   1        P0 = 0x00;
+ 121   1        P2 &= 0x1f;
+ 122   1        P2 = (P2 & 0x1f) | 0xc0;
+ 123   1        P0 = 0xff;
+ 124   1        P2 &= 0x1f;
+ 125   1        P2 = (P2 & 0x1f) | 0xe0;
+ 126   1        P0 = 0xff;
+ 127   1        P2 &= 0x1f;
+ 128   1      }
+ 129          void main()
+ 130          {
+ 131   1        Init_Sys();
+ 132   1        Init_T1();
+ 133   1        Init_DS1302();
+ 134   1        h = Du_24c02(0x01);
+ 135   1        m = Du_24c02(0x03);
+ 136   1        s = Du_24c02(0x05);
+ 137   1        while(1)
+ 138   1        {
+ 139   2          if(f_2ms == 1)
+ 140   2          {
+ 141   3            f_2ms = 0;
+ 142   3            Change_Keys();
+ 143   3            while(Scan_Keys());
+ 144   3            Du_DS1302();
+ 145   3            Xie_24c02(0x01,h);
+ 146   3            Xie_24c02(0x03,m);
+ 147   3            Xie_24c02(0x05,s);
+ 148   3            num1=h/16;num2=h%16;num3=11;num4=m/16;num5=m%16;num6=11;num7=s/16;num8=s%16;
+ 149   3          }
+ 150   2        }
+ 151   1      }
+ 152          void Service_T1() interrupt 3
+ 153          {
+ 154   1        TH1 = (65536 - 2000) / 256;
+ 155   1        TL1 = (65536 - 2000) % 256;
+ 156   1        
+ 157   1        f_2ms = 1;
+ 158   1        Display_Smg(num1,num2,num3,num4,num5,num6,num7,num8);
+ 159   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    639    ----
+   CONSTANT SIZE    =     20    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     12      13
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      1    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

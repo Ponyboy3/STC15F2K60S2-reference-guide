@@ -1,0 +1,397 @@
+C51 COMPILER V9.55   MAIN                                                                  07/18/2022 17:41:35 PAGE 1   
+
+
+C51 COMPILER V9.55, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\keil_mdk\pack_file\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Li
+                    -stings\main.lst) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          /*****************************
+   2          方法一  利用移位（<<,>>）运算符实现（1.左流水 2.右流水 3.外到内 4.内到外）
+   3          *****************************
+   4          #include <STC15F2K60S2.h>
+   5          #include <intrins.h>
+   6          #define uchar unsigned char 
+   7          #define uint unsigned int
+   8            
+   9          uchar led;
+  10          uchar i;
+  11          
+  12          void Delay500ms()   //@12.000MHz
+  13          {
+  14            unsigned char i, j, k;
+  15          
+  16            _nop_();
+  17            _nop_();
+  18            i = 23;
+  19            j = 205;
+  20            k = 120;
+  21            do
+  22            {
+  23              do
+  24              {
+  25                while (--k);
+  26              } while (--j);
+  27            } while (--i);
+  28          }
+  29          
+  30          void initial_all()
+  31          {
+  32            P2=(0x1f)|0xa0;
+  33            P0=0x00;
+  34            P2=(0x1f);
+  35            P2=(0x1f)|0x80;
+  36            P0=0xff;
+  37            P2=(0x1f);  
+  38            P2=(0x1f)|0xc0;
+  39            P0=0x00;
+  40            P2=(0x1f);  
+  41            P2=(0x1f)|0xe0;
+  42            P0=0xff;
+  43            P2=(0x1f);    
+  44          }
+  45          void main()
+  46          {
+  47            initial_all();
+  48          while(1)
+  49          {
+  50            P2=(0x1f)|0x80;
+  51            led=0xfd;
+  52            for(i=0;i<8;i++)
+  53            {
+  54              P0=led;
+C51 COMPILER V9.55   MAIN                                                                  07/18/2022 17:41:35 PAGE 2   
+
+  55              led=led<<1;     //移位是整体向左移动一位，尾部补零
+  56              
+  57              Delay500ms();   
+  58            }
+  59            P0=0xff;
+  60            Delay500ms();
+  61          
+  62          
+  63          //  led=0x7f;
+  64          //  for(i=0;i<8;i++)
+  65          //  {
+  66          //    P0=led;
+  67          //    led=led>>1;
+  68          //    
+  69          //    Delay500ms();   
+  70          //  }
+  71          //  P0=0xff;
+  72          //  Delay500ms(); 
+  73           }
+  74          }
+  75          
+  76          *************/
+  77          
+  78          
+  79          
+  80          
+  81          
+  82          /*****************************
+  83          方法二  利用本征函数_crol_() _cror_() 实现（1.左流水 2.右流水 3.外到内 4.内到外）
+  84          **********************
+  85          #include <STC15F2K60S2.h>
+  86          #include <intrins.h>
+  87          #define uchar unsigned char 
+  88          #define uint unsigned int 
+  89          
+  90          uchar led;
+  91          uchar i;
+  92          
+  93          void Delay500ms()   //@12.000MHz
+  94          {
+  95            unsigned char i, j, k;
+  96          
+  97            _nop_();
+  98            _nop_();
+  99            i = 23;
+ 100            j = 205;
+ 101            k = 120;
+ 102            do
+ 103            {
+ 104              do
+ 105              {
+ 106                while (--k);
+ 107              } while (--j);
+ 108            } while (--i);
+ 109          }
+ 110          
+ 111          void initial_all()
+ 112          {
+ 113            P2=(P2&0x1f)|0xa0;
+ 114            P0=0x00;
+ 115            P2=(P2&0x1f);
+ 116            P2=(P2&0x1f)|0x80;
+C51 COMPILER V9.55   MAIN                                                                  07/18/2022 17:41:35 PAGE 3   
+
+ 117            P0=0xff;
+ 118            P2=(P2&0x1f); 
+ 119            P2=(P2&0x1f)|0xc0;
+ 120            P0=0x00;
+ 121            P2=(P2&0x1f); 
+ 122            P2=(P2&0x1f)|0xe0;
+ 123            P0=0xff;
+ 124            P2=(P2&0x1f); 
+ 125          }
+ 126          void main()
+ 127          {
+ 128            initial_all();
+ 129            while(1)
+ 130            {
+ 131             P2=(P2&0x1f)|0x80;
+ 132             led=0xfe;
+ 133              for(i=0;i<8;i++)
+ 134              {
+ 135               P0=led;
+ 136                led=_crol_(led,1);      //移位函数是将高位拿给低位如此循环
+ 137              Delay500ms();
+ 138                if(i==7)
+ 139                {
+ 140                 P0=0xff;
+ 141                 Delay500ms();
+ 142                }     
+ 143              }
+ 144            
+ 145             led=0x7f;
+ 146              for(i=0;i<8;i++)
+ 147              {
+ 148               P0=led;
+ 149                led=_cror_(led,1);      
+ 150              Delay500ms();
+ 151                if(i==7)
+ 152                {
+ 153                 P0=0xff;
+ 154                 Delay500ms();
+ 155                }       
+ 156              } 
+ 157            }
+ 158          }
+ 159          
+ 160          ********/
+ 161          
+ 162          
+ 163          
+ 164          
+ 165          
+ 166          
+ 167          
+ 168          /*****************************
+ 169          方法三  利用数组 实现（1.左流水 2.右流水 3.外到内 4.内到外）
+ 170          ************************
+ 171          #include <STC15F2K60S2.H>
+ 172          #include <intrins.h>
+ 173          #define uchar unsigned char 
+ 174          #define uint unsigned int 
+ 175            
+ 176          uchar code type1[]={0xfe,0xfd,0xfb,0xf7,0xef,0xdf,0xbf,0x7f};
+ 177          uchar code type2[]={0x7f,0xbf,0xdf,0xef,0xf7,0xfb,0xfd,0xfe};
+ 178          uchar code type3[]={0x7e,0xbd,0xdb,0xe7};
+C51 COMPILER V9.55   MAIN                                                                  07/18/2022 17:41:35 PAGE 4   
+
+ 179          uchar code type4[]={0xe7,0xdb,0xbd,0x7e};
+ 180          
+ 181          uchar i;
+ 182          
+ 183          void Delay500ms()   //@12.000MHz
+ 184          {
+ 185            unsigned char i, j, k;
+ 186          
+ 187            _nop_();
+ 188            _nop_();
+ 189            i = 23;
+ 190            j = 205;
+ 191            k = 120;
+ 192            do
+ 193            {
+ 194              do
+ 195              {
+ 196                while (--k);
+ 197              } while (--j);
+ 198            } while (--i);
+ 199          }
+ 200          
+ 201          void initial_all()
+ 202          {
+ 203            P2=(P2&0x1f)|0xa0;
+ 204            P0=0x00;
+ 205            P2=(P2&0x1f);
+ 206            P2=(P2&0x1f)|0x80;
+ 207            P0=0xff;
+ 208            P2=(P2&0x1f); 
+ 209            P2=(P2&0x1f)|0xc0;
+ 210            P0=0x00;
+ 211            P2=(P2&0x1f); 
+ 212            P2=(P2&0x1f)|0xe0;
+ 213            P0=0xff;
+ 214            P2=(P2&0x1f); 
+ 215          }
+ 216          void main()
+ 217          {
+ 218            initial_all();
+ 219            while(1)
+ 220            {
+ 221             P2=(P2&0x1f)|0x80;
+ 222             for(i=0;i<8;i++)
+ 223              {
+ 224               P0=type1[i];
+ 225               Delay500ms();
+ 226              } 
+ 227             for(i=0;i<8;i++)
+ 228              {
+ 229               P0=type2[i];
+ 230               Delay500ms();
+ 231              }   
+ 232             for(i=0;i<4;i++)
+ 233              {
+ 234               P0=type3[i];
+ 235               Delay500ms();
+ 236              }   
+ 237             for(i=0;i<4;i++)
+ 238              {
+ 239               P0=type4[i];
+ 240               Delay500ms();
+C51 COMPILER V9.55   MAIN                                                                  07/18/2022 17:41:35 PAGE 5   
+
+ 241              }   
+ 242          
+ 243            }//while
+ 244          }
+ 245          
+ 246          ******/
+ 247          
+ 248          
+ 249          
+ 250          
+ 251          /*****************************
+ 252          LED流水，同时继电器跟随LED流水不断动作
+ 253          ******************************/
+ 254          #include <STC15F2K60S2.H>
+ 255          #include <intrins.h>
+ 256          #define uchar unsigned char 
+ 257          #define uint unsigned int 
+ 258            
+ 259          uchar code type1[]={0xfe,0xfd,0xfb,0xf7,0xef,0xdf,0xbf,0x7f};
+ 260          
+ 261          
+ 262          uchar i;
+ 263          uchar f_2ms;
+ 264          bit flag;
+ 265          
+ 266          
+ 267          void Delay500ms()   //@12.000MHz
+ 268          {
+ 269   1        unsigned char i, j, k;
+ 270   1      
+ 271   1        _nop_();
+ 272   1        _nop_();
+ 273   1        i = 23;
+ 274   1        j = 205;
+ 275   1        k = 120;
+ 276   1        do
+ 277   1        {
+ 278   2          do
+ 279   2          {
+ 280   3            while (--k);
+ 281   3          } while (--j);
+ 282   2        } while (--i);
+ 283   1      }
+ 284          
+ 285          void time1_int1()
+ 286          {
+ 287   1        EA=1;
+ 288   1        ET1=1;
+ 289   1        TR1=1;
+ 290   1        TMOD=(TMOD&0x0f)|0x10;
+ 291   1        TH1=(65536-2000)/256;
+ 292   1        TL1=(65536-2000)%256;   
+ 293   1      }
+ 294          void initial_all()
+ 295          {
+ 296   1        P2=(P2&0x1f)|0xa0;
+ 297   1        P0=0x00;
+ 298   1        P2=(P2&0x1f);
+ 299   1        P2=(P2&0x1f)|0x80;
+ 300   1        P0=0xff;
+ 301   1        P2=(P2&0x1f); 
+ 302   1        P2=(P2&0x1f)|0xc0;
+C51 COMPILER V9.55   MAIN                                                                  07/18/2022 17:41:35 PAGE 6   
+
+ 303   1        P0=0x00;
+ 304   1        P2=(P2&0x1f); 
+ 305   1        P2=(P2&0x1f)|0xe0;
+ 306   1        P0=0xff;
+ 307   1        P2=(P2&0x1f); 
+ 308   1      }
+ 309          void main()
+ 310          {
+ 311   1        initial_all();
+ 312   1        time1_int1();
+ 313   1        while(1)
+ 314   1        {
+ 315   2         if(f_2ms==1)
+ 316   2         {
+ 317   3           f_2ms=0;
+ 318   3           
+ 319   3         for(i=0;i<8;i++)
+ 320   3          {
+ 321   4           flag=~flag;
+ 322   4           P0=0xff;
+ 323   4           P2=(P2&0x1f)|0x80;
+ 324   4           P0=type1[i];
+ 325   4           P2=(P2&0x1f);
+ 326   4           
+ 327   4      
+ 328   4           if(flag==1)
+ 329   4           {
+ 330   5             P2=(P2&0x1f)|0xa0;
+ 331   5             P0=0x10;
+ 332   5             P2=(P2&0x1f);
+ 333   5           }
+ 334   4           else
+ 335   4           {
+ 336   5             P2=(P2&0x1f)|0xa0;
+ 337   5             P0=0x00;
+ 338   5             P2=(P2&0x1f);
+ 339   5           }       
+ 340   4           Delay500ms();
+ 341   4          } 
+ 342   3      
+ 343   3          
+ 344   3          
+ 345   3          
+ 346   3        }//f_2ms; 
+ 347   2        }//while
+ 348   1      }
+ 349          
+ 350          void cl_time1_int1() interrupt 3
+ 351          {
+ 352   1        TH1=(65536-2000)/256;
+ 353   1        TL1=(65536-2000)%256;   
+ 354   1        f_2ms=1;
+ 355   1        
+ 356   1        
+ 357   1      }
+ 358          
+ 359          
+ 360          
+ 361          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+C51 COMPILER V9.55   MAIN                                                                  07/18/2022 17:41:35 PAGE 7   
+
+   CODE SIZE        =    181    ----
+   CONSTANT SIZE    =      8    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      2    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      1    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

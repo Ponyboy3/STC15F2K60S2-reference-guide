@@ -1,0 +1,4 @@
+".\Objects\STARTUP.obj",
+".\Objects\矩阵键盘的基本操作.obj" 
+TO ".\Objects\矩阵键盘" 
+PRINT(".\Listings\矩阵键盘.m51") RAMSIZE(256) 

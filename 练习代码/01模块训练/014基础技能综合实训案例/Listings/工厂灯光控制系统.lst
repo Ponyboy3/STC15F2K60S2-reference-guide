@@ -1,0 +1,291 @@
+C51 COMPILER V9.59.0.0   ________________                                                  03/04/2023 18:03:23 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE ________________
+OBJECT MODULE PLACED IN .\Objects\工厂灯光控制系统.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE 工厂灯光控制系统.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\L
+                    -istings\工厂灯光控制系统.lst) TABS(2) OBJECT(.\Objects\工厂灯光控制系统.obj)
+
+line level    source
+
+   1          #include "reg52.h"
+   2          
+   3          sfr AUXR = 0x8e;
+   4          
+   5          sbit S4 = P3^3;
+   6          sbit S5 = P3^2;
+   7          
+   8          unsigned char code SMG_NUM[10]={0xc0,0xf9,0xa4,0xb0,0x99,0x92,0x82,0xf8,0x80,0x90};
+   9          
+  10          
+  11          unsigned char t_h = 0;
+  12          unsigned char t_m = 0;
+  13          unsigned char t_s = 0;
+  14          unsigned char count = 0;
+  15          unsigned char command = 0;
+  16          
+  17          unsigned int stat_led = 0xff;
+  18          
+  19          void Delay(unsigned int t)
+  20          {
+  21   1        while(t--);
+  22   1        while(t--);
+  23   1      }
+  24          
+  25          void SelectHC573(unsigned char n,unsigned int dat)
+  26          {
+  27   1        P0 = dat;
+  28   1        switch(n)
+  29   1        {
+  30   2          case 4:
+  31   2            P2 = (P2 & 0x1f) | 0x80;
+  32   2          break;
+  33   2          case 5:
+  34   2            P2 = (P2 & 0x1f) | 0xa0;
+  35   2          break;
+  36   2          case 6:
+  37   2            P2 = (P2 & 0x1f) | 0xc0;
+  38   2          break;
+  39   2          case 7:
+  40   2            P2 = (P2 & 0x1f) | 0xe0;
+  41   2          break;
+  42   2          case 0:
+  43   2            P2 = (P2 & 0x1f) | 0x00;
+  44   2          break;
+  45   2        }
+  46   1        P2 = (P2 & 0x1f) | 0x00; //关闭译码器
+  47   1      }
+  48          
+  49          //led检测函数
+  50          void Check_LED()
+  51          {
+  52   1        unsigned char i = 0;
+  53   1        for(i = 0;i < 8;i++)
+  54   1        {
+C51 COMPILER V9.59.0.0   ________________                                                  03/04/2023 18:03:23 PAGE 2   
+
+  55   2          stat_led = 0xfe << i;
+  56   2          SelectHC573(4,stat_led);
+  57   2          Delay(60000);
+  58   2          Delay(60000);
+  59   2        }
+  60   1        for(i = 0;i < 8;i++)
+  61   1        {
+  62   2          stat_led = ~(0xfe << i);
+  63   2          SelectHC573(4,stat_led);
+  64   2          Delay(60000);
+  65   2          Delay(60000);
+  66   2        }
+  67   1      }
+  68          
+  69          //数码管检测函数
+  70          void Check_SMG()
+  71          {
+  72   1        unsigned char i = 0;
+  73   1        for(i = 0;i < 8;i++)
+  74   1        {
+  75   2          SelectHC573(6,0x01 << i);
+  76   2          SelectHC573(7,0x00);
+  77   2          Delay(60000);
+  78   2          Delay(60000);
+  79   2        }
+  80   1        SelectHC573(7,0xff);
+  81   1      }
+  82          
+  83          void Init_Sys()
+  84          {
+  85   1        SelectHC573(0,0x00);
+  86   1        SelectHC573(5,0x00);
+  87   1        SelectHC573(4,stat_led);
+  88   1        SelectHC573(6,0xff);
+  89   1        SelectHC573(7,0xff);
+  90   1      }
+  91          
+  92          //定时器0初始化
+  93          void Init_Timer0()
+  94          {
+  95   1        TMOD = 0x21; //T0,T1同时工作
+  96   1        TH0 = (65535 - 50000) / 256;
+  97   1        TL0 = (65535 - 50000) % 256;
+  98   1        
+  99   1        EA = 1;
+ 100   1        ET0 = 1;
+ 101   1        TR0 = 1;
+ 102   1      }
+ 103          
+ 104          //串口初始化
+ 105          void Init_Uart()
+ 106          {
+ 107   1        TMOD = 0x21; //T0,T1同时工作
+ 108   1        TH1 = 0xfd;
+ 109   1        TL1 = 0xfd;
+ 110   1        TR1 = 1;
+ 111   1        
+ 112   1        SCON = 0x50;
+ 113   1        AUXR = 0x00;
+ 114   1        
+ 115   1        EA = 1;
+ 116   1        ES = 1;
+C51 COMPILER V9.59.0.0   ________________                                                  03/04/2023 18:03:23 PAGE 3   
+
+ 117   1      }
+ 118          
+ 119          void ServiceTimer0() interrupt 1
+ 120          {
+ 121   1        TH0 = (65535 - 50000) / 256;
+ 122   1        TL0 = (65535 - 50000) % 256;
+ 123   1        
+ 124   1        count++;
+ 125   1        if(count == 20)
+ 126   1        {
+ 127   2          count = 0;
+ 128   2          t_s++;
+ 129   2        }
+ 130   1        if(t_s == 60)
+ 131   1        {
+ 132   2          t_s = 0;
+ 133   2          t_m++;
+ 134   2          if(t_m == 60)
+ 135   2          {
+ 136   3            t_m = 0;
+ 137   3            t_h++;
+ 138   3          }
+ 139   2        }
+ 140   1      }
+ 141          
+ 142          
+ 143          //串口发送函数
+ 144          void SendByte(unsigned char dat)
+ 145          {
+ 146   1        SBUF = dat;
+ 147   1        while(TI == 0);
+ 148   1        TI = 0;
+ 149   1      }
+ 150          
+ 151          //命令解析函数
+ 152          void Executecommand()
+ 153          {
+ 154   1        if(command != 0x00)
+ 155   1        {
+ 156   2          switch(command & 0x0f)
+ 157   2          {
+ 158   3            case 0xa0:
+ 159   3              stat_led = (stat_led | 0x0f) & (~command | 0xf0);
+ 160   3              SelectHC573(4,stat_led);
+ 161   3              command = 0x00;
+ 162   3            break;
+ 163   3            case 0xb0:
+ 164   3              SendByte((t_h / 10 << 4) | (t_h % 10));
+ 165   3              SendByte((t_m / 10 << 4) | (t_m % 10));
+ 166   3              SendByte((t_s / 10 << 4) | (t_s % 10));
+ 167   3              command = 0x00;
+ 168   3            break;
+ 169   3          }
+ 170   2        }
+ 171   1      }
+ 172          
+ 173          void ServiceUart() interrupt 4
+ 174          {
+ 175   1        if(RI == 1)
+ 176   1        {
+ 177   2          command = SBUF;
+ 178   2          RI = 0;
+C51 COMPILER V9.59.0.0   ________________                                                  03/04/2023 18:03:23 PAGE 4   
+
+ 179   2        }
+ 180   1      }
+ 181          
+ 182          void DisplaySMG(unsigned char pos,unsigned char value)
+ 183          {
+ 184   1        SelectHC573(6,0x01 << pos);
+ 185   1        SelectHC573(7,value);
+ 186   1      }
+ 187          
+ 188          void DelayS(unsigned int t)
+ 189          {
+ 190   1        while(t--);
+ 191   1      }
+ 192          
+ 193          void DisplayTime()
+ 194          {
+ 195   1        DisplaySMG(0,SMG_NUM[t_h / 10]);
+ 196   1        DelayS(500);
+ 197   1        DisplaySMG(1,SMG_NUM[t_h % 10]);
+ 198   1        DelayS(500);
+ 199   1        DisplaySMG(2,0xbf);
+ 200   1        DelayS(500);
+ 201   1        DisplaySMG(3,SMG_NUM[t_m / 10]);
+ 202   1        DelayS(500);
+ 203   1        DisplaySMG(4,SMG_NUM[t_m % 10]);
+ 204   1        DelayS(500);
+ 205   1        DisplaySMG(5,0xbf);
+ 206   1        DelayS(500);
+ 207   1        DisplaySMG(6,SMG_NUM[t_s / 10]);
+ 208   1        DelayS(500);
+ 209   1        DisplaySMG(7,SMG_NUM[t_s % 10]);
+ 210   1        DelayS(500);
+ 211   1      }
+ 212          
+ 213          //按键扫描
+ 214          void ScanKeys()
+ 215          {
+ 216   1        if(S4 == 0)
+ 217   1        {
+ 218   2          DisplayTime();
+ 219   2          if(S4 == 0)
+ 220   2          {
+ 221   3            while(S4 == 0)
+ 222   3            {
+ 223   4              DisplayTime();
+ 224   4            }
+ 225   3            stat_led = (stat_led | 0x80) & (~stat_led | 0x7f);
+ 226   3            SelectHC573(4,stat_led);
+ 227   3          }
+ 228   2        }
+ 229   1        
+ 230   1        if(S5 == 0)
+ 231   1        {
+ 232   2          DisplayTime();
+ 233   2          if(S5 == 0)
+ 234   2          {
+ 235   3            while(S5 == 0)
+ 236   3            {
+ 237   4              DisplayTime();
+ 238   4            }
+ 239   3            stat_led = (stat_led | 0x40) & (~stat_led | 0xbf);
+ 240   3            SelectHC573(4,stat_led);
+C51 COMPILER V9.59.0.0   ________________                                                  03/04/2023 18:03:23 PAGE 5   
+
+ 241   3          }
+ 242   2        }
+ 243   1      }
+ 244          
+ 245          
+ 246          void main()
+ 247          {
+ 248   1        Init_Sys();
+ 249   1        Check_LED();
+ 250   1        Check_SMG();
+ 251   1        Init_Timer0();
+ 252   1        Init_Uart();
+ 253   1        while(1)
+ 254   1        {
+ 255   2          Executecommand();
+ 256   2          DisplayTime();
+ 257   2          ScanKeys();
+ 258   2        }
+ 259   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    734    ----
+   CONSTANT SIZE    =     10    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      7    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

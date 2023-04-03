@@ -1,0 +1,4 @@
+".\Objects\STARTUP.obj",
+".\Objects\串口.obj" 
+TO ".\Objects\串口基础" 
+PRINT(".\Listings\串口基础.m51") RAMSIZE(256) 

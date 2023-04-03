@@ -1,0 +1,134 @@
+C51 COMPILER V9.59.0.0   __________________                                                03/02/2023 00:00:08 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE __________________
+OBJECT MODULE PLACED IN .\Objects\独立按键的基本操作.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE 独立按键的基本操作.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.
+                    -\Listings\独立按键的基本操作.lst) TABS(2) OBJECT(.\Objects\独立按键的基本操作.obj)
+
+line level    source
+
+   1          #include "reg52.h"
+   2          
+   3          sbit S7 = P3^0;
+   4          sbit S6 = P3^1;
+   5          sbit S5 = P3^2;
+   6          sbit S4 = P3^3;
+   7          
+   8          sbit L1 = P0^0;
+   9          sbit L2 = P0^1;
+  10          sbit L3 = P0^2;
+  11          sbit L4 = P0^3;
+  12          sbit L5 = P0^4;
+  13          sbit L6 = P0^5;
+  14          
+  15          void SelectHC573(unsigned char channel);
+  16          void ScanKeys_Alone();
+  17          void DelayKey(unsigned int t);
+  18          
+  19          void SelectHC573(unsigned char channel)
+  20          {
+  21   1        switch(channel)
+  22   1        {
+  23   2          case 4:
+  24   2            P2 = (P2 & 0x1f) | 0x80;
+  25   2          break;
+  26   2          case 5:
+  27   2            P2 = (P2 & 0x1f) | 0xa0;
+  28   2          break;
+  29   2          case 6:
+  30   2            P2 = (P2 & 0x1f) | 0xc0;
+  31   2          break;
+  32   2          case 7:
+  33   2            P2 = (P2 & 0x1f) | 0xe0;
+  34   2          break;
+  35   2        }
+  36   1      }
+  37          
+  38          void DelayKey(unsigned int t)
+  39          {
+  40   1        while(t--);
+  41   1      }
+  42          
+  43          void ScanKeys_Alone()
+  44          {
+  45   1        if(S7 == 0)
+  46   1        {
+  47   2          DelayKey(100);
+  48   2          if(S7 == 0)
+  49   2          {
+  50   3            SelectHC573(4);
+  51   3            L1 = 0;
+  52   3            while(S7 == 0);
+  53   3            L1 = 1;
+  54   3          }
+C51 COMPILER V9.59.0.0   __________________                                                03/02/2023 00:00:08 PAGE 2   
+
+  55   2        }
+  56   1        if(S6 == 0)
+  57   1        {
+  58   2          DelayKey(100);
+  59   2          if(S6 == 0)
+  60   2          {
+  61   3            SelectHC573(4);
+  62   3            L2 = 0;
+  63   3            while(S6 == 0);
+  64   3            L2 = 1;
+  65   3          }
+  66   2        }
+  67   1        if(S5 == 0)
+  68   1        {
+  69   2          DelayKey(100);
+  70   2          if(S5 == 0)
+  71   2          {
+  72   3            SelectHC573(4);
+  73   3            L3 = 0;
+  74   3            while(S5 == 0);
+  75   3            L3 = 1;
+  76   3          }
+  77   2        }
+  78   1        if(S4 == 0)
+  79   1        {
+  80   2          DelayKey(100);
+  81   2          if(S4 == 0)
+  82   2          {
+  83   3            SelectHC573(4);
+  84   3            L4 = 0;
+  85   3            while(S4 == 0);
+  86   3            L4 = 1;
+  87   3          }
+  88   2        }
+  89   1      }
+  90          
+  91          void Init_System()
+  92          {
+  93   1        SelectHC573(4);
+  94   1        P0 = 0xff;
+  95   1        SelectHC573(5);
+  96   1        P0 = 0x00;
+  97   1      }
+  98          
+  99          void main()
+ 100          {
+ 101   1        //Init_System();
+ 102   1        while(1)
+ 103   1        {
+ 104   2          ScanKeys_Alone();
+ 105   2        }
+ 106   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    172    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+C51 COMPILER V9.59.0.0   __________________                                                03/02/2023 00:00:08 PAGE 3   
+
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

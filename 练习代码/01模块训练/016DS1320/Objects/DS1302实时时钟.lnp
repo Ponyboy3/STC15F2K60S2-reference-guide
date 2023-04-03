@@ -1,0 +1,6 @@
+".\Objects\STARTUP.obj",
+".\Objects\DS1302.obj",
+".\Objects\DS1302时钟.obj",
+".\Objects\smg_ca.obj" 
+TO ".\Objects\DS1302实时时钟" 
+PRINT(".\Listings\DS1302实时时钟.m51") RAMSIZE(256) 

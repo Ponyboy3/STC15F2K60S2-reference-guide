@@ -1,0 +1,5 @@
+".\Objects\STARTUP.obj",
+".\Objects\DS18B20温度读取.obj",
+".\Objects\onewire.obj" 
+TO ".\Objects\DS18B20的基本应用" 
+PRINT(".\Listings\DS18B20的基本应用.m51") RAMSIZE(256) 

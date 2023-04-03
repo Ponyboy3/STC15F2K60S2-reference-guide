@@ -1,0 +1,103 @@
+C51 COMPILER V9.59.0.0   EX6                                                               04/20/2022 14:13:16 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE EX6
+OBJECT MODULE PLACED IN .\Objects\ex6.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE ex6.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\ex6.l
+                    -st) TABS(2) OBJECT(.\Objects\ex6.obj)
+
+line level    source
+
+   1          /*******************************************************************************
+   2          * 文件名称：数码管控制实验
+   3          * 实验目的：1.掌握数码管驱动电路的设计方法
+   4          *           2.掌握数码管显示的基本原理
+   5          * 实验配置：J3跳线配置为IO方式，J5配置为BTN、J2配置为1-3和2-4
+   6          * 程序现象：数码管跳动显示0-9
+   7          * 硬件环境：IAP15F2K61S2@11.0592MHz
+   8          * 注意事项：无
+   9          * 日期版本：2022/02/08
+  10          *******************************************************************************/
+  11          #include "reg52.h"
+  12          #include "intrins.h"
+  13          
+  14          code unsigned char tab[] = {0xc0, 0xf9, 0xa4, 0xb0, 0x99, 0x92, 0x82, 0xf8, 0x80, 0x90};
+  15          
+  16          
+  17          void cls_buzz()
+  18          {
+  19   1          P2 = (P2 & 0x1F | 0xA0);
+  20   1          P0 = 0x00;
+  21   1          P2 &= 0x1F;
+  22   1      }
+  23          
+  24          void delay()  //delay 200ms @ 11.0592M
+  25          {
+  26   1          unsigned char i, j, k;
+  27   1      
+  28   1          _nop_();
+  29   1          _nop_();
+  30   1          i = 9;
+  31   1          j = 104;
+  32   1          k = 139;
+  33   1          do
+  34   1          {
+  35   2              do
+  36   2              {
+  37   3                  while (--k);
+  38   3              }
+  39   2              while (--j);
+  40   2          }
+  41   1          while (--i);
+  42   1      }
+  43          void main(void)
+  44          {
+  45   1          unsigned char i;
+  46   1          cls_buzz();
+  47   1          while(1)
+  48   1          {
+  49   2              for(i = 0; i < 9; i++)
+  50   2              {
+  51   3                  P2 = ((P2 & 0x1f) | 0xc0);
+  52   3                  P0 = 0x55;
+  53   3                  P2 &= 0x1f;
+  54   3      
+C51 COMPILER V9.59.0.0   EX6                                                               04/20/2022 14:13:16 PAGE 2   
+
+  55   3                  P2 = ((P2 & 0x1f) | 0xe0);
+  56   3                  P0 = tab[i];
+  57   3                  P2 &= 0x1f;
+  58   3                  delay();
+  59   3                  delay();
+  60   3                  delay();
+  61   3      
+  62   3                  P2 = ((P2 & 0x1f) | 0xc0);
+  63   3                  P0 = 0xAA;
+  64   3                  P2 &= 0x1f;
+  65   3      
+  66   3                  P2 = ((P2 & 0x1f) | 0xe0);
+  67   3                  P0 = tab[i + 1];
+  68   3                  P2 &= 0x1f;
+  69   3                  delay();
+  70   3                  delay();
+  71   3                  delay();
+  72   3      
+  73   3              }
+  74   2      
+  75   2          }
+  76   1      }
+  77          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    115    ----
+   CONSTANT SIZE    =     10    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

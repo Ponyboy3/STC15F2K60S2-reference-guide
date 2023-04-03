@@ -1,0 +1,1 @@
+"..\..\..\模块训练\006矩阵按键的扫描原理与基本应用\矩阵键盘的基本操作.c" OPTIMIZE (8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\矩阵键盘的基本操作.lst) TABS (2) OBJECT(.\Objects\矩阵键盘的基本操作.obj)

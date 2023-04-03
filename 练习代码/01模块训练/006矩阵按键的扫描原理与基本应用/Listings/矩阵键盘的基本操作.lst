@@ -1,0 +1,216 @@
+C51 COMPILER V9.59.0.0   __________________                                                03/01/2023 23:40:04 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE __________________
+OBJECT MODULE PLACED IN .\Objects\矩阵键盘的基本操作.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE 矩阵键盘的基本操作.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.
+                    -\Listings\矩阵键盘的基本操作.lst) TABS(2) OBJECT(.\Objects\矩阵键盘的基本操作.obj)
+
+line level    source
+
+   1          #include "reg52.h"
+   2          
+   3          sfr P4    = 0xC0;
+   4          
+   5          sbit R1 = P3^0;
+   6          sbit R2 = P3^1;
+   7          sbit R3 = P3^2;
+   8          sbit R4 = P3^3;
+   9          
+  10          sbit C1 = P4^4;
+  11          sbit C2 = P4^2;
+  12          sbit C3 = P3^5;
+  13          sbit C4 = P3^4;
+  14          
+  15          unsigned char code SMG_duanma[18] = 
+  16              {0xc0,0xf9,0xa4,0xb0,0x99,0x92,
+  17               0x82,0xf8,0x80,0x90,0x88,0x80,
+  18               0xc6,0xc0,0x86,0x8e,0xbf,0x7f}; 
+  19          
+  20          void SelectHC573(unsigned char channel);
+  21          void DiplayKeyNum(unsigned char value);
+  22          void ScanKeysMulti();
+  23          
+  24          void SelectHC573(unsigned char channel)
+  25          {
+  26   1        switch(channel)
+  27   1        {
+  28   2          case 4:
+  29   2            P2 = (P2 & 0x0f) | 0x80;
+  30   2          break;
+  31   2          case 5:
+  32   2            P2 = (P2 & 0x0f) | 0xa0;
+  33   2          break;
+  34   2          case 6:
+  35   2            P2 = (P2 & 0x0f) | 0xc0;
+  36   2          break;
+  37   2          case 7:
+  38   2            P2 = (P2 & 0x0f) | 0xe0;
+  39   2          break;
+  40   2        }
+  41   1      }
+  42          
+  43          void DiplayKeyNum(unsigned char value)
+  44          {
+  45   1        SelectHC573(6);
+  46   1        P0 = 0x01;
+  47   1        SelectHC573(7);
+  48   1        P0 = value;
+  49   1      }
+  50          
+  51          unsigned char key_num;
+  52          void ScanKeysMulti()
+  53          {
+  54   1        R1 = 0;                            //扫描第一行
+C51 COMPILER V9.59.0.0   __________________                                                03/01/2023 23:40:04 PAGE 2   
+
+  55   1        R2 = R3 = R4 = 1;
+  56   1        C1 = C2 = C3 = C4 = 1;
+  57   1        if(C1 == 0)
+  58   1        {
+  59   2          
+  60   2          while(C1 == 0);
+  61   2          key_num = 0;
+  62   2          DiplayKeyNum(SMG_duanma[key_num]);
+  63   2        }
+  64   1        else if(C2 == 0)
+  65   1        {
+  66   2          while(C2 ==0);
+  67   2          key_num = 1;
+  68   2          DiplayKeyNum(SMG_duanma[key_num]);
+  69   2        }
+  70   1        else if(C3 == 0)
+  71   1        {
+  72   2          while(C3 ==0);
+  73   2          key_num = 2;
+  74   2          DiplayKeyNum(SMG_duanma[key_num]);
+  75   2        }
+  76   1        else if(C4 == 0)
+  77   1        {
+  78   2          while(C4 ==0);
+  79   2          key_num = 3;
+  80   2          DiplayKeyNum(SMG_duanma[key_num]);
+  81   2        }
+  82   1        
+  83   1        R2 = 0;                           //扫描第二行
+  84   1        R1 = R3 = R4 = 1;
+  85   1        C1 = C2 = C3 = C4 = 1;
+  86   1        if(C1 == 0)
+  87   1        {
+  88   2          
+  89   2          while(C1 == 0);
+  90   2          key_num = 4;
+  91   2          DiplayKeyNum(SMG_duanma[key_num]);
+  92   2        }
+  93   1        else if(C2 == 0)
+  94   1        {
+  95   2          while(C2 ==0);
+  96   2          key_num = 5;
+  97   2          DiplayKeyNum(SMG_duanma[key_num]);
+  98   2        }
+  99   1        else if(C3 == 0)
+ 100   1        {
+ 101   2          while(C3 ==0);
+ 102   2          key_num = 6;
+ 103   2          DiplayKeyNum(SMG_duanma[key_num]);
+ 104   2        }
+ 105   1        else if(C4 == 0)
+ 106   1        {
+ 107   2          while(C4 ==0);
+ 108   2          key_num = 7;
+ 109   2          DiplayKeyNum(SMG_duanma[key_num]);
+ 110   2        }
+ 111   1        
+ 112   1        R3 = 0;                           //扫描第三行
+ 113   1        R1 = R2 = R4 = 1;
+ 114   1        C1 = C2 = C3 = C4 = 1;
+ 115   1        if(C1 == 0)
+ 116   1        {
+C51 COMPILER V9.59.0.0   __________________                                                03/01/2023 23:40:04 PAGE 3   
+
+ 117   2          
+ 118   2          while(C1 == 0);
+ 119   2          key_num = 8;
+ 120   2          DiplayKeyNum(SMG_duanma[key_num]);
+ 121   2        }
+ 122   1        else if(C2 == 0)
+ 123   1        {
+ 124   2          while(C2 ==0);
+ 125   2          key_num = 9;
+ 126   2          DiplayKeyNum(SMG_duanma[key_num]);
+ 127   2        }
+ 128   1        else if(C3 == 0)
+ 129   1        {
+ 130   2          while(C3 ==0);
+ 131   2          key_num = 10;
+ 132   2          DiplayKeyNum(SMG_duanma[key_num]);
+ 133   2        }
+ 134   1        else if(C4 == 0)
+ 135   1        {
+ 136   2          while(C4 ==0);
+ 137   2          key_num = 11;
+ 138   2          DiplayKeyNum(SMG_duanma[key_num]);
+ 139   2        }
+ 140   1        
+ 141   1        R4 = 0;                           //扫描第四行
+ 142   1        R1 = R2 = R3 = 1;
+ 143   1        C1 = C2 = C3 = C4 = 1;
+ 144   1        if(C1 == 0)
+ 145   1        {
+ 146   2          
+ 147   2          while(C1 == 0);
+ 148   2          key_num = 12;
+ 149   2          DiplayKeyNum(SMG_duanma[key_num]);
+ 150   2        }
+ 151   1        else if(C2 == 0)
+ 152   1        {
+ 153   2          while(C2 ==0);
+ 154   2          key_num = 13;
+ 155   2          DiplayKeyNum(SMG_duanma[key_num]);
+ 156   2        }
+ 157   1        else if(C3 == 0)
+ 158   1        {
+ 159   2          while(C3 ==0);
+ 160   2          key_num = 14;
+ 161   2          DiplayKeyNum(SMG_duanma[key_num]);
+ 162   2        }
+ 163   1        else if(C4 == 0)
+ 164   1        {
+ 165   2          while(C4 ==0);
+ 166   2          key_num = 15;
+ 167   2          DiplayKeyNum(SMG_duanma[key_num]);
+ 168   2        }
+ 169   1      }
+ 170          
+ 171          void Init_System()
+ 172          {
+ 173   1        SelectHC573(4);
+ 174   1        P0 = 0xff;
+ 175   1        SelectHC573(5);
+ 176   1        P0 = 0x00;
+ 177   1      }
+ 178          
+C51 COMPILER V9.59.0.0   __________________                                                03/01/2023 23:40:04 PAGE 4   
+
+ 179          void main()
+ 180          {
+ 181   1        Init_System();
+ 182   1        while(1)
+ 183   1        {
+ 184   2          ScanKeysMulti();
+ 185   2        }
+ 186   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    344    ----
+   CONSTANT SIZE    =     18    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      1    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,179 @@
+BL51 BANKED LINKER/LOCATER V6.22.2.0                                                    03/06/2023  12:14:19  PAGE 1
+
+
+BL51 BANKED LINKER/LOCATER V6.22.2.0, INVOKED BY:
+C:\KEIL_V5\C51\BIN\BL51.EXE .\Objects\·äÃùÆ÷¼Ä´æÆ÷.obj TO .\Objects\·äÃùÆ÷ PRINT (.\Listings\·äÃùÆ÷.m51) RAMSIZE (256)
+
+
+MEMORY MODEL: SMALL
+
+
+INPUT MODULES INCLUDED:
+  .\Objects\·äÃùÆ÷¼Ä´æÆ÷.obj (____________)
+  C:\KEIL_V5\C51\LIB\C51S.LIB (?C_STARTUP)
+
+
+LINK MAP OF MODULE:  .\Objects\·äÃùÆ÷ (____________)
+
+
+            TYPE    BASE      LENGTH    RELOCATION   SEGMENT NAME
+            -----------------------------------------------------
+
+            * * * * * * *   D A T A   M E M O R Y   * * * * * * *
+            REG     0000H     0008H     ABSOLUTE     "REG BANK 0"
+            IDATA   0008H     0001H     UNIT         ?STACK
+
+            * * * * * * *   C O D E   M E M O R Y   * * * * * * *
+            CODE    0000H     0003H     ABSOLUTE     
+            CODE    0003H     00ACH     UNIT         ?PR?DISPLAY_LED?____________
+            CODE    00AFH     001DH     UNIT         ?PR?INIT_SYS?____________
+            CODE    00CCH     0015H     UNIT         ?PR?DELAY?____________
+            CODE    00E1H     000CH     UNIT         ?C_C51STARTUP
+            CODE    00EDH     0008H     UNIT         ?PR?MAIN?____________
+
+
+
+OVERLAY MAP OF MODULE:   .\Objects\·äÃùÆ÷ (____________)
+
+
+SEGMENT
+  +--> CALLED SEGMENT
+---------------------
+?C_C51STARTUP
+  +--> ?PR?MAIN?____________
+
+?PR?MAIN?____________
+  +--> ?PR?INIT_SYS?____________
+  +--> ?PR?DISPLAY_LED?____________
+
+?PR?DISPLAY_LED?____________
+  +--> ?PR?DELAY?____________
+
+
+
+SYMBOL TABLE OF MODULE:  .\Objects\·äÃùÆ÷ (____________)
+
+  VALUE           TYPE          NAME
+  ----------------------------------
+
+  -------         MODULE        ____________
+  C:0000H         SYMBOL        _ICE_DUMMY_
+  D:0080H         PUBLIC        P0
+BL51 BANKED LINKER/LOCATER V6.22.2.0                                                  03/06/2023  12:14:19  PAGE 2
+
+
+  D:0090H         PUBLIC        P1
+  D:00A0H         PUBLIC        P2
+  D:00B0H         PUBLIC        P3
+  D:00A8H         PUBLIC        IE
+  D:00B8H         PUBLIC        IP
+  C:00EDH         PUBLIC        main
+  D:0098H         PUBLIC        SCON
+  D:0088H         PUBLIC        TCON
+  C:00AFH         PUBLIC        Init_Sys
+  D:00C8H         PUBLIC        T2CON
+  C:0003H         PUBLIC        Display_led
+  C:00D4H         PUBLIC        Delay
+  D:00D0H         PUBLIC        PSW
+  -------         PROC          INIT_SYS
+  C:00AFH         LINE#         3
+  C:00AFH         LINE#         4
+  C:00AFH         LINE#         5
+  C:00B7H         LINE#         6
+  C:00BAH         LINE#         7
+  C:00BDH         LINE#         9
+  C:00C5H         LINE#         10
+  C:00C8H         LINE#         11
+  C:00CBH         LINE#         12
+  -------         ENDPROC       INIT_SYS
+  C:00CCH         SYMBOL        L?0029
+  C:00CEH         SYMBOL        L?0030
+  -------         PROC          L?0028
+  -------         ENDPROC       L?0028
+  C:00CCH         SYMBOL        L?0029
+  C:00CEH         SYMBOL        L?0030
+  -------         PROC          DELAY
+  -------         DO            
+  D:0007H         SYMBOL        i
+  D:0006H         SYMBOL        j
+  D:0005H         SYMBOL        k
+  -------         ENDDO         
+  C:00D4H         LINE#         14
+  C:00D4H         LINE#         15
+  C:00D4H         LINE#         16
+  C:00DAH         LINE#         18
+  C:00DAH         LINE#         20
+  C:00DAH         LINE#         21
+  C:00DCH         LINE#         22
+  C:00DEH         LINE#         23
+  C:00E0H         LINE#         25
+  -------         ENDPROC       DELAY
+  -------         PROC          DISPLAY_LED
+  -------         DO            
+  D:0004H         SYMBOL        i
+  -------         ENDDO         
+  C:0003H         LINE#         27
+  C:0003H         LINE#         28
+  C:0003H         LINE#         30
+  C:000FH         LINE#         31
+  C:000FH         LINE#         32
+  C:0017H         LINE#         33
+  C:0018H         LINE#         34
+BL51 BANKED LINKER/LOCATER V6.22.2.0                                                  03/06/2023  12:14:19  PAGE 3
+
+
+  C:0018H         LINE#         35
+  C:0018H         LINE#         36
+  C:001BH         LINE#         37
+  C:0023H         LINE#         38
+  C:0026H         LINE#         39
+  C:0026H         LINE#         40
+  C:0026H         LINE#         41
+  C:0029H         LINE#         42
+  C:002CH         LINE#         44
+  C:0038H         LINE#         45
+  C:0038H         LINE#         46
+  C:0040H         LINE#         47
+  C:004BH         LINE#         48
+  C:004BH         LINE#         49
+  C:004BH         LINE#         50
+  C:004EH         LINE#         51
+  C:0051H         LINE#         53
+  C:0059H         LINE#         54
+  C:005CH         LINE#         55
+  C:005CH         LINE#         56
+  C:005CH         LINE#         57
+  C:005FH         LINE#         58
+  C:0067H         LINE#         59
+  C:006AH         LINE#         60
+  C:006DH         LINE#         62
+  C:0078H         LINE#         63
+  C:0078H         LINE#         64
+  C:0080H         LINE#         65
+  C:008CH         LINE#         66
+  C:008CH         LINE#         67
+  C:008CH         LINE#         68
+  C:008FH         LINE#         69
+  C:0092H         LINE#         71
+  C:009AH         LINE#         72
+  C:009DH         LINE#         73
+  C:009DH         LINE#         74
+  C:009DH         LINE#         75
+  C:00A0H         LINE#         76
+  C:00A8H         LINE#         77
+  C:00ABH         LINE#         78
+  C:00AEH         LINE#         79
+  -------         ENDPROC       DISPLAY_LED
+  -------         PROC          MAIN
+  C:00EDH         LINE#         81
+  C:00EDH         LINE#         82
+  C:00EDH         LINE#         83
+  C:00F0H         LINE#         84
+  C:00F0H         LINE#         85
+  C:00F0H         LINE#         86
+  C:00F3H         LINE#         87
+  -------         ENDPROC       MAIN
+  -------         ENDMOD        ____________
+
+Program Size: data=9.0 xdata=0 code=245
+LINK/LOCATE RUN COMPLETE.  0 WARNING(S),  0 ERROR(S)

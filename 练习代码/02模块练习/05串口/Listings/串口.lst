@@ -1,0 +1,80 @@
+C51 COMPILER V9.59.0.0   ____                                                              03/06/2023 21:42:37 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE ____
+OBJECT MODULE PLACED IN .\Objects\串口.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE 串口.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\串口
+                    -.lst) TABS(2) OBJECT(.\Objects\串口.obj)
+
+line level    source
+
+   1          #include "reg52.h"
+   2          
+   3          sfr AUXR = 0x8e;
+   4          
+   5          #define BAUD       9600  //波特率
+   6          #define SYSTEMCLOCK  11059200L  //系统时钟频率
+   7          
+   8          unsigned char urdat;
+   9          
+  10          void GetByte(unsigned char dat);
+  11          void Init_Uart()
+  12          {
+  13   1        TMOD = 0x00;
+  14   1        TL1 = (65536 - (SYSTEMCLOCK / 4 / BAUD));
+  15   1        TH1 = (65536 - (SYSTEMCLOCK / 4 / BAUD)) >> 8;
+  16   1        ET1 = 0;        //禁止定时器1中断
+  17   1        TR1 = 1;        //启动定时器1
+  18   1        
+  19   1        SCON = 0x50;
+  20   1        AUXR = 0x40;
+  21   1          
+  22   1        ES = 1;
+  23   1        EA = 1;
+  24   1      }
+  25          
+  26          void ServiceUart() interrupt 4
+  27          {
+  28   1        if(RI == 1)
+  29   1        {
+  30   2          RI = 0;//人工清零
+  31   2          urdat = SBUF;
+  32   2          GetByte(urdat + 1);
+  33   2          GetByte(0x5a);
+  34   2          GetByte(0xa5);
+  35   2        }
+  36   1      }
+  37          
+  38          void GetByte(unsigned char dat)
+  39          {
+  40   1        SBUF = dat;
+  41   1        while(TI == 0);
+  42   1        TI = 0;
+  43   1      }
+  44          
+  45          void main()
+  46          {
+  47   1        Init_Uart();
+  48   1        GetByte(0x5a);
+  49   1        GetByte(0xa5);
+  50   1        while(1)
+  51   1        {
+  52   2          
+  53   2        }
+  54   1      }
+C51 COMPILER V9.59.0.0   ____                                                              03/06/2023 21:42:37 PAGE 2   
+
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    128    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      1    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

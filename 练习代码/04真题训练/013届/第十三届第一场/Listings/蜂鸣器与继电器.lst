@@ -1,0 +1,135 @@
+C51 COMPILER V9.59.0.0   ______________                                                    03/05/2023 16:43:45 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE ______________
+OBJECT MODULE PLACED IN .\Objects\蜂鸣器与继电器.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE ..\..\..\模块训练\002蜂鸣器与继电器的基本控制\蜂鸣器与继电器.c OPTIMIZE(
+                    -8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\蜂鸣器与继电器.lst) TABS(2) OBJECT(.\Objects\蜂鸣器与继电器.obj)
+
+line level    source
+
+   1          #include "reg52.h"
+   2          
+   3          sbit HC138_A = P2^5;
+   4          sbit HC138_B = P2^6;
+   5          sbit HC138_C = P2^7;
+   6          
+   7          void Delay(unsigned int t)
+   8          {
+   9   1        while(t--);
+  10   1        while(t--);
+  11   1      }
+  12          
+  13          void InitHC138(unsigned char n)
+  14          {
+  15   1        switch(n)
+  16   1        {
+  17   2          case 4:
+  18   2            HC138_C = 1;
+  19   2            HC138_B = 0;
+  20   2            HC138_A = 0;   //让Y4输出低电平
+  21   2            //   P2 = (P2 & 0x1f) | 0x80 
+  22   2          break;
+  23   2          case 5:
+  24   2            HC138_C = 1;
+  25   2            HC138_B = 0;
+  26   2            HC138_A = 1;   //让Y5输出低电平
+  27   2          break;
+  28   2          case 6:
+  29   2            HC138_C = 1;
+  30   2            HC138_B = 1;
+  31   2            HC138_A = 0;   //让Y6输出低电平
+  32   2          break;
+  33   2          case 7:
+  34   2            HC138_C = 1;
+  35   2            HC138_B = 1;
+  36   2            HC138_A = 1;   //让Y7输出低电平
+  37   2          break;
+  38   2        }
+  39   1      }
+  40          
+  41          void OutputP0(unsigned char channel,unsigned char date)
+  42          {
+  43   1        InitHC138(channel);//让Yn输出低电平
+  44   1        P0 = date;
+  45   1      }
+  46          
+  47          //LED点灯函数
+  48          void LEDRunning()//Y4 --> CBA = 100                         
+  49          {
+  50   1        unsigned int i;
+  51   1        
+  52   1        for(i=0;i<3;i++)
+  53   1        {
+  54   2          OutputP0(4,0x00);
+C51 COMPILER V9.59.0.0   ______________                                                    03/05/2023 16:43:45 PAGE 2   
+
+  55   2          Delay(60000);
+  56   2          Delay(60000);
+  57   2          
+  58   2          OutputP0(4,0xff);
+  59   2          Delay(60000);
+  60   2          Delay(60000);
+  61   2        }
+  62   1        
+  63   1        for(i=1;i<=8;i++)
+  64   1        {
+  65   2          OutputP0(4,(0xff << i));
+  66   2          Delay(60000);
+  67   2          Delay(60000);
+  68   2        }
+  69   1        
+  70   1        InitHC138(5);//让Y5输出低电平
+  71   1        P0 = 0x10;
+  72   1        Delay(60000);
+  73   1        Delay(60000);
+  74   1        P0 = 0x00;
+  75   1        
+  76   1        InitHC138(4);//让Y4输出低电平
+  77   1        for(i=1;i<=8;i++)
+  78   1        {
+  79   2          P0 = ~(0xff << i);
+  80   2          Delay(60000);
+  81   2          Delay(60000);
+  82   2        }
+  83   1        
+  84   1        InitHC138(5);//让Y5输出低电平
+  85   1        P0 = 0x40;
+  86   1        Delay(60000);
+  87   1        Delay(60000);
+  88   1        P0 = 0x00;
+  89   1      }
+  90          
+  91          //初始化函数
+  92          void InitSystem()
+  93          {
+  94   1        InitHC138(5);//让Y5输出低电平
+  95   1        
+  96   1        P0 = 0x00;
+  97   1        
+  98   1      }
+  99          
+ 100          void main()
+ 101          {
+ 102   1        InitSystem();
+ 103   1        while(1)
+ 104   1        {
+ 105   2          LEDRunning();
+ 106   2        }
+ 107   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    226    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+C51 COMPILER V9.59.0.0   ______________                                                    03/05/2023 16:43:45 PAGE 3   
+
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,134 @@
+C51 COMPILER V9.59.0.0   EX7                                                               04/20/2022 16:41:16 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE EX7
+OBJECT MODULE PLACED IN .\Objects\ex7.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE ex7.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\ex7.l
+                    -st) TABS(2) OBJECT(.\Objects\ex7.obj)
+
+line level    source
+
+   1          /*******************************************************************************
+   2          * 文件名称：数码管控制实验
+   3          * 实验目的：1.掌握数码管动态扫描的基本原理,掌握数码管消除“鬼影”的方法
+   4          *           2.掌握51单片机定时器工作模式和配置方法
+   5          *           3.掌握keil uvision集成开发环境下，中断服务函数设计方法
+   6          * 实验配置：J3跳线配置为IO方式，J5配置为BTN、J2配置为1-3和2-4
+   7          * 程序现象：数码管动态显示
+   8          * 硬件环境：IAP15F2K61S2@11.0592MHz
+   9          * 注意事项：理解动态显示和静态显示
+  10          * 日期版本：2022/02/08
+  11          *******************************************************************************/
+  12          #include "reg52.h"
+  13          #include "intrins.h"
+  14          sfr AUXR = 0x8E;    //定义辅助寄存器，因为在51单片机头文件中没有定义
+  15                                    //  0    1      2      3     4     5     6     7    8    9      熄灭
+  16          code unsigned char tab[] = { 0xc0, 0xf9, 0xa4, 0xb0, 0x99, 0x92, 0x82, 0xf8, 0x80, 0x90, 0xFF};
+  17          unsigned char dspbuf[8] = {10, 10, 10, 10, 10, 10, 10, 10}; //显示缓冲区
+  18          unsigned char dspcom = 0;  //显示位选
+  19          
+  20          unsigned char ms = 0;
+  21          unsigned char counter = 0;  //200ms 加1,最大值255
+  22          
+  23          void display(void);
+  24          
+  25          
+  26          void cls_buzz()
+  27          {
+  28   1          P2 = (P2 & 0x1F | 0xA0);
+  29   1          P0 = 0x00;
+  30   1          P2 &= 0x1F;
+  31   1      }
+  32          
+  33          void cls_led()
+  34          {
+  35   1          P2 = (P2 & 0x1F | 0x80);
+  36   1          P0 = 0xFF;
+  37   1          P2 &= 0x1F;
+  38   1      }
+  39          
+  40          //主函数
+  41          void main(void)
+  42          {
+  43   1          cls_buzz();
+  44   1          cls_led();
+  45   1      
+  46   1          AUXR |= 0x80; //定时模式下，1T模式，IAP15F2K61S2单片机特殊功能寄存器不分频
+  47   1          TMOD &= 0xF0;      //T1在模式3下被禁止。T0工作在方式1下，16位自动重装定时器
+  48   1          TL0 = 0xCD;       //1ms定时
+  49   1          TH0 = 0xD4;
+  50   1          TF0 = 0;
+  51   1          TR0 = 1;
+  52   1          ET0 = 1;
+  53   1          EA = 1;
+  54   1      
+C51 COMPILER V9.59.0.0   EX7                                                               04/20/2022 16:41:16 PAGE 2   
+
+  55   1          while(1)
+  56   1          {
+  57   2              if(counter >= 100)
+  58   2              {
+  59   3                  dspbuf[0] = counter / 100;
+  60   3              }
+  61   2              else
+  62   2              {
+  63   3                  dspbuf[0] = 10;  //10对应熄灭
+  64   3              }
+  65   2              if(counter >= 10)
+  66   2              {
+  67   3                  dspbuf[1] = counter % 100 / 10;
+  68   3              }
+  69   2              else
+  70   2              {
+  71   3                  dspbuf[1] = 10;
+  72   3              }
+  73   2              dspbuf[2] = counter % 10;
+  74   2          }
+  75   1      }
+  76          
+  77          //定时器中断服务函数
+  78          void isr_timer_0(void)  interrupt 1  //默认中断优先级 1
+  79          {
+  80   1          if(++ms == 200)
+  81   1          {
+  82   2              ms = 0;
+  83   2              counter++;
+  84   2          }
+  85   1          display();  //1ms执行一次
+  86   1      
+  87   1      }
+  88          
+  89          void display(void)
+  90          {
+  91   1          P2 = ((P2 & 0x1f) | 0xe0);
+  92   1          P0 = 0xff;
+  93   1          P2 &= 0x1f;
+  94   1      
+  95   1          P2 = ((P2 & 0x1f) | 0xc0);
+  96   1          P0 = (1 << dspcom);
+  97   1          P2 &= 0x1f;
+  98   1      
+  99   1          P2 = ((P2 & 0x1f) | 0xe0);
+ 100   1          P0 = tab[dspbuf[dspcom]];
+ 101   1          P2 &= 0x1f;
+ 102   1          if(++dspcom == 8)
+ 103   1          {
+ 104   2              dspcom = 0;
+ 105   2          }
+ 106   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    269    ----
+   CONSTANT SIZE    =     11    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     11    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+C51 COMPILER V9.59.0.0   EX7                                                               04/20/2022 16:41:16 PAGE 3   
+
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

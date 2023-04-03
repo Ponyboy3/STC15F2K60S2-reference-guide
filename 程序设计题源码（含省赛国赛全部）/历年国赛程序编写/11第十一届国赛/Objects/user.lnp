@@ -1,0 +1,6 @@
+".\Objects\main.obj",
+".\Objects\onewire.obj",
+".\Objects\iic.obj",
+".\Objects\ds1302.obj" 
+TO ".\Objects\user" 
+PRINT(".\Listings\user.m51") RAMSIZE(256) 

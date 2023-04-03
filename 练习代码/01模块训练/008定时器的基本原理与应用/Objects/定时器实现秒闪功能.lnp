@@ -1,0 +1,4 @@
+".\Objects\STARTUP.obj",
+".\Objects\定时器.obj" 
+TO ".\Objects\定时器实现秒闪功能" 
+PRINT(".\Listings\定时器实现秒闪功能.m51") RAMSIZE(256) 

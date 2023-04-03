@@ -1,0 +1,124 @@
+C51 COMPILER V9.59.0.0   DS18B20________                                                   03/05/2023 00:23:13 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE DS18B20________
+OBJECT MODULE PLACED IN .\Objects\DS18B20温度读取.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE DS18B20温度读取.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Li
+                    -stings\DS18B20温度读取.lst) TABS(2) OBJECT(.\Objects\DS18B20温度读取.obj)
+
+line level    source
+
+   1          #include "reg52.h"
+   2          #include "absacc.h"
+   3          #include "onewire.h"
+   4          
+   5          unsigned char code SMGNoDot_CA[10] = 
+   6          {0xc0,0xf9,0xa4,0xb0,0x99,0x92,0x82,0xf8,0x80,0x90};
+   7          unsigned char code SMGDot_CA[10] = 
+   8          {0x40,0x79,0x24,0x30,0x19,0x12,0x02,0x78,0x00,0x10};
+   9          
+  10          unsigned int temp = 0;
+  11          
+  12          void DelaySMG(unsigned int t)
+  13          {
+  14   1        while(t--);
+  15   1      }
+  16          
+  17          void DisplaySMG_Bit(unsigned char pos,unsigned char dat)
+  18          {
+  19   1        XBYTE[0xE000] = 0xff;
+  20   1        XBYTE[0xC000] = 0x01 << pos;
+  21   1        XBYTE[0xE000] = dat;
+  22   1      }
+  23          
+  24          void Display_All(unsigned char dat)
+  25          {
+  26   1        XBYTE[0xc000] = 0xff;
+  27   1        XBYTE[0xe000] = dat;
+  28   1      }
+  29          
+  30          void DisplaySMG_Temp()
+  31          {
+  32   1        DisplaySMG_Bit(7,SMGNoDot_CA[temp % 10]);
+  33   1        DelaySMG(100);
+  34   1        DisplaySMG_Bit(6,SMGDot_CA[(temp % 100) / 10]);
+  35   1        DelaySMG(100);
+  36   1        DisplaySMG_Bit(5,SMGNoDot_CA[temp / 100]);
+  37   1        DelaySMG(100);
+  38   1        
+  39   1        DisplaySMG_Bit(4,0xff);
+  40   1        DelaySMG(100);
+  41   1        DisplaySMG_Bit(3,0xff);
+  42   1        DelaySMG(100);
+  43   1        DisplaySMG_Bit(2,0xff);
+  44   1        DelaySMG(100);
+  45   1        DisplaySMG_Bit(1,0xff);
+  46   1        DelaySMG(100);
+  47   1        DisplaySMG_Bit(0,0xff);
+  48   1        DelaySMG(100);
+  49   1        
+  50   1        Display_All(0xff);
+  51   1      }
+  52          
+  53          void Delay(unsigned int t)
+  54          {
+C51 COMPILER V9.59.0.0   DS18B20________                                                   03/05/2023 00:23:13 PAGE 2   
+
+  55   1        while(t--)
+  56   1        {
+  57   2          DisplaySMG_Temp();
+  58   2        }
+  59   1      }
+  60          void Read_DS18B20_temp()
+  61          {
+  62   1        unsigned char LSB,MSB;
+  63   1        
+  64   1        init_ds18b20();
+  65   1        Write_DS18B20(0xcc);
+  66   1        Write_DS18B20(0x44);
+  67   1        
+  68   1        Delay(1000);
+  69   1        
+  70   1        init_ds18b20();
+  71   1        Write_DS18B20(0xcc);
+  72   1        Write_DS18B20(0xbe);
+  73   1        
+  74   1        LSB = Read_DS18B20();
+  75   1        MSB = Read_DS18B20();
+  76   1        
+  77   1        temp = MSB;
+  78   1        temp = (temp <<= 8 ) | LSB;
+  79   1        //temp >>= 4;
+  80   1        
+  81   1        
+  82   1        if((temp & 0xf800) == 0x0000)
+  83   1        {
+  84   2          temp >>= 4;
+  85   2          temp = temp * 10;
+  86   2          temp = temp + (LSB & 0x0f) * 0.625;
+  87   2        }
+  88   1        
+  89   1      }
+  90          void main()
+  91          {
+  92   1        XBYTE[0x8000] = 0xff;
+  93   1        while(1)
+  94   1        {
+  95   2          Read_DS18B20_temp();
+  96   2          DisplaySMG_Temp();
+  97   2        }
+  98   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    386    ----
+   CONSTANT SIZE    =     20    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      2       1
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

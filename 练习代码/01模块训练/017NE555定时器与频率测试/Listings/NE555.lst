@@ -1,0 +1,197 @@
+C51 COMPILER V9.59.0.0   NE555                                                             03/07/2023 21:32:00 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE NE555
+OBJECT MODULE PLACED IN .\Objects\NE555.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE NE555.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\NE5
+                    -55.lst) TABS(2) OBJECT(.\Objects\NE555.obj)
+
+line level    source
+
+   1          #include "reg52.h"
+   2          
+   3          unsigned char code SMG_duanma[18] = 
+   4              {0xc0,0xf9,0xa4,0xb0,0x99,0x92,
+   5               0x82,0xf8,0x80,0x90,0x88,0x80,
+   6               0xc6,0xc0,0x86,0x8e,0xbf,0x7f};
+   7              
+   8          unsigned int count_f = 0;
+   9          unsigned int dat_f = 0; 
+  10          
+  11          void SelectHC573(unsigned char channel,unsigned char dat)
+  12          {
+  13   1        P2 = (P2 & 0x1f) | 0x00;
+  14   1        switch(channel)
+  15   1        {
+  16   2          case 4:
+  17   2            P2 = (P2 & 0x1f) | 0x80;
+  18   2          break;
+  19   2          case 5:
+  20   2            P2 = (P2 & 0x1f) | 0xa0;
+  21   2          break;
+  22   2          case 6:
+  23   2            P2 = (P2 & 0x1f) | 0xc0;
+  24   2          break;
+  25   2          case 7:
+  26   2            P2 = (P2 & 0x1f) | 0xe0;
+  27   2          break;
+  28   2        }
+  29   1        P2 = (P2 & 0x1f) | 0x00;
+  30   1      }
+*** WARNING C280 IN LINE 11 OF NE555.c: 'dat': unreferenced local variable
+  31          
+  32          void Delay(unsigned int t)
+  33          {
+  34   1        while(t--);
+  35   1        
+  36   1      }
+  37          
+  38          void DispalySMG_Bit(unsigned char pos,unsigned char value)
+  39          {
+  40   1        SelectHC573(6,0x01 << pos);
+  41   1        SelectHC573(7,value);
+  42   1        Delay(500);
+  43   1        SelectHC573(6,0x01 << pos);
+  44   1        SelectHC573(7,0xff);
+  45   1      }
+  46            
+  47          void Init_Timer()
+  48          {
+  49   1        TMOD = 0x16;//T1定时，T0计数
+  50   1        TL0 = 0xff;
+  51   1        TH0 = 0xff;
+  52   1        
+  53   1        TL1 = (65536 - 50000) / 256;
+C51 COMPILER V9.59.0.0   NE555                                                             03/07/2023 21:32:00 PAGE 2   
+
+  54   1        TH1 = (65536 - 50000) % 256;
+  55   1        
+  56   1        EA = 1;
+  57   1        ET0 = 1;
+  58   1        ET1 = 1;
+  59   1        TR0 = 1;
+  60   1        TR1 = 1;
+  61   1      }
+  62          
+  63          void Service_T0() interrupt 1
+  64          {
+  65   1        count_f++;
+  66   1      } 
+  67          unsigned char count_t = 0;
+  68          void Service_T1() interrupt 3
+  69          {
+  70   1        TL1 = (65536 - 50000) / 256;
+  71   1        TH1 = (65536 - 50000) % 256;
+  72   1        
+  73   1        count_t++;
+  74   1        if(count_t == 20)
+  75   1        {
+  76   2          dat_f = count_f;
+  77   2          count_f = 0;
+  78   2          count_t = 0;
+  79   2        }
+  80   1        
+  81   1      } 
+  82          
+  83          
+  84          void Display_SMG()
+  85          {
+  86   1        P2 = ((P2 & 0x1f) | 0xc0);
+  87   1        P0 = 0x01 << 0;
+  88   1        P2 &= 0x1f;
+  89   1        P2 = ((P2 & 0x1f) | 0xe0);
+  90   1        P0 = 0x8e;
+  91   1        P2 &= 0x1f;
+  92   1        Delay(500);
+  93   1        
+  94   1        P2 = ((P2 & 0x1f) | 0xc0);
+  95   1        P0 = 0x01 << 1;
+  96   1        P2 &= 0x1f;
+  97   1        P2 = ((P2 & 0x1f) | 0xe0);
+  98   1        P0 = 0xff;
+  99   1        P2 &= 0x1f;
+ 100   1        Delay(500);
+ 101   1        
+ 102   1        P2 = ((P2 & 0x1f) | 0xc0);
+ 103   1        P0 = 0x01 << 2;
+ 104   1        P2 &= 0x1f;
+ 105   1        P2 = ((P2 & 0x1f) | 0xe0);
+ 106   1        P0 = 0xff;
+ 107   1        P2 &= 0x1f;
+ 108   1        Delay(500);
+ 109   1        
+ 110   1          P2 = ((P2 & 0x1f) | 0xc0);
+ 111   1          P0 = 0x01 << 3;
+ 112   1          P2 &= 0x1f;
+ 113   1          P2 = ((P2 & 0x1f) | 0xe0);
+ 114   1          P0 = SMG_duanma[dat_f / 10000];
+ 115   1          P2 &= 0x1f;
+C51 COMPILER V9.59.0.0   NE555                                                             03/07/2023 21:32:00 PAGE 3   
+
+ 116   1          Delay(500);
+ 117   1          
+ 118   1          P2 = ((P2 & 0x1f) | 0xc0);
+ 119   1          P0 = 0x01 << 4;
+ 120   1          P2 &= 0x1f;
+ 121   1          P2 = ((P2 & 0x1f) | 0xe0);
+ 122   1          P0 = SMG_duanma[(dat_f / 1000) % 10];
+ 123   1          P2 &= 0x1f;
+ 124   1          Delay(500);
+ 125   1          
+ 126   1          P2 = ((P2 & 0x1f) | 0xc0);
+ 127   1          P0 = 0x01 << 5;
+ 128   1          P2 &= 0x1f;
+ 129   1          P2 = ((P2 & 0x1f) | 0xe0);
+ 130   1          P0 = SMG_duanma[(dat_f / 100) % 10];
+ 131   1          P2 &= 0x1f;
+ 132   1          Delay(500);
+ 133   1        
+ 134   1          P2 = ((P2 & 0x1f) | 0xc0);
+ 135   1          P0 = 0x01 << 6;
+ 136   1          P2 &= 0x1f;
+ 137   1          P2 = ((P2 & 0x1f) | 0xe0);
+ 138   1          P0 = SMG_duanma[(dat_f / 10) % 10];
+ 139   1          P2 &= 0x1f;
+ 140   1          Delay(500);
+ 141   1        
+ 142   1          P2 = ((P2 & 0x1f) | 0xc0);
+ 143   1          P0 = 0x01 << 7;
+ 144   1          P2 &= 0x1f;
+ 145   1          P2 = ((P2 & 0x1f) | 0xe0);
+ 146   1          P0 = SMG_duanma[dat_f % 10];
+ 147   1          P2 &= 0x1f;
+ 148   1          Delay(500);
+ 149   1      }
+ 150          
+ 151          void main()
+ 152          {
+ 153   1        P2 = ((P2 & 0x1f) | 0x80);
+ 154   1        P0 = 0xff;
+ 155   1        P2 &= 0x1f;
+ 156   1        
+ 157   1        P2 = ((P2 & 0x1f) | 0xa0);
+ 158   1        P0 = 0x00;
+ 159   1        P2 &= 0x1f;
+ 160   1        
+ 161   1        Init_Timer();
+ 162   1        while(1)
+ 163   1        {
+ 164   2          Display_SMG();
+ 165   2        }
+ 166   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    543    ----
+   CONSTANT SIZE    =     18    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      5       1
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+C51 COMPILER V9.59.0.0   NE555                                                             03/07/2023 21:32:00 PAGE 4   
+
+
+C51 COMPILATION COMPLETE.  1 WARNING(S),  0 ERROR(S)

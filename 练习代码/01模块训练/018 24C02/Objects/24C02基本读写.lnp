@@ -1,0 +1,5 @@
+".\Objects\STARTUP.obj",
+".\Objects\24C02基本读写.obj",
+".\Objects\iic.obj" 
+TO ".\Objects\24C02基本读写" 
+PRINT(".\Listings\24C02基本读写.m51") RAMSIZE(256) 

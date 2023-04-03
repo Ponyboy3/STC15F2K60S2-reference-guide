@@ -1,0 +1,5 @@
+".\Objects\STARTUP.obj",
+".\Objects\iic.obj",
+".\Objects\智能照明自动控制器.obj" 
+TO ".\Objects\采样可变电阻电压与光明电阻电压" 
+PRINT(".\Listings\采样可变电阻电压与光明电阻电压.m51") RAMSIZE(256) 

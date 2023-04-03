@@ -1,0 +1,130 @@
+C51 COMPILER V9.59.0.0   MAIN                                                              03/29/2023 10:50:45 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\main
+                    -.lst) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include "reg52.h"
+   2          #include "ds1302.h"
+   3          #define uchar unsigned char
+   4          #define uint unsigned int
+   5            
+   6          uchar code type1[] = {0xc0,0xf9,0xa4,0xb0,0x99,0x92,0x82,0xf8,0x80,0x90,0xff,0x88,0xc6,0x86};
+   7          uchar code type2[] = {0x01,0x02,0x04,0x08,0x10,0x20,0x40,0x80};
+   8          
+   9          uchar num1,num2,num3,num4,num5,num6,num7,num8;
+  10          uchar h,m,s;
+  11          uint t_2ms;
+  12          bit f_2ms;
+  13          
+  14          void Display_SMG(uchar n1,uchar n2,uchar n3,uchar n4,uchar n5,uchar n6,uchar n7,uchar n8)
+  15          {
+  16   1        char i;
+  17   1        P0 = 0xff;//消影
+  18   1        P2 = (P2 & 0x1f) | 0xc0;
+  19   1        P0 = type2[i];
+  20   1        P2 &= 0x1f;
+  21   1        switch(i)
+  22   1        {
+  23   2          case 0:P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n1];P2 &= 0x1f;break;
+  24   2          case 1:P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n2];P2 &= 0x1f;break;
+  25   2          case 2:P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n3];P2 &= 0x1f;break;
+  26   2          case 3:P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n4];P2 &= 0x1f;break;
+  27   2          case 4:P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n5];P2 &= 0x1f;break;
+  28   2          case 5:P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n6];P2 &= 0x1f;break;
+  29   2          case 6:P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n7];P2 &= 0x1f;break;
+  30   2          case 7:P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n8];P2 &= 0x1f;break;
+  31   2        }
+  32   1        if(++i==8)
+  33   1          i=0;
+  34   1      }
+  35          
+  36          void Init_T1()
+  37          {
+  38   1        TMOD = (TMOD & 0x0f) | 0x10;
+  39   1        TH1 = (65536 - 2000) / 256;
+  40   1        TL1 = (65536 - 2000) % 256;
+  41   1        
+  42   1        EA = 1;
+  43   1        ET1 = 1;
+  44   1        TR1 = 1;
+  45   1      }
+  46          void Xie_DS1302()
+  47          {
+  48   1        Write_Ds1302_Byte(0x8e,0x00);
+  49   1        Write_Ds1302_Byte(0x84,0x23);//时
+  50   1        Write_Ds1302_Byte(0x82,0x59);//分
+  51   1        Write_Ds1302_Byte(0x80,0x45);//秒
+  52   1      }
+  53          void Du_DS1302()
+  54          {
+C51 COMPILER V9.59.0.0   MAIN                                                              03/29/2023 10:50:45 PAGE 2   
+
+  55   1        h = Read_Ds1302_Byte(0x85);//时
+  56   1        h = (h >> 4) * 10 + (h & 0x0f);
+  57   1        m = Read_Ds1302_Byte(0x83);//分
+  58   1        m = (m >> 4) * 10 + (m & 0x0f);
+  59   1        s = Read_Ds1302_Byte(0x81);//秒
+  60   1        s = (s >> 4) * 10 + (s & 0x0f);
+  61   1      }
+  62          
+  63          void Init_Sys()
+  64          {
+  65   1        P2 = (P2 & 0x1f) | 0x80;
+  66   1        P0 = 0xff;
+  67   1        P2 &= 0x1f;
+  68   1        P2 = (P2 & 0x1f) | 0xa0;
+  69   1        P0 = 0x00;
+  70   1        P2 &= 0x1f;
+  71   1        P2 = (P2 & 0x1f) | 0xc0;
+  72   1        P0 = 0xff;
+  73   1        P2 &= 0x1f;
+  74   1        P2 = (P2 & 0x1f) | 0xe0;
+  75   1        P0 = 0xff;
+  76   1        P2 &= 0x1f;
+  77   1      }
+  78          void main()
+  79          {
+  80   1        Init_Sys();
+  81   1        Init_T1();
+  82   1        Xie_DS1302();
+  83   1        while(1)
+  84   1        {
+  85   2          if(f_2ms == 1)
+  86   2          {
+  87   3            f_2ms = 0;
+  88   3            if(++t_2ms == 250)
+  89   3            {
+  90   4              t_2ms = 0;
+  91   4              Du_DS1302();
+  92   4            }
+  93   3            num1=h/10;num2=h%10;num3=10;num4=m/10;num5=m%10;num6=10;num7=s/10;num8=s%10;
+  94   3          }
+  95   2        }
+  96   1      }
+  97          void Service_T1() interrupt 3
+  98          {
+  99   1        TH1 = (65536 - 2000) / 256;
+ 100   1        TL1 = (65536 - 2000) % 256;
+ 101   1        
+ 102   1        f_2ms = 1;
+ 103   1        Display_SMG(num1,num2,num3,num4,num5,num6,num7,num8);
+ 104   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    543    ----
+   CONSTANT SIZE    =     22    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     13       9
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      1    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

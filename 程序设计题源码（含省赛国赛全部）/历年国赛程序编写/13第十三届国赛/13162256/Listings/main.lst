@@ -1,0 +1,822 @@
+C51 COMPILER V9.55   MAIN                                                                  06/18/2022 15:43:30 PAGE 1   
+
+
+C51 COMPILER V9.55, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\keilc\pack_file\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listi
+                    -ngs\main.lst) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include <STC15F2K60S2.H>
+   2          #include "iic.h"
+   3          #include <intrins.h>
+   4          #define uchar unsigned char 
+   5          #define uint unsigned int 
+   6            
+   7          uchar code type1[]={0xc0,  
+   8                              0xf9,  
+   9                              0xa4,   
+  10                              0xb0,  
+  11                              0x99, 
+  12                              0x92,  
+  13                              0x82,  
+  14                              0xf8,  
+  15                              0x80,  
+  16                              0x90,0xff,0x8e,0x89,0x88,0x8c };
+  17          uchar code type2[]={0x01,0x02,0x04,0x08,0x10,0x20,0x40,0x80};
+  18          uchar num1,num2,num3,num4,num5,num6,num7,num8;
+  19          uchar GN;
+  20          bit f_2ms;
+  21          uchar t_2ms;
+  22          sbit trig=P1^0;
+  23          sbit echo=P1^1;
+  24          uchar bdata U6=0xff;
+  25          sbit led1=U6^0;
+  26          sbit led2=U6^1;
+  27          sbit led3=U6^2;
+  28          sbit led4=U6^3;
+  29          sbit led5=U6^4;
+  30          sbit led6=U6^5;
+  31          
+  32          uchar bdata U9;
+  33          sbit relay=U9^4;
+  34          sbit mot=U9^5;
+  35          
+  36          bit f_hz;
+  37          uint temp_f,temp_kf;
+  38          //------------------------------
+  39          bit f_lim;
+  40          bit f_danwei=0;
+  41          uchar model_ce;
+  42          uchar model_can;
+  43          //--------------
+  44          uchar t_adc;
+  45          uchar temp_shidu;
+  46          uchar distance;
+  47          bit dis_danwei;
+  48          //----------------
+  49          uchar f_can=90;
+  50          uchar c_can=40;
+  51          uchar d_can=6;
+  52          
+  53          //-----------------
+  54          bit f_relay;
+C51 COMPILER V9.55   MAIN                                                                  06/18/2022 15:43:30 PAGE 2   
+
+  55          uint count_relay;
+  56          bit f_start;
+  57          uint t_rel;
+  58          
+  59          
+  60          
+  61          void Delay10ms()    //@12.000MHz
+  62          {
+  63   1        unsigned char i, j;
+  64   1      
+  65   1        i = 117;
+  66   1        j = 184;
+  67   1        do
+  68   1        {
+  69   2          while (--j);
+  70   2        } while (--i);
+  71   1      }
+  72          
+  73          void smg_display(char n1,char n2,char n3,char n4,char n5,char n6,char n7,char n8)
+  74          {
+  75   1        char i;
+  76   1        P2=(P2&0x1f)|0xc0;
+  77   1        P0=type2[i];
+  78   1        P2=(P2&0x1f);
+  79   1        P0=0xff;
+  80   1        switch(i)
+  81   1        {
+  82   2          case 0:P2=(P2&0x1f)|0xe0;P0=type1[n1];P2=(P2&0x1f);break;
+  83   2          case 1:P2=(P2&0x1f)|0xe0;P0=type1[n2];P2=(P2&0x1f);break;
+  84   2          case 2:P2=(P2&0x1f)|0xe0;P0=type1[n3];P2=(P2&0x1f);break;
+  85   2          case 3:P2=(P2&0x1f)|0xe0;P0=type1[n4];P2=(P2&0x1f);break;
+  86   2          case 4:P2=(P2&0x1f)|0xe0;P0=type1[n5];P2=(P2&0x1f);break;
+  87   2          case 5:P2=(P2&0x1f)|0xe0;
+  88   2                                   if(model_ce==2 && dis_danwei==1)
+  89   2                                   {
+  90   3                                     P0=type1[n6]&0x7f;
+  91   3                                   }    
+  92   2                                   else
+  93   2                                     P0=type1[n6];  
+  94   2                                   
+  95   2                                   P2=(P2&0x1f);break;
+  96   2          case 6:P2=(P2&0x1f)|0xe0;
+  97   2                                   if(f_danwei==1 && model_ce==0)
+  98   2                                   {
+  99   3                                     P0=type1[n7]&0x7f;
+ 100   3                                   }                             
+ 101   2      //                             else
+ 102   2      //                               P0=type1[n7];                               
+ 103   2                                   else if(model_ce==3 && model_can==0)
+ 104   2                                   {
+ 105   3                                     P0=type1[n7]&0x7f;
+ 106   3                                   }
+ 107   2      //                             else
+ 108   2      //                               P0=type1[n7];
+ 109   2                                   else if(model_ce==3 && model_can==2)
+ 110   2                                   {
+ 111   3                                     P0=type1[n7]&0x7f;
+ 112   3                                   }
+ 113   2                                   else
+ 114   2                                     P0=type1[n7];                               
+ 115   2                                   P2=(P2&0x1f);break;
+ 116   2          case 7:P2=(P2&0x1f)|0xe0;P0=type1[n8];P2=(P2&0x1f);break; 
+C51 COMPILER V9.55   MAIN                                                                  06/18/2022 15:43:30 PAGE 3   
+
+ 117   2        }
+ 118   1        if(++i==8)
+ 119   1          i=0;
+ 120   1      }
+ 121          //========================================key
+ 122          uchar key_scan()
+ 123          {
+ 124   1        uchar temp;
+ 125   1        temp=(~P3)&0x0f;
+ 126   1        if(temp==0) return 0;
+ 127   1        Delay10ms();
+ 128   1        temp=(~P3)&0x0f;
+ 129   1        if(temp==0) return 0; 
+ 130   1        return temp;  
+ 131   1      }
+ 132          void key_change()
+ 133          {
+ 134   1        uchar D;
+ 135   1        D=key_scan();
+ 136   1        switch(D)
+ 137   1        {
+ 138   2          case 8:GN=4;break;
+ 139   2          case 4:GN=5;break;
+ 140   2          case 2:GN=6;break;
+ 141   2          case 1:GN=7;break;
+ 142   2          case 0:GN=0;break;
+ 143   2        }
+ 144   1      }
+ 145          //========================================超声波
+ 146          uchar f_count=10;
+ 147          uchar csb_send()
+ 148          {
+ 149   1        f_count=10;
+ 150   1        trig=0;
+ 151   1        TR0=1;
+ 152   1        while(f_count--)
+ 153   1        {
+ 154   2          while(!TF0);
+ 155   2          trig ^= 1;
+ 156   2          TH0=(65535-12)/256;
+ 157   2          TL0=(65535-12)%256;     
+ 158   2          TF0=0;    
+ 159   2        }
+ 160   1        TR0=0;
+ 161   1        TH0=0;
+ 162   1        TL0=0;
+ 163   1        TR0=1;
+ 164   1        while(echo && !TF0);
+ 165   1        TR0=0;
+ 166   1        if(TF0)
+ 167   1        {
+ 168   2          TF0=0;
+ 169   2          return 999;
+ 170   2        }
+ 171   1        else
+ 172   1          return ((TH0<<8)+TL0)*0.017;
+ 173   1        
+ 174   1      }
+ 175          //===================================24c02
+ 176          void xie_24c02(uchar addr,uchar dat)
+ 177          {
+ 178   1        IIC_Start( ); 
+C51 COMPILER V9.55   MAIN                                                                  06/18/2022 15:43:30 PAGE 4   
+
+ 179   1        IIC_SendByte(0xa0+0); 
+ 180   1        IIC_WaitAck( );  
+ 181   1        IIC_SendByte(addr); 
+ 182   1        IIC_WaitAck( ); 
+ 183   1        IIC_SendByte(dat); 
+ 184   1        IIC_WaitAck( ); 
+ 185   1        IIC_Stop( );  
+ 186   1      }
+ 187          uchar du_24c02(uchar addr)
+ 188          {
+ 189   1        uchar D;
+ 190   1        IIC_Start( ); 
+ 191   1        IIC_SendByte(0xa0+0); 
+ 192   1        IIC_WaitAck( );  
+ 193   1        IIC_SendByte(addr); 
+ 194   1        IIC_WaitAck( );   
+ 195   1        
+ 196   1        IIC_Start( ); 
+ 197   1        IIC_SendByte(0xa0+1); 
+ 198   1        IIC_WaitAck( );   
+ 199   1        D=IIC_RecByte( );
+ 200   1        IIC_SendAck(1);
+ 201   1        IIC_Stop( );
+ 202   1        
+ 203   1        return D;
+ 204   1      }
+ 205          //=========================================adc
+ 206          void initial_adc()
+ 207          {
+ 208   1        IIC_Start( ); 
+ 209   1        IIC_SendByte(0x90+0); 
+ 210   1        IIC_WaitAck( );  
+ 211   1        IIC_SendByte(0x3); 
+ 212   1        IIC_WaitAck( ); 
+ 213   1        IIC_Stop( );  
+ 214   1      }
+ 215          uchar  du_adc()
+ 216          {
+ 217   1        uchar D;
+ 218   1        IIC_Start( ); 
+ 219   1        IIC_SendByte(0x90+1); 
+ 220   1        IIC_WaitAck( ); 
+ 221   1        D=IIC_RecByte( );
+ 222   1        IIC_SendAck(1);
+ 223   1        IIC_Stop( );
+ 224   1        D=(D*100.0)/255;
+ 225   1        return D;   
+ 226   1      }
+ 227          //========================================DAC
+ 228          void xie_dac(uchar D)
+ 229          {
+ 230   1        IIC_Start( ); 
+ 231   1        IIC_SendByte(0x90+0); 
+ 232   1        IIC_WaitAck( );  
+ 233   1        IIC_SendByte(0x40); 
+ 234   1        IIC_WaitAck( );   
+ 235   1        IIC_SendByte(D); 
+ 236   1        IIC_WaitAck( );   
+ 237   1        IIC_Stop( );  
+ 238   1      }
+ 239          //========================================数据处理
+ 240          void shuju(uint D)
+C51 COMPILER V9.55   MAIN                                                                  06/18/2022 15:43:30 PAGE 5   
+
+ 241          {
+ 242   1      if(f_danwei==0)
+ 243   1      {
+ 244   2        if(D<10)
+ 245   2        {
+ 246   3          if(f_danwei==0)
+ 247   3          {
+ 248   4          num4=num5=num6=num7=10;
+ 249   4          num8=D;   
+ 250   4          } 
+ 251   3        }
+ 252   2        if(D>10 && D<100)
+ 253   2        {
+ 254   3          if(f_danwei==0)
+ 255   3          {
+ 256   4          num4=num5=num6=10;
+ 257   4          num7=D/10;num8=D%10;            
+ 258   4          }
+ 259   3        } 
+ 260   2        if(D>99 && D<1000)
+ 261   2        {
+ 262   3          if(f_danwei==0)
+ 263   3          {
+ 264   4          num4=num5=10;
+ 265   4          num6=D/100;num7=D%100/10;num8=D%10;             
+ 266   4          }
+ 267   3        }
+ 268   2        if(D>999 && D<10000)
+ 269   2        {
+ 270   3          if(f_danwei==0)
+ 271   3          {
+ 272   4          num4=10;
+ 273   4          num5=D/1000;num6=D%1000/100;num7=D%100/10;num8=D%10;            
+ 274   4          }
+ 275   3        }
+ 276   2        if(D>9999)
+ 277   2        { 
+ 278   3         if(f_danwei==0)  
+ 279   3         {
+ 280   4           num4=D/10000;num5=D%10000/1000;num6=D%1000/100;num7=D%100/10;num8=D%10;  
+ 281   4         }  
+ 282   3       }
+ 283   2      
+ 284   2      } 
+ 285   1          if(f_danwei==1)
+ 286   1          {
+ 287   2            if(D<100)
+ 288   2            {
+ 289   3             num4=num5=num6=10;num7=0;num8=0;
+ 290   3            } 
+ 291   2            if(D>99 && D<1000)
+ 292   2            {
+ 293   3             num4=num5=num6=10;num7=0;num8=D/100;
+ 294   3            }
+ 295   2            if(D>990 && D<10000)
+ 296   2            {
+ 297   3             num4=num5=num6=10;num7=D/1000;num8=D%1000/100;
+ 298   3            }
+ 299   2            if(D>9999)
+ 300   2            {
+ 301   3             num4=num5=10;num6=D/10000;num7=D%10000/1000;num8=D%1000/100;
+ 302   3            }       
+C51 COMPILER V9.55   MAIN                                                                  06/18/2022 15:43:30 PAGE 6   
+
+ 303   2          }
+ 304   1      
+ 305   1        }   
+ 306          ////==========================================dac湿度输出
+ 307            uchar ds;
+ 308          void shidu_output()
+ 309          {
+ 310   1        if(temp_shidu < c_can)
+ 311   1        {
+ 312   2          xie_dac(51);
+ 313   2        }
+ 314   1        if(temp_shidu >= 100)
+ 315   1        {
+ 316   2          xie_dac(255);   
+ 317   2        } 
+ 318   1        if(temp_shidu>c_can && temp_shidu<100)
+ 319   1        {
+ 320   2          ds=temp_shidu*2.55; 
+ 321   2          xie_dac(ds);    
+ 322   2        }
+ 323   1      }
+ 324          //=============================================距离关于继电器
+ 325          void relay_output()
+ 326          {
+ 327   1        if(distance > d_can*10)
+ 328   1        {
+ 329   2          if(f_relay==1)
+ 330   2          {
+ 331   3            count_relay++;
+ 332   3            f_relay=0;
+ 333   3            xie_24c02(0,count_relay);
+ 334   3            Delay10ms();
+ 335   3          }
+ 336   2          relay=1;  
+ 337   2          P2=(P2&0x1f)|0xa0;
+ 338   2          P0=U9;
+ 339   2          P2=(P2&0x1f);     
+ 340   2        }
+ 341   1        if(distance <= d_can*10)
+ 342   1        {
+ 343   2          f_relay=1;
+ 344   2          relay=0;  
+ 345   2          P2=(P2&0x1f)|0xa0;
+ 346   2          P0=U9;
+ 347   2          P2=(P2&0x1f);     
+ 348   2        } 
+ 349   1      }
+ 350          //=====================================mot频率输出
+ 351          uchar z_2ms;
+ 352          uchar x_2ms;
+ 353          void out_output()
+ 354          {
+ 355   1        if(temp_f > f_can*100)
+ 356   1        {
+ 357   2          if(++z_2ms==10)
+ 358   2          {
+ 359   3            z_2ms=0;      
+ 360   3            mot=1;    
+ 361   3          }
+ 362   2          if(z_2ms==2)
+ 363   2          {
+ 364   3            mot=0;
+C51 COMPILER V9.55   MAIN                                                                  06/18/2022 15:43:30 PAGE 7   
+
+ 365   3          }
+ 366   2            P2=(P2&0x1f)|0xa0;
+ 367   2            P0=U9;
+ 368   2            P2=(P2&0x1f);     
+ 369   2        }
+ 370   1      
+ 371   1        if(temp_f <= f_can*100)
+ 372   1        {
+ 373   2          if(++z_2ms==10)
+ 374   2          {
+ 375   3            t_2ms=0;
+ 376   3            mot=1;      
+ 377   3          }
+ 378   2          if(z_2ms==8)
+ 379   2          {
+ 380   3            mot=0;
+ 381   3          } 
+ 382   2            P2=(P2&0x1f)|0xa0;
+ 383   2            P0=U9;
+ 384   2            P2=(P2&0x1f);     
+ 385   2         }      
+ 386   1      }
+ 387          //============================================led
+ 388          uchar t_led1;
+ 389          
+ 390          void led_display()
+ 391          {
+ 392   1      //====================================led1  
+ 393   1        if(model_ce==0)
+ 394   1          {
+ 395   2            led1=0;led2=1;led3=1;
+ 396   2            P0=0xff;
+ 397   2            P2=(P2&0x1f)|0x80;
+ 398   2            P0=U6;
+ 399   2            P2=(P2&0x1f);         
+ 400   2          }
+ 401   1        if( model_can==0)
+ 402   1        {
+ 403   2          if(++t_led1==50)
+ 404   2          {
+ 405   3            t_led1=0;
+ 406   3            led1=~led1;     
+ 407   3          }
+ 408   2            led2=1;led3=1;
+ 409   2            P0=0xff;
+ 410   2            P2=(P2&0x1f)|0x80;
+ 411   2            P0=U6;
+ 412   2            P2=(P2&0x1f);         
+ 413   2        }
+ 414   1      //================================  led2
+ 415   1        if(model_ce==1)
+ 416   1          {
+ 417   2            led1=1;led2=0;led3=1;
+ 418   2            P0=0xff;
+ 419   2            P2=(P2&0x1f)|0x80;
+ 420   2            P0=U6;
+ 421   2            P2=(P2&0x1f);         
+ 422   2          }
+ 423   1        if( model_can==1)
+ 424   1        {
+ 425   2          if(++t_led1==50)
+ 426   2          {
+C51 COMPILER V9.55   MAIN                                                                  06/18/2022 15:43:30 PAGE 8   
+
+ 427   3            t_led1=0;
+ 428   3            led2=~led2;     
+ 429   3          }
+ 430   2            led1=1;led3=1;
+ 431   2            P0=0xff;
+ 432   2            P2=(P2&0x1f)|0x80;
+ 433   2            P0=U6;
+ 434   2            P2=(P2&0x1f);         
+ 435   2        } 
+ 436   1      //======================================= led3
+ 437   1        if(model_ce==2)
+ 438   1          {
+ 439   2            led1=1;led2=1;led3=0;
+ 440   2            P0=0xff;
+ 441   2            P2=(P2&0x1f)|0x80;
+ 442   2            P0=U6;
+ 443   2            P2=(P2&0x1f);         
+ 444   2          }
+ 445   1        if( model_can==2)
+ 446   1        {
+ 447   2          if(++t_led1==50)
+ 448   2          {
+ 449   3            t_led1=0;
+ 450   3            led3=~led3;     
+ 451   3          }
+ 452   2            led1=1;led2=1;
+ 453   2            P0=0xff;
+ 454   2            P2=(P2&0x1f)|0x80;
+ 455   2            P0=U6;
+ 456   2            P2=(P2&0x1f);         
+ 457   2        }   
+ 458   1      //===============================led4 
+ 459   1      
+ 460   1        if(temp_f > f_can*100)
+ 461   1        {   
+ 462   2            led4=0;
+ 463   2            P0=0xff;
+ 464   2            P2=(P2&0x1f)|0x80;
+ 465   2            P0=U6;
+ 466   2            P2=(P2&0x1f);   
+ 467   2        }
+ 468   1        if(temp_f < f_can*100)
+ 469   1        {
+ 470   2            led4=1;
+ 471   2            P0=0xff;
+ 472   2            P2=(P2&0x1f)|0x80;
+ 473   2            P0=U6;
+ 474   2            P2=(P2&0x1f);         
+ 475   2        }
+ 476   1      //===============================led5
+ 477   1        if(temp_shidu > c_can)
+ 478   1        {
+ 479   2            led5=0;
+ 480   2            P0=0xff;
+ 481   2            P2=(P2&0x1f)|0x80;
+ 482   2            P0=U6;
+ 483   2            P2=(P2&0x1f);       
+ 484   2        }
+ 485   1        if(temp_shidu <= c_can)
+ 486   1        {
+ 487   2            led5=1;
+ 488   2            P0=0xff;
+C51 COMPILER V9.55   MAIN                                                                  06/18/2022 15:43:30 PAGE 9   
+
+ 489   2            P2=(P2&0x1f)|0x80;
+ 490   2            P0=U6;
+ 491   2            P2=(P2&0x1f);     
+ 492   2        }
+ 493   1      //====================================led6
+ 494   1      if(distance > d_can*10)
+ 495   1      {
+ 496   2            led6=0;
+ 497   2            P0=0xff;
+ 498   2            P2=(P2&0x1f)|0x80;
+ 499   2            P0=U6;
+ 500   2            P2=(P2&0x1f); 
+ 501   2      }
+ 502   1        if(distance <= d_can*10)
+ 503   1        {
+ 504   2            led6=1;
+ 505   2            P0=0xff;
+ 506   2            P2=(P2&0x1f)|0x80;
+ 507   2            P0=U6;
+ 508   2            P2=(P2&0x1f);     
+ 509   2        }
+ 510   1      }
+ 511          //==========================
+ 512          void time0()
+ 513          {
+ 514   1        if(f_lim==1)
+ 515   1         TMOD=(TMOD&0xf0)|0x05;
+ 516   1        if(f_lim==0)
+ 517   1         TMOD=(TMOD&0xf0)|0x01; 
+ 518   1        
+ 519   1        TH0=(65535-12)/256;
+ 520   1        TL0=(65535-12)%256;   
+ 521   1      }
+ 522          
+ 523          void time1_int1()
+ 524          {
+ 525   1        EA=1;
+ 526   1        ET1=1;
+ 527   1        TR1=1;
+ 528   1        TMOD=(TMOD&0x1f)|0x10;
+ 529   1        TH1=(65535-2000)/256;
+ 530   1        TL1=(65535-2000)%256;   
+ 531   1      }
+ 532          void initial_all()
+ 533          {
+ 534   1        P2=(P2&0x1f)|0xa0;
+ 535   1        P0=0x00;
+ 536   1        P2=(P2&0x1f); 
+ 537   1        P2=(P2&0x1f)|0x80;
+ 538   1        P0=0xff;
+ 539   1        P2=(P2&0x1f);   
+ 540   1        P2=(P2&0x1f)|0xc0;
+ 541   1        P0=0xff;
+ 542   1        P2=(P2&0x1f);   
+ 543   1        P2=(P2&0x1f)|0xe0;
+ 544   1        P0=0xff;
+ 545   1        P2=(P2&0x1f);   
+ 546   1        
+ 547   1      }
+ 548          void main()
+ 549          {
+ 550   1        uchar a;
+C51 COMPILER V9.55   MAIN                                                                  06/18/2022 15:43:30 PAGE 10  
+
+ 551   1        initial_all();
+ 552   1        time1_int1();
+ 553   1        time0();  
+ 554   1        initial_adc();
+ 555   1        count_relay=du_24c02(0);
+ 556   1        while(1)
+ 557   1        {
+ 558   2          if(f_2ms)
+ 559   2          {
+ 560   3           f_2ms=0;
+ 561   3           key_change();  
+ 562   3           relay_output();
+ 563   3           led_display(); 
+ 564   3           out_output();  
+ 565   3           shidu_output();      
+ 566   3      //----------------------------
+ 567   3          if(GN==4)
+ 568   3          {
+ 569   4            model_can=0;a=0;
+ 570   4            model_ce++;
+ 571   4            if(model_ce==4)
+ 572   4              model_ce=0;
+ 573   4            while(key_scan());      
+ 574   4          }
+ 575   3      //----------------------------
+ 576   3          switch(model_ce)
+ 577   3          {
+ 578   4            case 0:
+ 579   4                   if(GN==7)
+ 580   4                   {
+ 581   5                     f_danwei=~f_danwei;
+ 582   5                     while(key_scan());
+ 583   5                   }
+ 584   4                   f_lim=1;///////////////
+ 585   4                   if(a==0)
+ 586   4                   {
+ 587   5                      time0();
+ 588   5                      a=1;
+ 589   5                   }            
+ 590   4                   if(f_danwei==0)
+ 591   4                   {
+ 592   5                     num1=11;num2=num3=10;
+ 593   5      //               num4=temp_f/10000;num5=temp_f%10000/1000;num6=temp_f%1000/100;
+ 594   5      //               num7=temp_f%100/10;num8=temp_f%10;
+ 595   5                     shuju(temp_f);              
+ 596   5                   }
+ 597   4                   if(f_danwei==1)
+ 598   4                   {
+ 599   5                     num1=11;num2=num3=10;
+ 600   5                     
+ 601   5                     shuju(temp_f); 
+ 602   5                   }
+ 603   4                   break;
+ 604   4            case 1:
+ 605   4                   if(GN==7)
+ 606   4                   {
+ 607   5                    f_start=1; 
+ 608   5                    while(key_scan());
+ 609   5                    f_start=0;t_rel=0;               
+ 610   5                   }
+ 611   4                   if(++t_adc==100)
+ 612   4                   {
+C51 COMPILER V9.55   MAIN                                                                  06/18/2022 15:43:30 PAGE 11  
+
+ 613   5                     t_adc=0;
+ 614   5                     initial_adc();
+ 615   5                     temp_shidu=du_adc();
+ 616   5                   }
+ 617   4                   num1=12;num2=num3=num4=num5=num6=10;
+ 618   4                   num7=temp_shidu/10;num8=temp_shidu%10;     
+ 619   4                   break;
+ 620   4            case 2:
+ 621   4                   if(GN==6)
+ 622   4                   {
+ 623   5                     dis_danwei=~dis_danwei;               
+ 624   5                    while(key_scan()); 
+ 625   5                   }
+ 626   4                   f_lim=0;///////////
+ 627   4                   if(a==0)
+ 628   4                   {
+ 629   5                      time0();
+ 630   5                      a=1;
+ 631   5                   }             
+ 632   4                   distance=csb_send();
+ 633   4                   if(dis_danwei==0)
+ 634   4                   {
+ 635   5                     num1=13;num2=num3=num4=num5=10;
+ 636   5                     if(distance<10)
+ 637   5                     {
+ 638   6                       num6=num7=10;num8=distance;
+ 639   6                     }
+ 640   5                     if(distance>10 && distance<100)
+ 641   5                     {
+ 642   6                       num6=10;num7=distance/10;num8=distance%10;
+ 643   6                     }
+ 644   5                     if(distance>100)
+ 645   5                     {
+ 646   6                       num6=distance/100;num7=distance%100/10;num8=distance%10;
+ 647   6                     }               
+ 648   5                   }
+ 649   4                   if(dis_danwei==1)
+ 650   4                   {
+ 651   5                     num1=13;num2=num3=num4=num5=10;
+ 652   5                     num6=distance/100;num7=distance%100/10;num8=distance%10;            
+ 653   5                    }                 
+ 654   4                   break;
+ 655   4            case 3://参数界面
+ 656   4                   if(GN==5)
+ 657   4                   {
+ 658   5                     model_can++;
+ 659   5                     if(model_can==3)
+ 660   5                       model_can=0;              
+ 661   5                     while(key_scan()); 
+ 662   5                   }
+ 663   4                   switch(model_can)
+ 664   4                   {
+ 665   5                     case 0://频率
+ 666   5                            if(GN==6)
+ 667   5                            {
+ 668   6                               if(f_can==120) f_can=10; else f_can+=5; while(key_scan());    
+ 669   6                            }
+ 670   5                            if(GN==7)
+ 671   5                            {
+ 672   6                               if(f_can==10) f_can=120; else f_can-=5; while(key_scan());    
+ 673   6                            }                     
+ 674   5                            num1=14;num2=1;num3=num4=num5=10;
+C51 COMPILER V9.55   MAIN                                                                  06/18/2022 15:43:30 PAGE 12  
+
+ 675   5                            num6=f_can/100;num7=f_can%100/10;num8=f_can%10;                
+ 676   5                            break;
+ 677   5                
+ 678   5                     case 1://湿度
+ 679   5                            if(GN==6)
+ 680   5                            {
+ 681   6                               if(c_can==60) c_can=10; else c_can+=10; while(key_scan());    
+ 682   6                            }
+ 683   5                            if(GN==7)
+ 684   5                            {
+ 685   6                               if(c_can==10) c_can=60; else c_can-=10; while(key_scan());    
+ 686   6                            }                     
+ 687   5                            num1=14;num2=2;num3=num4=num5=num6=10;
+ 688   5                            num7=c_can/10;num8=c_can%10;                 
+ 689   5                            break;
+ 690   5                     case 2://距离
+ 691   5                            if(GN==6)
+ 692   5                            {
+ 693   6                               if(d_can==12) d_can=1; else d_can+=1; while(key_scan());    
+ 694   6                            }
+ 695   5                            if(GN==7)
+ 696   5                            {
+ 697   6                               if(d_can==1) d_can=12; else d_can-=1; while(key_scan());    
+ 698   6                            }                     
+ 699   5                            num1=14;num2=3;num3=num4=num5=num6=10;
+ 700   5                            num7=d_can/10;num8=d_can%10;                 
+ 701   5                            break;                                          
+ 702   5                    } //内          
+ 703   4                  break;
+ 704   4          }//model_ce
+ 705   3          
+ 706   3      
+ 707   3      
+ 708   3      
+ 709   3      
+ 710   3            
+ 711   3      //      num1=csb_send()/10;num2=csb_send()%10;
+ 712   3      //      num3=du_24c02(0);
+ 713   3      //      num4=du_adc()/10;num5=du_adc()%10;
+ 714   3      //      num6=6;num7=7;num8=8;
+ 715   3            
+ 716   3          }//f_2ms
+ 717   2        }
+ 718   1      }
+ 719          
+ 720          void cl_time1_int1() interrupt 3
+ 721          {
+ 722   1        TH1=(65535-2000)/256;
+ 723   1        TL1=(65535-2000)%256; 
+ 724   1        smg_display(num1,num2,num3,num4,num5,num6,num7,num8);
+ 725   1        f_2ms=1;
+ 726   1        
+ 727   1      if(f_lim==1)
+ 728   1      {
+ 729   2        if(++t_2ms==250)
+ 730   2        {
+ 731   3          t_2ms=0;
+ 732   3          f_hz=~f_hz;
+ 733   3          
+ 734   3          if(f_hz)
+ 735   3          {
+ 736   4            TH0=0;
+C51 COMPILER V9.55   MAIN                                                                  06/18/2022 15:43:30 PAGE 13  
+
+ 737   4            TL0=0;
+ 738   4            TR0=1;  
+ 739   4          }
+ 740   3          else
+ 741   3          {
+ 742   4            TR0=0;
+ 743   4            temp_f=((TH0<<8)+TL0)*2;
+ 744   4          } 
+ 745   3        }
+ 746   2      } 
+ 747   1      //======================
+ 748   1      if(f_start==1)
+ 749   1      {
+ 750   2        if(++t_rel==500)
+ 751   2        {
+ 752   3          t_rel=0;
+ 753   3          count_relay=0;
+ 754   3        } 
+ 755   2      }
+ 756   1      
+ 757   1      }
+ 758          
+ 759          
+ 760          
+ 761          
+ 762          
+ 763          
+ 764          
+ 765          
+ 766          
+ 767          
+ 768          
+ 769          
+ 770          
+ 771          
+ 772          
+ 773          
+ 774          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   2916    ----
+   CONSTANT SIZE    =     23    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     33      16
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      7    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
