@@ -21,7 +21,7 @@ unsigned char Read_ADC(unsigned char n)
 	}
 	else
 	{
-		IIC_SendByte(0x01);//读取滑动变阻器
+		IIC_SendByte(0x03);//读取滑动变阻器
 	}
 	IIC_WaitAck();
 	IIC_Stop();
