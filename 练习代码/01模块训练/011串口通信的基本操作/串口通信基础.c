@@ -16,8 +16,6 @@ void Init_Uart()
 	SCON = 0x50;
 	AUXR = 0x00;
 	
-	
-	
 	ES = 1;
 	EA = 1;
 }

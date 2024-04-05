@@ -1,7 +1,7 @@
-BL51 BANKED LINKER/LOCATER V6.22.2.0                                                    03/06/2023  21:23:20  PAGE 1
+BL51 BANKED LINKER/LOCATER V6.22.4.0                                                    04/06/2024  00:13:32  PAGE 1
 
 
-BL51 BANKED LINKER/LOCATER V6.22.2.0, INVOKED BY:
+BL51 BANKED LINKER/LOCATER V6.22.4.0, INVOKED BY:
 C:\KEIL_V5\C51\BIN\BL51.EXE .\Objects\STARTUP.obj, .\Objects\串口通信基础.obj TO .\Objects\串口通信收发基础 PRINT (.\Lis
 >> tings\串口通信收发基础.m51) RAMSIZE (256)
 
@@ -27,12 +27,14 @@ LINK MAP OF MODULE:  .\Objects\串口通信收发基础 (?C_STARTUP)
 
             * * * * * * *   C O D E   M E M O R Y   * * * * * * *
             CODE    0000H     0003H     ABSOLUTE     
-            CODE    0003H     0018H     UNIT         ?PR?INIT_UART?____________
-            CODE    001BH     0008H     UNIT         ?PR?_GETBYTE?____________
+                    0003H     0020H                  *** GAP ***
             CODE    0023H     0003H     ABSOLUTE     
-            CODE    0026H     0051H     UNIT         ?PR?SERVICEUART?____________
-            CODE    0077H     000FH     UNIT         ?PR?MAIN?____________
-            CODE    0086H     000CH     UNIT         ?C_C51STARTUP
+                    0026H     07DAH                  *** GAP ***
+            CODE    0800H     0051H     UNIT         ?PR?SERVICEUART?____________
+            CODE    0851H     0018H     UNIT         ?PR?INIT_UART?____________
+            CODE    0869H     000FH     UNIT         ?PR?MAIN?____________
+            CODE    0878H     000CH     UNIT         ?C_C51STARTUP
+            CODE    0884H     0008H     UNIT         ?PR?_GETBYTE?____________
 
 
 
@@ -57,15 +59,15 @@ SEGMENT
 
 
 SYMBOL TABLE OF MODULE:  .\Objects\串口通信收发基础 (?C_STARTUP)
+BL51 BANKED LINKER/LOCATER V6.22.4.0                                                  04/06/2024  00:13:32  PAGE 2
+
+
 
   VALUE           TYPE          NAME
-BL51 BANKED LINKER/LOCATER V6.22.2.0                                                  03/06/2023  21:23:20  PAGE 2
-
-
   ----------------------------------
 
   -------         MODULE        ?C_STARTUP
-  C:0086H         SEGMENT       ?C_C51STARTUP
+  C:0878H         SEGMENT       ?C_C51STARTUP
   I:0009H         SEGMENT       ?STACK
   C:0000H         PUBLIC        ?C_STARTUP
   D:00E0H         SYMBOL        ACC
@@ -75,7 +77,7 @@ SYMBOL TABLE OF MODULE:  .\Objects\串口通信收发基础 (?C_STARTUP)
   N:0000H         SYMBOL        IBPSTACK
   N:0100H         SYMBOL        IBPSTACKTOP
   N:0080H         SYMBOL        IDATALEN
-  C:0089H         SYMBOL        IDATALOOP
+  C:087BH         SYMBOL        IDATALOOP
   N:0000H         SYMBOL        PBPSTACK
   N:0100H         SYMBOL        PBPSTACKTOP
   N:0000H         SYMBOL        PDATALEN
@@ -84,18 +86,18 @@ SYMBOL TABLE OF MODULE:  .\Objects\串口通信收发基础 (?C_STARTUP)
   N:0000H         SYMBOL        PPAGEENABLE
   D:00A0H         SYMBOL        PPAGE_SFR
   D:0081H         SYMBOL        SP
-  C:0086H         SYMBOL        STARTUP1
+  C:0878H         SYMBOL        STARTUP1
   N:0000H         SYMBOL        XBPSTACK
   N:0000H         SYMBOL        XBPSTACKTOP
   N:0000H         SYMBOL        XDATALEN
   N:0000H         SYMBOL        XDATASTART
   C:0000H         LINE#         126
-  C:0086H         LINE#         133
-  C:0088H         LINE#         134
-  C:0089H         LINE#         135
-  C:008AH         LINE#         136
-  C:008CH         LINE#         185
-  C:008FH         LINE#         196
+  C:0878H         LINE#         133
+  C:087AH         LINE#         134
+  C:087BH         LINE#         135
+  C:087CH         LINE#         136
+  C:087EH         LINE#         185
+  C:0881H         LINE#         196
   -------         ENDMOD        ?C_STARTUP
 
   -------         MODULE        ____________
@@ -104,75 +106,82 @@ SYMBOL TABLE OF MODULE:  .\Objects\串口通信收发基础 (?C_STARTUP)
   D:00B0H         PUBLIC        P3
   B:00A8H.7       PUBLIC        EA
   D:00A8H         PUBLIC        IE
-  C:0003H         PUBLIC        Init_Uart
+  C:0851H         PUBLIC        Init_Uart
   B:00A8H.4       PUBLIC        ES
   D:00B8H         PUBLIC        IP
   B:0098H.0       PUBLIC        RI
   B:0098H.1       PUBLIC        TI
   D:0008H         PUBLIC        urdat
-  C:0077H         PUBLIC        main
+  C:0869H         PUBLIC        main
   D:0099H         PUBLIC        SBUF
   D:0098H         PUBLIC        SCON
   D:0089H         PUBLIC        TMOD
   D:0088H         PUBLIC        TCON
-  C:001BH         PUBLIC        _GetByte
+  C:0884H         PUBLIC        _GetByte
   D:008EH         PUBLIC        AUXR
+BL51 BANKED LINKER/LOCATER V6.22.4.0                                                  04/06/2024  00:13:32  PAGE 3
+
+
   B:00A8H.3       PUBLIC        ET1
   D:008DH         PUBLIC        TH1
-BL51 BANKED LINKER/LOCATER V6.22.2.0                                                  03/06/2023  21:23:20  PAGE 3
-
-
   D:008BH         PUBLIC        TL1
   B:0088H.6       PUBLIC        TR1
   D:00C8H         PUBLIC        T2CON
-  C:0026H         PUBLIC        ServiceUart
+  C:0800H         PUBLIC        ServiceUart
   D:00D0H         PUBLIC        PSW
   -------         PROC          INIT_UART
-  C:0003H         LINE#         8
-  C:0003H         LINE#         9
-  C:0003H         LINE#         10
-  C:0006H         LINE#         11
-  C:0009H         LINE#         12
-  C:000CH         LINE#         13
-  C:000EH         LINE#         14
-  C:0010H         LINE#         16
-  C:0013H         LINE#         17
-  C:0016H         LINE#         21
-  C:0018H         LINE#         22
-  C:001AH         LINE#         23
+  C:0851H         LINE#         8
+  C:0851H         LINE#         9
+  C:0851H         LINE#         10
+  C:0854H         LINE#         11
+  C:0857H         LINE#         12
+  C:085AH         LINE#         13
+  C:085CH         LINE#         14
+  C:085EH         LINE#         16
+  C:0861H         LINE#         17
+  C:0864H         LINE#         19
+  C:0866H         LINE#         20
+  C:0868H         LINE#         21
   -------         ENDPROC       INIT_UART
   -------         PROC          SERVICEUART
-  C:0026H         LINE#         25
-  C:0043H         LINE#         27
-  C:0046H         LINE#         28
-  C:0046H         LINE#         29
-  C:0048H         LINE#         30
-  C:004BH         LINE#         31
-  C:0052H         LINE#         32
-  C:0057H         LINE#         33
-  C:005CH         LINE#         34
-  C:005CH         LINE#         35
+  C:0800H         LINE#         23
+  C:081DH         LINE#         25
+  C:0820H         LINE#         26
+  C:0820H         LINE#         27
+  C:0822H         LINE#         28
+  C:0825H         LINE#         29
+  C:082CH         LINE#         30
+  C:0831H         LINE#         31
+  C:0836H         LINE#         32
+  C:0836H         LINE#         33
   -------         ENDPROC       SERVICEUART
   -------         PROC          _GETBYTE
   D:0007H         SYMBOL        dat
-  C:001BH         LINE#         37
-  C:001BH         LINE#         38
-  C:001BH         LINE#         39
-  C:001DH         LINE#         40
-  C:0020H         LINE#         41
-  C:0022H         LINE#         42
+  C:0884H         LINE#         35
+  C:0884H         LINE#         36
+  C:0884H         LINE#         37
+  C:0886H         LINE#         38
+  C:0889H         LINE#         39
+  C:088BH         LINE#         40
   -------         ENDPROC       _GETBYTE
   -------         PROC          MAIN
-  C:0077H         LINE#         44
-  C:0077H         LINE#         45
-  C:0077H         LINE#         46
-  C:007AH         LINE#         47
-  C:007FH         LINE#         48
-  C:0084H         LINE#         49
-  C:0084H         LINE#         50
-  C:0084H         LINE#         52
+  C:0869H         LINE#         42
+  C:0869H         LINE#         43
+  C:0869H         LINE#         44
+  C:086CH         LINE#         45
+  C:0871H         LINE#         46
+  C:0876H         LINE#         47
+  C:0876H         LINE#         48
+  C:0876H         LINE#         50
   -------         ENDPROC       MAIN
   -------         ENDMOD        ____________
+
+******************************************************************************
+* RESTRICTED VERSION WITH 0800H BYTE CODE SIZE LIMIT; USED: 0092H BYTE ( 7%) *
+******************************************************************************
+BL51 BANKED LINKER/LOCATER V6.22.4.0                                                  04/06/2024  00:13:32  PAGE 4
+
+
 
 Program Size: data=10.0 xdata=0 code=146
 LINK/LOCATE RUN COMPLETE.  0 WARNING(S),  0 ERROR(S)
