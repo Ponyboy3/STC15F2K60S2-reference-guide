@@ -3,7 +3,7 @@
 sfr AUXR = 0x8e;
 
 #define BAUD         9600
-#define SYSTEMCLOCK  11059200L
+#define SYSTEMCLOCK  12000000L
 
 void SelectHC573(unsigned char c)
 {

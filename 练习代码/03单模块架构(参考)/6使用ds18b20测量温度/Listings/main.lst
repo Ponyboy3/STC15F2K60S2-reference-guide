@@ -1,0 +1,192 @@
+C51 COMPILER V9.60.7.0   MAIN                                                              04/06/2024 15:35:24 PAGE 1   
+
+
+C51 COMPILER V9.60.7.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\main
+                    -.lst) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include <STC15F2K60S2.H>
+*** WARNING C318 IN LINE 1 OF main.c: can't open file 'STC15F2K60S2.H'
+   2          #include <intrins.h>
+   3          #include <onewire.h>
+*** WARNING C318 IN LINE 4 OF onewire.h: can't open file 'STC15F2K60S2.H'
+*** ERROR C202 IN LINE 7 OF onewire.h: 'P1': undefined identifier
+   4          
+   5          #define uchar unsigned char 
+   6          #define uint unsigned int
+   7                  
+   8          uchar code type1[]={    0xC0,
+   9                                                                                                  0xF9,
+  10                                                                                                  0xA4,
+  11                                                                                                  0xB0,
+  12                                                                                                  0x99,
+  13                                                                                                  0x92,
+  14                                                                                                  0x82,
+  15                                                                                                  0xF8,
+  16                                                                                                  0x80,
+  17                                                                                                  0x90,0xff};
+  18          uchar code type2[]={0x01,0x02,0x04,0x08,0x10,0x20,0x40,0x80};
+  19          uchar num1,num2,num3,num4,num5,num6,num7,num8;
+  20          bit f_2ms;
+  21          uint t_2ms;
+  22          
+  23          uint temp;
+  24          
+  25          
+  26          
+  27          void smg_display(char n1,char n2,char n3,char n4,char n5,char n6,char n7,char n8)
+  28          {
+  29   1              char i;
+  30   1              P0=0xff;
+*** ERROR C202 IN LINE 30 OF main.c: 'P0': undefined identifier
+  31   1              P2=(P2&0x1f)|0xc0;
+*** ERROR C202 IN LINE 31 OF main.c: 'P2': undefined identifier
+  32   1              P0=type2[i];
+*** ERROR C202 IN LINE 32 OF main.c: 'P0': undefined identifier
+  33   1              P2=(P2&0x1f);
+*** ERROR C202 IN LINE 33 OF main.c: 'P2': undefined identifier
+  34   1              switch(i)
+  35   1              {
+  36   2                      case 0:P2=(P2&0x1f)|0xe0; P0=type1[n1];P2=(P2&0x1f);break;
+*** ERROR C202 IN LINE 36 OF main.c: 'P2': undefined identifier
+*** ERROR C202 IN LINE 36 OF main.c: 'P0': undefined identifier
+*** ERROR C202 IN LINE 36 OF main.c: 'P2': undefined identifier
+  37   2                      case 1:P2=(P2&0x1f)|0xe0; P0=type1[n2];P2=(P2&0x1f);break;      
+*** ERROR C202 IN LINE 37 OF main.c: 'P2': undefined identifier
+*** ERROR C202 IN LINE 37 OF main.c: 'P0': undefined identifier
+*** ERROR C202 IN LINE 37 OF main.c: 'P2': undefined identifier
+  38   2                      case 2:P2=(P2&0x1f)|0xe0; P0=type1[n3];P2=(P2&0x1f);break;      
+*** ERROR C202 IN LINE 38 OF main.c: 'P2': undefined identifier
+*** ERROR C202 IN LINE 38 OF main.c: 'P0': undefined identifier
+*** ERROR C202 IN LINE 38 OF main.c: 'P2': undefined identifier
+C51 COMPILER V9.60.7.0   MAIN                                                              04/06/2024 15:35:24 PAGE 2   
+
+  39   2                      case 3:P2=(P2&0x1f)|0xe0; P0=type1[n4];P2=(P2&0x1f);break;      
+*** ERROR C202 IN LINE 39 OF main.c: 'P2': undefined identifier
+*** ERROR C202 IN LINE 39 OF main.c: 'P0': undefined identifier
+*** ERROR C202 IN LINE 39 OF main.c: 'P2': undefined identifier
+  40   2                      case 4:P2=(P2&0x1f)|0xe0; P0=type1[n5];P2=(P2&0x1f);break;                      
+*** ERROR C202 IN LINE 40 OF main.c: 'P2': undefined identifier
+*** ERROR C202 IN LINE 40 OF main.c: 'P0': undefined identifier
+*** ERROR C202 IN LINE 40 OF main.c: 'P2': undefined identifier
+  41   2                      case 5:P2=(P2&0x1f)|0xe0; P0=type1[n6];P2=(P2&0x1f);break;
+*** ERROR C202 IN LINE 41 OF main.c: 'P2': undefined identifier
+*** ERROR C202 IN LINE 41 OF main.c: 'P0': undefined identifier
+*** ERROR C202 IN LINE 41 OF main.c: 'P2': undefined identifier
+  42   2                      case 6:P2=(P2&0x1f)|0xe0; P0=type1[n7];P2=(P2&0x1f);break;
+*** ERROR C202 IN LINE 42 OF main.c: 'P2': undefined identifier
+*** ERROR C202 IN LINE 42 OF main.c: 'P0': undefined identifier
+*** ERROR C202 IN LINE 42 OF main.c: 'P2': undefined identifier
+  43   2                      case 7:P2=(P2&0x1f)|0xe0; P0=type1[n8];P2=(P2&0x1f);break;              
+*** ERROR C202 IN LINE 43 OF main.c: 'P2': undefined identifier
+*** ERROR C202 IN LINE 43 OF main.c: 'P0': undefined identifier
+*** ERROR C202 IN LINE 43 OF main.c: 'P2': undefined identifier
+  44   2              }
+  45   1              if(++i==8)
+  46   1                      i=0;
+  47   1      }
+  48          
+  49          
+  50          
+  51          void time1_int1()
+  52          {
+  53   1              EA=1;
+*** ERROR C202 IN LINE 53 OF main.c: 'EA': undefined identifier
+  54   1              ET1=1;
+*** ERROR C202 IN LINE 54 OF main.c: 'ET1': undefined identifier
+  55   1              TR1=1;
+*** ERROR C202 IN LINE 55 OF main.c: 'TR1': undefined identifier
+  56   1              TMOD=(TMOD&0x0f)|0x10;
+*** ERROR C202 IN LINE 56 OF main.c: 'TMOD': undefined identifier
+  57   1              TH1=(65536-2000)/256;
+*** ERROR C202 IN LINE 57 OF main.c: 'TH1': undefined identifier
+  58   1              TL1=(65536-2000)%256;
+*** ERROR C202 IN LINE 58 OF main.c: 'TL1': undefined identifier
+  59   1      }
+  60          
+  61          void initial_all()
+  62          {
+  63   1              P2=(P2&0x1f)|0xa0;
+*** ERROR C202 IN LINE 63 OF main.c: 'P2': undefined identifier
+  64   1              P0=0x00;
+*** ERROR C202 IN LINE 64 OF main.c: 'P0': undefined identifier
+  65   1              P2=(P2&0x1f);   
+*** ERROR C202 IN LINE 65 OF main.c: 'P2': undefined identifier
+  66   1              P2=(P2&0x1f)|0x80;
+*** ERROR C202 IN LINE 66 OF main.c: 'P2': undefined identifier
+  67   1              P0=0xff;
+*** ERROR C202 IN LINE 67 OF main.c: 'P0': undefined identifier
+  68   1              P2=(P2&0x1f);           
+*** ERROR C202 IN LINE 68 OF main.c: 'P2': undefined identifier
+  69   1              P2=(P2&0x1f)|0xc0;
+*** ERROR C202 IN LINE 69 OF main.c: 'P2': undefined identifier
+  70   1              P0=0xff;
+*** ERROR C202 IN LINE 70 OF main.c: 'P0': undefined identifier
+  71   1              P2=(P2&0x1f);           
+C51 COMPILER V9.60.7.0   MAIN                                                              04/06/2024 15:35:24 PAGE 3   
+
+*** ERROR C202 IN LINE 71 OF main.c: 'P2': undefined identifier
+  72   1              P2=(P2&0x1f)|0xe0;
+*** ERROR C202 IN LINE 72 OF main.c: 'P2': undefined identifier
+  73   1              P0=0xff;
+*** ERROR C202 IN LINE 73 OF main.c: 'P0': undefined identifier
+  74   1              P2=(P2&0x1f);           
+*** ERROR C202 IN LINE 74 OF main.c: 'P2': undefined identifier
+  75   1      }
+  76          void main()
+  77          {
+  78   1              initial_all();
+  79   1              time1_int1();
+  80   1        initial_18b20();
+  81   1        temp=rd_temperature( );
+  82   1              while(1)
+  83   1              {
+  84   2               if(f_2ms==1)
+  85   2               {
+  86   3                f_2ms=0;
+  87   3                       
+  88   3                      if(++t_2ms==10)
+  89   3                              {
+  90   4                                t_2ms=0;
+  91   4                                temp=rd_temperature( );
+  92   4                        }
+  93   3                       
+  94   3                      num1=num2=num3=num4=10;
+  95   3                      num5=temp/1000;
+  96   3                      num6=temp%1000/100;
+  97   3                      num7=temp%100/10; 
+  98   3                      num8=temp%10; 
+  99   3                       
+ 100   3                       
+ 101   3                       
+ 102   3                       
+ 103   3              
+ 104   3               }//f_2ms
+ 105   2              }
+ 106   1      }
+ 107          
+ 108          void cl_time1_int1() interrupt 3
+ 109          {
+ 110   1              TH1=(65536-2000)/256;
+*** ERROR C202 IN LINE 110 OF main.c: 'TH1': undefined identifier
+ 111   1              TL1=(65536-2000)%256;   
+*** ERROR C202 IN LINE 111 OF main.c: 'TL1': undefined identifier
+ 112   1              
+ 113   1              smg_display(num1,num2,num3,num4,num5,num6,num7,num8);
+ 114   1              
+ 115   1              f_2ms=1;
+ 116   1              
+ 117   1      
+ 118   1              
+ 119   1              
+ 120   1              
+ 121   1              
+ 122   1              
+ 123   1      }//aall
+ 124          
+ 125          
+
+C51 COMPILATION COMPLETE.  2 WARNING(S),  49 ERROR(S)

@@ -163,9 +163,14 @@ void Init_Sys()
 void main()
 {
 	Init_Sys();
-//	dat1 = Read_24C02(0x00);
+	dat1 = Read_24C02(0x01);
+	dat2 = Read_24C02(0x03);
+	dat3 = Read_24C02(0x05);
+	
+	
+//	Write_24C02(0x03,11);
+//	
 //	dat2 = Read_24C02(0x01);
-//	dat3 = Read_24C02(0x02);
 	while(1)
 	{
 		Scan_Keys();

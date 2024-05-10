@@ -434,7 +434,7 @@ void main()
     }
 }
 
-void Service_T0() interrupt 2
+void Service_T0() interrupt 1
 {
 	TH0 = (65536 - 100) / 256;
 	TL0 = (65536 - 100) % 256;

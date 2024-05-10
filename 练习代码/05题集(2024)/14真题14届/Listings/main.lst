@@ -1,0 +1,925 @@
+C51 COMPILER V9.60.7.0   MAIN                                                              04/10/2024 15:58:26 PAGE 1   
+
+
+C51 COMPILER V9.60.7.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\main
+                    -.lst) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include "reg52.h"
+   2          #include "onewire.h"
+   3          #include "iic.h"
+   4          #include "ds1302.h"
+   5          #include "intrins.h"
+   6          
+   7          #define uchar unsigned char 
+   8          #define uint unsigned int
+   9          
+  10          // 数码管显示数据， 一般前10个为0-9， 可更具需要往里面添加
+  11          unsigned char code type1[] = {0xc0,0xf9,0xa4,0xb0,0x99,0x92,0x82,0xf8,0x80,0x90,0xff,0xbf,
+  12                                                                    0xc6,0x89,0x8e,0x8c,0x86, 0x88};
+  13          // 数码管位
+  14          uchar code type2[] = {0x01,0x02,0x04,0x08,0x10,0x20,0x40,0x80};
+  15          
+  16          unsigned char num1,num2,num3,num4,num5,num6,num7,num8;  // 数码管每一位（例如 num1 = 2, 第一个数码管显示 2
+             -）
+  17          unsigned char GN;  // 按键标志位
+  18          bit f_2ms, f_50ms, f_500ms_smg;  // 2ms, 50ms, 500ms标志位
+  19          unsigned int num_2ms_smg;  // 多少个2ms
+  20          unsigned char temp_Led_P0 = 0xff;  // 用来存上一次LED状态
+  21          unsigned char ds1302_h, ds1302_m, ds1302_s;  // ds1302数据
+  22          bit f_200ms_ds1302;
+  23          unsigned int num_2ms_ds1302;  // // 多少个2ms
+  24          bit f_key_long, is_key_set_time;
+  25          unsigned char t_key;  // 按键按住时间
+  26          // 超声波测距
+  27          unsigned int distance;
+  28          // PCF8951
+  29          unsigned char dat_rd1, dat_rd2;  // ADC读取数据
+  30          float rd1_v;
+  31          unsigned int smg_rd1_v;
+  32          // 按键
+  33          unsigned char stat_key;  // 按键按下次数
+  34          unsigned int count_key_t;  // 10ms单位累计
+  35          
+  36          bit f_1s;  // 1s标志位
+  37          
+  38          unsigned int num_2ms = 0, num_s = 0, num_s_key = 0;  // 多少个2ms, 1s, 按键按下时间
+  39          
+  40          bit f_time = 1;  // 定时器0秒钟是否暂停
+  41          
+  42          sbit S7 = P3^0;
+  43          sbit S6 = P3^1;
+  44          sbit S5 = P3^2;
+  45          sbit S4 = P3^3;
+  46          
+  47          sbit L0 = P0^0;
+  48          sbit L1 = P0^1;
+  49          sbit L2 = P0^2;
+  50          sbit L3 = P0^3;
+  51          sbit L4 = P0^4;
+  52          sbit L5 = P0^5;
+  53          sbit L6 = P0^6;
+C51 COMPILER V9.60.7.0   MAIN                                                              04/10/2024 15:58:26 PAGE 2   
+
+  54          sbit L7 = P0^7;
+  55          
+  56          unsigned char stat_led[8];  // LED状态
+  57          
+  58          // =========================================== 代码开始 ======================================
+  59          unsigned char dis_model_s4 = 0;  // 0:显示温度（DS18B20）， 1:显示时钟 2:回显， 3：参数
+  60          unsigned char dis_model_s5 = 0;  // 0：温度， 1：湿度，2：时间
+  61          unsigned int temperature, max_temperature = 0;  // 温度
+  62          int temperature_parameters = 30;  // 温度参数
+  63          unsigned int temper[2], Temper_all = 0, Temper_average = 0;  // 平均温度
+  64          bit is_mesure_temp, is_mesure_temp_ing;  // 测量温度触发, 是否在测量中
+  65          unsigned int num_2ms_mesure, num_mesure_s;  // 测量温度触发时间
+  66          
+  67          unsigned char dat1 = 0x13,dat2 = 0x03,dat3 = 0x05;  // （16进制）ds1302写数据
+  68          
+  69          bit is_key_s9_pressing;  // 按键按下未松开
+  70          unsigned char num_s_key_pressing;  // 按键按下时间
+  71          
+  72          // Record记录
+  73          unsigned int is_mesure_temp_num, mesure_h, mesure_m;  // 测量次数
+  74          
+  75          
+  76          // 警报
+  77          bit is_temp_more_mesure;  // 大于温度参数
+  78          bit f_100ms_L4;  // L4亮灭时间
+  79          unsigned int num_2ms_L4;  // 多少个2ms
+  80          
+  81          unsigned int count_f_NE555 = 0, dat_f = 0;  // NE555计数
+  82          unsigned int count_2ms_NE555 = 0;
+  83          unsigned int temp_f,temp_t;
+  84          bit f;
+  85          // =========================================== 代码结束 ======================================
+  86          
+  87          
+  88          //=========================================普通延时函数(模板函数)=================================
+  89          void Delay(uint t) {
+  90   1              while( t -- );
+  91   1              while( t -- );
+  92   1      }
+  93          //=======================================单个LED控制函数(模板函数)================================
+  94          // 根据项目需要删减
+  95          
+  96          // ======================LED0====================
+  97          void LED0_On() {
+  98   1              TR1 = 0;
+  99   1              P0 = 0xff & temp_Led_P0;  // 清除其他地方对P0的值（特别是数码管一直在刷新），并且结合LED前一次的状态
+ 100   1              P2 = (P2 & 0x1f) | 0x80;  // LED控制开启
+ 101   1              L0 = 0;  // 要将P0放在这两句代码之间，避免错乱
+ 102   1              temp_Led_P0 = P0;
+ 103   1              TR1 = 1;
+ 104   1              P2 &= 0x1f;
+ 105   1              
+ 106   1              stat_led[0] = 1;
+ 107   1      }
+ 108          void LED0_Off() {
+ 109   1              TR1 = 0;
+ 110   1              P0 = 0xff & temp_Led_P0;
+ 111   1              P2 = (P2 & 0x1f) | 0x80;  // LED控制开启
+ 112   1              L0 = 1;  // 要将P0放在这两句代码之间，避免错乱
+ 113   1              temp_Led_P0 = P0;
+ 114   1              TR1 = 1;
+ 115   1              P2 &= 0x1f;
+C51 COMPILER V9.60.7.0   MAIN                                                              04/10/2024 15:58:26 PAGE 3   
+
+ 116   1              
+ 117   1              stat_led[0] = 0;
+ 118   1      }
+ 119          // ======================LED1====================
+ 120          void LED1_On() {
+ 121   1              TR1 = 0;
+ 122   1              P0 = 0xff & temp_Led_P0;  // 清除其他地方对P0的值（特别是数码管一直在刷新），并且结合LED前一次的状态
+ 123   1              P2 = (P2 & 0x1f) | 0x80;  // LED控制开启
+ 124   1              L1 = 0;  // 要将P0放在这两句代码之间，避免错乱
+ 125   1              temp_Led_P0 = P0;
+ 126   1              TR1 = 1;
+ 127   1              P2 &= 0x1f;
+ 128   1              
+ 129   1              stat_led[1] = 1;
+ 130   1      }
+ 131          void LED1_Off() {
+ 132   1              TR1 = 0;
+ 133   1              P0 = 0xff & temp_Led_P0;
+ 134   1              P2 = (P2 & 0x1f) | 0x80;  // LED控制开启
+ 135   1              L1 = 1;  // 要将P0放在这两句代码之间，避免错乱
+ 136   1              temp_Led_P0 = P0;
+ 137   1              TR1 = 1;
+ 138   1              P2 &= 0x1f;
+ 139   1              
+ 140   1              stat_led[1] = 1;
+ 141   1      }
+ 142          // ======================LED2====================
+ 143          void LED2_On() {
+ 144   1              TR1 = 0;
+ 145   1              P0 = 0xff & temp_Led_P0;
+ 146   1              P2 = (P2 & 0x1f) | 0x80;  // LED控制开启
+ 147   1              L2 = 0;  // 要将P0放在这两句代码之间，避免错乱
+ 148   1              temp_Led_P0 = P0;
+ 149   1              TR1 = 1;
+ 150   1              P2 &= 0x1f;
+ 151   1      }
+ 152          void LED2_Off() {
+ 153   1              TR1 = 0;
+ 154   1              P0 = 0xff & temp_Led_P0;
+ 155   1              P2 = (P2 & 0x1f) | 0x80;  // LED控制开启
+ 156   1              L2 = 1;  // 要将P0放在这两句代码之间，避免错乱
+ 157   1              temp_Led_P0 = P0;
+ 158   1              TR1 = 1;
+ 159   1              P2 &= 0x1f;
+ 160   1      }
+ 161          // ======================LED3====================
+ 162          void LED3_On() {
+ 163   1              TR1 = 0;
+ 164   1              P0 = 0xff & temp_Led_P0;
+ 165   1              P2 = (P2 & 0x1f) | 0x80;  // LED控制开启
+ 166   1              L3 = 0;  // 要将P0放在这两句代码之间，避免错乱
+ 167   1              temp_Led_P0 = P0;
+ 168   1              TR1 = 1;
+ 169   1              P2 &= 0x1f;
+ 170   1      }
+ 171          void LED3_Off() {
+ 172   1              TR1 = 0;
+ 173   1              P0 = 0xff & temp_Led_P0;
+ 174   1              P2 = (P2 & 0x1f) | 0x80;  // LED控制开启
+ 175   1              L3 = 1;  // 要将P0放在这两句代码之间，避免错乱
+ 176   1              temp_Led_P0 = P0;
+ 177   1              TR1 = 1;
+C51 COMPILER V9.60.7.0   MAIN                                                              04/10/2024 15:58:26 PAGE 4   
+
+ 178   1              P2 &= 0x1f;
+ 179   1      }
+ 180          // ======================LED4====================
+ 181          void LED4_On() {
+ 182   1              TR1 = 0;
+ 183   1              P0 = 0xff & temp_Led_P0;
+ 184   1              P2 = (P2 & 0x1f) | 0x80;  // LED控制开启
+ 185   1              L4 = 0;  // 要将P0放在这两句代码之间，避免错乱
+ 186   1              temp_Led_P0 = P0;
+ 187   1              TR1 = 1;
+ 188   1              P2 &= 0x1f;
+ 189   1      }
+ 190          void LED4_Off() {
+ 191   1              TR1 = 0;
+ 192   1              P0 = 0xff & temp_Led_P0 & temp_Led_P0;
+ 193   1              P2 = (P2 & 0x1f) | 0x80;  // LED控制开启
+ 194   1              L4 = 1;  // 要将P0放在这两句代码之间，避免错乱
+ 195   1              temp_Led_P0 = P0;
+ 196   1              TR1 = 1;
+ 197   1              P2 &= 0x1f;
+ 198   1      }
+ 199          // ======================LED5====================
+ 200          void LED5_On() {
+ 201   1              TR1 = 0;
+ 202   1              P0 = 0xff & temp_Led_P0;
+ 203   1              P2 = (P2 & 0x1f) | 0x80;  // LED控制开启
+ 204   1              L5 = 0;  // 要将P0放在这两句代码之间，避免错乱
+ 205   1              temp_Led_P0 = P0;
+ 206   1              TR1 = 1;
+ 207   1              P2 &= 0x1f;
+ 208   1      }
+ 209          void LED5_Off() {
+ 210   1              TR1 = 0;
+ 211   1              P0 = 0xff & temp_Led_P0;
+ 212   1              P2 = (P2 & 0x1f) | 0x80;  // LED控制开启
+ 213   1              L5 = 1;  // 要将P0放在这两句代码之间，避免错乱
+ 214   1              temp_Led_P0 = P0;
+ 215   1              TR1 = 1;
+ 216   1              P2 &= 0x1f;
+ 217   1      }
+ 218          // ======================LED6====================
+ 219          void LED6_On() {
+ 220   1              TR1 = 0;
+ 221   1              P0 = 0xff & temp_Led_P0;
+ 222   1              P2 = (P2 & 0x1f) | 0x80;  // LED控制开启
+ 223   1              L6 = 0;  // 要将P0放在这两句代码之间，避免错乱
+ 224   1              temp_Led_P0 = P0;
+ 225   1              TR1 = 1;
+ 226   1              P2 &= 0x1f;
+ 227   1              
+ 228   1              stat_led[6] = 1;
+ 229   1      }
+ 230          void LED6_Off() {
+ 231   1              TR1 = 0;
+ 232   1              P0 = 0xff & temp_Led_P0;
+ 233   1              P2 = (P2 & 0x1f) | 0x80;  // LED控制开启
+ 234   1              L6 = 1;  // 要将P0放在这两句代码之间，避免错乱
+ 235   1              temp_Led_P0 = P0;
+ 236   1              TR1 = 1;
+ 237   1              P2 &= 0x1f;
+ 238   1              
+ 239   1              stat_led[6] = 0;
+C51 COMPILER V9.60.7.0   MAIN                                                              04/10/2024 15:58:26 PAGE 5   
+
+ 240   1      }
+ 241          // ======================LED7====================
+ 242          void LED7_On() {
+ 243   1              TR1 = 0;
+ 244   1              P0 = 0xff & temp_Led_P0;
+ 245   1              P2 = (P2 & 0x1f) | 0x80;  // LED控制开启
+ 246   1              L7 = 0;  // 要将P0放在这两句代码之间，避免错乱
+ 247   1              temp_Led_P0 = P0;
+ 248   1              TR1 = 1;
+ 249   1              P2 &= 0x1f;
+ 250   1              
+ 251   1              stat_led[7] = 1;
+ 252   1      }
+ 253          void LED7_Off() {
+ 254   1              TR1 = 0;
+ 255   1              P0 = 0xff & temp_Led_P0;
+ 256   1              P2 = (P2 & 0x1f) | 0x80;  // LED控制开启
+ 257   1              L7 = 1;  // 要将P0放在这两句代码之间，避免错乱
+ 258   1              temp_Led_P0 = P0;
+ 259   1              TR1 = 1;
+ 260   1              P2 &= 0x1f;
+ 261   1              
+ 262   1              stat_led[7] = 0;
+ 263   1      }
+ 264          //=========================================数码管显示==============================================
+ 265          void Display_SMG(uchar n1,uchar n2,uchar n3,uchar n4,uchar n5,uchar n6,uchar n7,uchar n8)
+ 266          {
+ 267   1              char i;
+ 268   1              P0 = 0xff;
+ 269   1              P2 = (P2 & 0x1f) | 0xc0;//数码管位选
+ 270   1              P0 = type2[i];
+ 271   1              P2 &= 0x1f;
+ 272   1              switch(i)//数码管位选
+ 273   1              {
+ 274   2                      case 0:P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n1];P2 &= 0x1f;break;
+ 275   2                      case 1:P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n2];P2 &= 0x1f;break;
+ 276   2                      case 2:P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n3];P2 &= 0x1f;break;
+ 277   2                      case 3:P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n4];P2 &= 0x1f;break;
+ 278   2                      case 4:P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n5];P2 &= 0x1f;break;
+ 279   2                      case 5:P2 = (P2 & 0x1f) | 0xe0;
+ 280   2                                                                              if(0)  // 根据需要的条件
+ 281   2                                                                              {
+ 282   3                                                                                      P0 = type1[n6]&0x7f;  // 加入小数点
+ 283   3                                                                              }
+ 284   2                                                                              else
+ 285   2                                                                                      P0 = type1[n6];
+ 286   2                                                                              P2 &= 0x1f;break;
+ 287   2                      case 6:P2 = (P2 & 0x1f) | 0xe0;
+ 288   2                                                                              if(!dis_model_s5 && dis_model_s4 == 1 && !is_mesure_temp)  // 根据需要的条件
+ 289   2                                                                              {
+ 290   3                                                                                      P0 = type1[n7]&0x7f;  // 加入小数点
+ 291   3                                                                              }
+ 292   2                                                                              else
+ 293   2                                                                                      P0 = type1[n7];
+ 294   2                                                                              P2 &= 0x1f;break;
+ 295   2                      case 7:P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n8];P2 &= 0x1f;break;
+ 296   2              }
+ 297   1              if(++i==8)
+ 298   1                      i = 0;
+ 299   1      }
+ 300          
+ 301          //============================================按键==============================================
+C51 COMPILER V9.60.7.0   MAIN                                                              04/10/2024 15:58:26 PAGE 6   
+
+ 302          void Delay_Keys(uint t)
+ 303          {
+ 304   1              while(t--);
+ 305   1      }
+ 306          //============================================矩阵按键============================================
+ 307          sfr P4 = 0xc0;
+ 308          sbit P44 = P4^4;
+ 309          sbit P42 = P4^2;
+ 310          
+ 311          uchar Scan_Keys()
+ 312          {
+ 313   1              char H,L;
+ 314   1              
+ 315   1              TR0 = 0;
+ 316   1              
+ 317   1              P3 =  0xcf;P44 = 0;P42 = 0;H = (~P3) & 0x0f;
+ 318   1              if(H == 0) return 0;
+ 319   1              Delay_Keys(100);
+ 320   1              P3 =  0xcf;P44 = 0;P42 = 0;H = (~P3) & 0x0f;
+ 321   1              if(H == 0) return 0;
+ 322   1              P3 =  0xf0;P44 = 1;P42 = 1;L = (~P3) & 0x30;
+ 323   1              if(P44 == 0) L |= 0x80;
+ 324   1              if(P42 == 0) L |= 0x40;
+ 325   1              
+ 326   1              TR0 = 1;
+ 327   1              return (H+L);
+ 328   1      }
+ 329          
+ 330          void Change_Keys()
+ 331          {
+ 332   1              switch(Scan_Keys())
+ 333   1              {
+ 334   2                      case 0x88:GN = 4;break;  // S4
+ 335   2                      case 0x84:GN = 5;break;  // S5
+ 336   2                      case 0x82:GN = 6;break;  // S6
+ 337   2                      case 0x81:GN = 7;break;  // S7
+ 338   2                      case 0x48:GN = 8;break;  // S8
+ 339   2                      case 0x44:GN = 9;break;  // S9
+ 340   2                      case 0x42:GN = 10;break;  // S10
+ 341   2                      case 0x41:GN = 11;break;  // S11
+ 342   2                      case 0x28:GN = 12;break;  // S12
+ 343   2                      case 0x24:GN = 13;break;  // S13
+ 344   2                      case 0x22:GN = 14;break;  // S14
+ 345   2                      case 0x21:GN = 15;break;  // S15
+ 346   2                      case 0x18:GN = 16;break;  // S16
+ 347   2                      case 0x14:GN = 17;break;  // S17
+ 348   2                      case 0x12:GN = 18;break;  // S18
+ 349   2                      case 0x11:GN = 19;break;  // S19
+ 350   2                      case 0:GN = 0;break;
+ 351   2              }
+ 352   1      }
+ 353          
+ 354          sbit R1 = P3^3;
+ 355          sbit R2 = P3^2;
+ 356          sbit R3 = P3^0;
+ 357          sbit C1 = P4^4;
+ 358          sbit C2 = P4^2;
+ 359          //============================================DS18B20初始化============================================
+ 360          void Init_18b20()
+ 361          {
+ 362   1              char i;
+ 363   1              init_ds18b20();
+C51 COMPILER V9.60.7.0   MAIN                                                              04/10/2024 15:58:26 PAGE 7   
+
+ 364   1              Write_DS18B20(0xcc);
+ 365   1              Write_DS18B20(0x44);  // 启动温度转换
+ 366   1      //      Write_DS18B20(0x00);
+ 367   1      //      Write_DS18B20(0x00);
+ 368   1      //      Write_DS18B20(0x7f);
+ 369   1              
+ 370   1              for (i = 0; i < 8; i ++ ) {  // 等待第一次采集结束，不会显示85
+ 371   2                      Delay_Keys(60000);
+ 372   2              }
+ 373   1      }
+ 374          unsigned int Read_Temperature(void)  // 当需要保留2为小数时，才需要用到unsigned int,
+ 375                                                                                   // 这里介绍3种类型，所以用unsigned int，保留整数
+ 376                                                                           // 和一位小数可用unsigned char.
+ 377          {
+ 378   1              unsigned char H,L;
+ 379   1              
+ 380   1              init_ds18b20();
+ 381   1              Write_DS18B20(0xcc);
+ 382   1              Write_DS18B20(0x44);
+ 383   1              init_ds18b20();
+ 384   1              Write_DS18B20(0xcc);
+ 385   1              Write_DS18B20(0xbe);
+ 386   1              L = Read_DS18B20();
+ 387   1              H = Read_DS18B20();
+ 388   1              
+ 389   1              init_ds18b20();
+ 390   1              Write_DS18B20(0xcc);
+ 391   1              Write_DS18B20(0x44);
+ 392   1              
+ 393   1              //1.保留整数--23
+ 394   1              //temp = (H<<4) + (L>>4);
+ 395   1              
+ 396   1              //2.保留1位小数--23.4
+ 397   1              return ((H<<8) + L)*5/8;
+ 398   1              
+ 399   1              //3.保留2位小数--23.45
+ 400   1      //      return ((H<<8)+L)*25/4;  // (50/8)
+ 401   1      }
+ 402          //============================================Ds1302初始化============================================
+ 403          void My_Write_Ds1302()
+ 404          {
+ 405   1              Write_Ds1302_Byte(0x8e,0x00);  // 解除写保护
+ 406   1              Write_Ds1302_Byte(0x84,dat1);//时
+ 407   1              Write_Ds1302_Byte(0x82,dat2);//分
+ 408   1              Write_Ds1302_Byte(0x80,dat3);//秒
+ 409   1              
+ 410   1              Write_Ds1302_Byte(0x8e,0x80);  // 使能写保护
+ 411   1      }
+ 412          void My_Read_Ds1302()
+ 413          {
+ 414   1              ds1302_h = Read_Ds1302_Byte(0x85);//时
+ 415   1              ds1302_h = (ds1302_h >> 4) * 10 + (ds1302_h & 0x0f);
+ 416   1              ds1302_m = Read_Ds1302_Byte(0x83);//分
+ 417   1              ds1302_m = (ds1302_m >> 4) * 10 + (ds1302_m & 0x0f);
+ 418   1              ds1302_s = Read_Ds1302_Byte(0x81);//秒
+ 419   1              ds1302_s = (ds1302_s >> 4) * 10 + (ds1302_s & 0x0f);
+ 420   1      }
+ 421          //============================================PCF8951部分=======================================
+ 422          // A/D读取光敏电阻(RD1)或电压采集(RB2)数值
+ 423          unsigned char Read_ADC(unsigned char n)
+ 424          {
+ 425   1              unsigned char temp;
+C51 COMPILER V9.60.7.0   MAIN                                                              04/10/2024 15:58:26 PAGE 8   
+
+ 426   1              IIC_Start();
+ 427   1              IIC_SendByte(0x90);
+ 428   1              IIC_WaitAck();
+ 429   1              if (n == 1)
+ 430   1              {
+ 431   2                      IIC_SendByte(0x01);//读取光敏电阻RB1
+ 432   2              }
+ 433   1              else if (n == 2)
+ 434   1              {
+ 435   2                      IIC_SendByte(0x03);//读取滑动变阻器RB2
+ 436   2              }
+ 437   1              IIC_WaitAck();
+ 438   1              IIC_Stop();
+ 439   1              
+ 440   1              Delay_Keys(500);//while(500--);延时等待
+ 441   1              
+ 442   1              IIC_Start();
+ 443   1              IIC_SendByte(0x91);
+ 444   1              IIC_WaitAck();
+ 445   1              temp = IIC_RecByte();//读取
+ 446   1              IIC_SendAck(1); 
+ 447   1              IIC_Stop();
+ 448   1              return temp;
+ 449   1      }
+ 450          
+ 451          //Read_ADC(1) -> (0~255) -> *2 -> (0~500)V
+ 452          
+ 453          // D/A写电压
+ 454          void Xie_ADC(unsigned char dat)
+ 455          {
+ 456   1              IIC_Start();
+ 457   1              IIC_SendByte(0x90);
+ 458   1          IIC_WaitAck();
+ 459   1          IIC_SendByte(0x40);
+ 460   1          IIC_WaitAck();
+ 461   1          IIC_SendByte(dat);
+ 462   1          IIC_WaitAck();
+ 463   1          IIC_Stop();
+ 464   1      }
+ 465          //============================================定时器T0初始化=======================================
+ 466          uchar count = 0;
+ 467          uchar pwm_dut = 0;//占空比
+ 468          void Init_T0()
+ 469          {
+ 470   1              TMOD = (TMOD & 0xf0) | 0x05;
+ 471   1              TH0 = 0;
+ 472   1              TL0 = 0;
+ 473   1              
+ 474   1              TR0 = 1;
+ 475   1      }
+ 476          //============================================定时器T1初始化=======================================
+ 477          void Init_T1()
+ 478          {
+ 479   1              TMOD = (TMOD & 0x0f) | 0x10;  // 定时
+ 480   1              TH1 = (65536 - 2000) / 256;
+ 481   1              TL1 = (65536 - 2000) % 256;
+ 482   1              
+ 483   1              EA = 1;
+ 484   1              ET1 = 1;
+ 485   1              TR1 = 1;
+ 486   1      }
+ 487          //==========================================系统初始化=============================================
+C51 COMPILER V9.60.7.0   MAIN                                                              04/10/2024 15:58:26 PAGE 9   
+
+ 488          void Init_Sys()
+ 489          {
+ 490   1              P2 = (P2 & 0x1f) | 0x80;  // LED
+ 491   1              P0 = 0xff;
+ 492   1              P2 &= 0x1f;
+ 493   1              P2 = (P2 & 0x1f) | 0xa0;  // 蜂鸣器，寄存器
+ 494   1              P0 = 0x00;
+ 495   1              P2 &= 0x1f;
+ 496   1              P2 = (P2 & 0x1f) | 0xc0;  // 数码管
+ 497   1              P0 = 0xff;
+ 498   1              P2 &= 0x1f;
+ 499   1              P2 = (P2 & 0x1f) | 0xe0;
+ 500   1              P0 = 0xff;
+ 501   1              
+ 502   1              num1=num2=num3=num4=num5=num6=num7=num8=10;
+ 503   1      }
+ 504          
+ 505          void LED_control() {
+ 506   1              // ================= 测试开始 =============
+ 507   1      //      P2 = (P2 & 0x1f) | 0x80;  // LED控制开启
+ 508   1      //      P0 = 0x7f;  // 要将P0放在这两句代码之间，避免错乱
+ 509   1      //      P2 &= 0x1f;
+ 510   1              // ================= 测试结束 =============
+ 511   1              
+ 512   1              // =========================================== 代码开始 ======================================
+ 513   1              if (!is_mesure_temp && dis_model_s4 == 0) {  // 时间显示界面
+ 514   2                      LED0_On();  // L1亮
+ 515   2              }
+ 516   1              else {
+ 517   2                      LED0_Off();  // L1灭
+ 518   2              }
+ 519   1              
+ 520   1              if (!is_mesure_temp && dis_model_s4 == 1) {  // 时间显示界面
+ 521   2                      LED1_On();  // L2亮
+ 522   2              }
+ 523   1              else {
+ 524   2                      LED1_Off();  // L2灭
+ 525   2              }
+ 526   1              if (is_mesure_temp) {  // 时间显示界面
+ 527   2                      LED2_On();  // L3亮
+ 528   2              }
+ 529   1              else {
+ 530   2                      LED2_Off();  // L3灭
+ 531   2              }
+ 532   1              
+ 533   1              // 报警指示灯
+ 534   1              if (is_temp_more_mesure == 1) {
+ 535   2                      if (f_100ms_L4) LED3_Off();
+ 536   2                      else LED3_On();
+ 537   2              }
+ 538   1              else LED3_Off();  // L4灭
+ 539   1              
+ 540   1              
+ 541   1              LED6_Off();
+ 542   1              // =========================================== 代码结束 ======================================
+ 543   1      }
+ 544          
+ 545          void main()
+ 546          {
+ 547   1              Init_Sys();
+ 548   1              
+ 549   1              Init_T1();
+C51 COMPILER V9.60.7.0   MAIN                                                              04/10/2024 15:58:26 PAGE 10  
+
+ 550   1      //      TMOD = (TMOD & 0x0f) | 0x00;//定时
+ 551   1              Init_T0();
+ 552   1              Init_18b20();
+ 553   1              Read_Temperature();
+ 554   1      
+ 555   1              My_Write_Ds1302();
+ 556   1              
+ 557   1              while(1)
+ 558   1              {
+ 559   2      //              LED_control();
+ 560   2      //              Scan_Keys_2x2();
+ 561   2              if(f_2ms == 1)
+ 562   2              {
+ 563   3                  f_2ms = 0;                  
+ 564   3                              LED_control();
+ 565   3                              // =======================按键开始========================
+ 566   3                              /*根据需要选择对应的按键类型*/
+ 567   3      //                      Change_Keys_Alone();  // 1.独立按键扫描(1)
+ 568   3      //                      ScanKeys_Alone();     // 2.独立按键扫描(2)
+ 569   3                              
+ 570   3                              if (!is_mesure_temp)  // 测量NE555时避免和数码管冲突
+ 571   3                              {
+ 572   4                                      TR1 = 0;
+ 573   4                                      Change_Keys();        // 3.矩阵按键扫描
+ 574   4                                      TR1 = 1;
+ 575   4                              }
+ 576   3                              
+ 577   3                              /*根据需要添加对应按键*/
+ 578   3                              if (GN == 4) {  // S4
+ 579   4                                      // =========================================== 代码开始 ======================================
+ 580   4                                      
+ 581   4                                      dis_model_s4 ++ ;
+ 582   4                                      if (dis_model_s4 > 2) dis_model_s4 = 0;
+ 583   4                                      // =========================================== 代码结束 ======================================
+ 584   4                                      while(Scan_Keys());
+ 585   4                                      // =========================================== 代码开始 ======================================
+ 586   4                                      
+ 587   4                                      // =========================================== 代码结束 ======================================
+ 588   4                              }
+ 589   3                              
+ 590   3                              if (GN == 5) {  // S5
+ 591   4                                      // =========================================== 代码开始 ======================================
+ 592   4                                      
+ 593   4                                      dis_model_s5 ++ ;
+ 594   4                                      if (dis_model_s5 > 2) dis_model_s5 = 0;
+ 595   4                                      // =========================================== 代码结束 ======================================
+ 596   4                                      while(Scan_Keys());
+ 597   4                                      // =========================================== 代码开始 ======================================
+ 598   4      
+ 599   4                                      // =========================================== 代码结束 ======================================
+ 600   4                              }
+ 601   3                              if (GN == 8) {  // S8
+ 602   4                                      // =========================================== 代码开始 ======================================
+ 603   4      
+ 604   4                                      if (dis_model_s4 == 2 && !is_mesure_temp) {  // 参数设置界面
+ 605   5                                              temperature_parameters ++ ;
+ 606   5                                              if (temperature_parameters > 99) temperature_parameters = 99;
+ 607   5                                      }
+ 608   4                                      // =========================================== 代码结束 ======================================
+ 609   4                                      while(Scan_Keys());
+ 610   4                                      // =========================================== 代码开始 ======================================
+ 611   4      
+C51 COMPILER V9.60.7.0   MAIN                                                              04/10/2024 15:58:26 PAGE 11  
+
+ 612   4                                      // =========================================== 代码结束 ======================================
+ 613   4                              }
+ 614   3                              if (GN == 9) {  // S9
+ 615   4                                      // =========================================== 代码开始 ======================================
+ 616   4      
+ 617   4                                      if (dis_model_s4 == 2 && !is_mesure_temp) {  // 参数设置界面
+ 618   5                                              temperature_parameters -- ;
+ 619   5                                              if (temperature_parameters < 0) temperature_parameters = 0;
+ 620   5                                      }
+ 621   4                                      if (dis_model_s5 == 2 && !is_mesure_temp) {  // 时间回转界面
+ 622   5                                              is_key_s9_pressing = 1;  // 按键按下未松开
+ 623   5                                      }
+ 624   4                                      // =========================================== 代码结束 ======================================
+ 625   4                                      while(Scan_Keys());
+ 626   4                                      // =========================================== 代码开始 ======================================
+ 627   4      
+ 628   4                                      LED4_Off();
+ 629   4                                      
+ 630   4                                      is_key_s9_pressing = 0;  // 按键按下松开
+ 631   4                                      num_s_key_pressing = 0;
+ 632   4                                      
+ 633   4                                      if (f_key_long) {  // 长按转换模式
+ 634   5                                              is_mesure_temp_num = 0;
+ 635   5                                              f_key_long = 0;
+ 636   5                                      }
+ 637   4                                      // =========================================== 代码结束 ======================================
+ 638   4                              }
+ 639   3                              
+ 640   3                              if (GN == 7) {  // S7
+ 641   4                                      // =========================================== 代码开始 ======================================
+ 642   4                                      // =========================================== 代码结束 ======================================
+ 643   4                                      while(Scan_Keys());
+ 644   4                                      // =========================================== 代码开始 ======================================
+ 645   4                                      if (!is_mesure_temp_ing) {
+ 646   5                                              num_2ms_mesure = 0;
+ 647   5                                              num_mesure_s = 0;
+ 648   5                                              
+ 649   5                                              is_mesure_temp_ing = 1;
+ 650   5                                              is_mesure_temp = 1;
+ 651   5                                              is_mesure_temp_num ++ ;  // 触发次数
+ 652   5                                      }
+ 653   4                                      // =========================================== 代码结束 ======================================
+ 654   4                              }
+ 655   3                              // =======================按键结束========================
+ 656   3                                                      
+ 657   3                              // =========================================== 测试代码开始 ======================================                      
+ 658   3                              // =======================1.温度读取开始========================
+ 659   3                              
+ 660   3                              // =======================1.温度读取结束========================
+ 661   3                              
+ 662   3                              
+ 663   3                              
+ 664   3                              // =========================================== 测试代码结束 ======================================
+ 665   3                              
+ 666   3                              // =========================================== 代码开始 ======================================
+ 667   3                              if (f_200ms_ds1302) {
+ 668   4                                      f_200ms_ds1302 = 0;
+ 669   4                                      My_Read_Ds1302();
+ 670   4                              }
+ 671   3                              
+ 672   3                              if (is_mesure_temp) {  // 触发测量 
+ 673   4                                      
+C51 COMPILER V9.60.7.0   MAIN                                                              04/10/2024 15:58:26 PAGE 12  
+
+ 674   4                                      TR0 = 1;
+ 675   4                                      
+ 676   4                                      mesure_h = ds1302_h, mesure_m = ds1302_s;
+ 677   4                                      
+ 678   4      //                              TR1 = 0;
+ 679   4                                      temperature = Read_Temperature();
+ 680   4      //                              TR1 = 1;
+ 681   4                                      temper[(is_mesure_temp_num-1) % 10] = temperature;
+ 682   4                                      
+ 683   4                                      if (max_temperature < temperature && temperature < 8500)
+ 684   4                                              max_temperature = temperature;  // 最高温度
+ 685   4                                      
+ 686   4                                      Temper_all = 0;
+ 687   4                                      
+ 688   4      
+ 689   4                                      if (is_mesure_temp_num < 10) {
+ 690   5                                              unsigned char i;
+ 691   5                                              for (i = 0; i < is_mesure_temp_num; i ++ ) {
+ 692   6                                                      Temper_all += temper[i];
+ 693   6                                              }
+ 694   5                                              Temper_average = Temper_all / is_mesure_temp_num;
+ 695   5                                      }
+ 696   4                                      else {
+ 697   5                                              unsigned char i;
+ 698   5                                              for (i = 0; i < 10; i ++ ) {
+ 699   6                                                      Temper_all += temper[i];
+ 700   6                                              }
+ 701   5                                              Temper_average = Temper_all / 10;
+ 702   5                                      }
+ 703   4                              }
+ 704   3                              
+ 705   3                              if ((temperature_parameters * 10) < temperature) {
+ 706   4                                              is_temp_more_mesure = 1;
+ 707   4                                      }
+ 708   3                              else 
+ 709   3                                      is_temp_more_mesure = 0;
+ 710   3                              
+ 711   3                              if (!is_mesure_temp) {  // 没有触发温湿度测量
+ 712   4                                      if (dis_model_s4 == 0) {  // 时间显示
+ 713   5                                              num1=ds1302_h/10;num2=ds1302_h%10;num3=11;
+ 714   5                                              num4=ds1302_m/10;num5=ds1302_m%10;num6=11;
+ 715   5                                              num7=ds1302_s/10;num8=ds1302_s%10;
+ 716   5                                              
+ 717   5                                              dis_model_s5 = 0;
+ 718   5                                      }
+ 719   4                                      else if (dis_model_s4 == 1) {  // 回转
+ 720   5                                              
+ 721   5                                              if (dis_model_s5 == 0) {
+ 722   6                                                      num1=12;num2=10;
+ 723   6                                                      num3=max_temperature/100;num4=max_temperature%100/10;
+ 724   6                                                      num5=max_temperature % 10;
+ 725   6                                                      num6=Temper_average/ 100;num7=Temper_average % 100 / 10;num8=Temper_average%10;
+ 726   6                                              }
+ 727   5                                              if (dis_model_s5 == 1) {  // 
+ 728   6                                                      num1=13;num2=10;num3=10;num4=10;
+ 729   6                                                      num4=11;num5=11;num6=11;
+ 730   6                                                      num7=11;num8=11;
+ 731   6                                              }
+ 732   5                                              if (dis_model_s5 == 2) {  // F
+ 733   6                                                      num1=14;num2=is_mesure_temp_num / 10;num3=is_mesure_temp_num % 10;
+ 734   6                                                      num4=mesure_h / 10;num5=mesure_h % 10;
+ 735   6                                                      num6=11;
+C51 COMPILER V9.60.7.0   MAIN                                                              04/10/2024 15:58:26 PAGE 13  
+
+ 736   6                                                      num7=mesure_m / 10;num8=mesure_m % 10;
+ 737   6                                              }
+ 738   5      
+ 739   5                                      }
+ 740   4                                      else if (dis_model_s4 == 2) {  // P温度参数
+ 741   5                                              num1=15;
+ 742   5      //                                      num2=10;num3=10;num4=10;
+ 743   5      //                                      num4=10;num5=10;num6=10;
+ 744   5                                              
+ 745   5                                              num2=dat_f / 10000;num3=(dat_f % 10000) / 1000;num4=(dat_f % 1000) / 100;
+ 746   5                                              num5=(dat_f % 100) / 10;num6=dat_f % 10;
+ 747   5                                              
+ 748   5                                              num7=temperature_parameters/10;num8=temperature_parameters%10;
+ 749   5                                      }
+ 750   4                              }
+ 751   3                              else {   // 触发温湿度测量
+ 752   4                                      num1=16;num2=10;num3=10;num4=10;
+ 753   4                                      num4=temperature/100;num5=temperature%100/10;
+ 754   4                                      num6=11;
+ 755   4                                      num7=(dat_f % 100) / 10;num8=dat_f % 10;
+ 756   4                              }
+ 757   3                               
+ 758   3                              // =========================================== 代码结束 ======================================
+ 759   3              }
+ 760   2          }
+ 761   1      }
+ 762          
+ 763          void Service_T1() interrupt 3
+ 764          {
+ 765   1              TH1 = (65536 - 2000) / 256;
+ 766   1              TL1 = (65536 - 2000) % 256;
+ 767   1              
+ 768   1              f_2ms = 1;
+ 769   1              
+ 770   1              num_2ms ++ ;
+ 771   1              
+ 772   1              if (num_2ms == 500) {
+ 773   2                      f_1s = 1;
+ 774   2                      num_2ms = 0;
+ 775   2              }
+ 776   1              
+ 777   1              if (f_1s == 1) {
+ 778   2                      f_1s = 0;
+ 779   2                      
+ 780   2                      if (f_time) num_s ++ ;
+ 781   2                      
+ 782   2                      // 按键长按2s
+ 783   2                      if (is_key_s9_pressing) {
+ 784   3                              num_s_key_pressing ++ ;
+ 785   3                              if (num_s_key_pressing == 2) {
+ 786   4                                      LED4_On();
+ 787   4                                      f_key_long = 1;
+ 788   4                              }
+ 789   3                      }                       
+ 790   2                              
+ 791   2                      
+ 792   2                      if (num_s == 9) 
+ 793   2                              num_s = 0;
+ 794   2                      
+ 795   2              }
+ 796   1              
+ 797   1              // 数码管闪烁
+C51 COMPILER V9.60.7.0   MAIN                                                              04/10/2024 15:58:26 PAGE 14  
+
+ 798   1              num_2ms_smg ++ ;
+ 799   1              if (num_2ms_smg == 250) {
+ 800   2                      num_2ms_smg = 0;
+ 801   2                      f_500ms_smg = ~f_500ms_smg;
+ 802   2              }
+ 803   1              
+ 804   1              // 按键双击
+ 805   1              if (stat_key != 0) {
+ 806   2                      count_key_t ++ ;
+ 807   2              }
+ 808   1              
+ 809   1              // 时间读取刷新
+ 810   1              num_2ms_ds1302 ++ ;
+ 811   1              if (num_2ms_ds1302 == 100) {
+ 812   2                      f_200ms_ds1302 = 1;
+ 813   2                      num_2ms_ds1302 = 0;
+ 814   2              }
+ 815   1              
+ 816   1              // 测量模式
+ 817   1              if (is_mesure_temp) {
+ 818   2                      num_2ms_mesure ++ ;
+ 819   2                      if (num_2ms_mesure == 500) {
+ 820   3                              num_mesure_s ++ ;
+ 821   3                              num_2ms_mesure = 0;
+ 822   3                      }
+ 823   2                      if (num_mesure_s >= 3) {
+ 824   3                              num_mesure_s = 0;
+ 825   3                              is_mesure_temp = 0;  // 测量结束
+ 826   3                              is_mesure_temp_ing = 0;  // 测量结束，可用开始下一次测量
+ 827   3                              
+ 828   3                              dis_model_s4 = 1;
+ 829   3                              dis_model_s5 = 0;
+ 830   3                      }
+ 831   2              }
+ 832   1              
+ 833   1              // L4管闪烁
+ 834   1              num_2ms_L4 ++ ;
+ 835   1              if (num_2ms_L4 == 50) {
+ 836   2                      num_2ms_L4 = 0;
+ 837   2                      f_100ms_L4 = ~f_100ms_L4;
+ 838   2              }
+ 839   1              
+ 840   1      //      ++ count_2ms_NE555;
+ 841   1      //      if( count_2ms_NE555 == 500)
+ 842   1      //      {
+ 843   1      //              dat_f = (TH0 << 8) | TL0;
+ 844   1      //              count_2ms_NE555 = 0;
+ 845   1      //              
+ 846   1      //              TH0 = 0;
+ 847   1      //              TL0 = 0;
+ 848   1      //      }
+ 849   1              
+ 850   1              if (is_mesure_temp)
+ 851   1              {
+ 852   2      //              if(++count_2ms_NE555 == 500)
+ 853   2      //              {
+ 854   2      //                      count_2ms_NE555 = 0;
+ 855   2      //                      dat_f = (TH0 << 8) | TL0;
+ 856   2      //                      TH0 = 0;
+ 857   2      //                      TL0 = 0;
+ 858   2      //              }
+ 859   2              }
+C51 COMPILER V9.60.7.0   MAIN                                                              04/10/2024 15:58:26 PAGE 15  
+
+ 860   1              else 
+ 861   1                      TR0 = 0;
+ 862   1              /***************************************************
+ 863   1              与时间相关的变量的更新放在里面
+ 864   1              注意：不要把消耗过长时间的代码（如for循环等）放在这里，容易造成错乱
+ 865   1              ***************************************************/
+ 866   1              // =========================================== 代码开始 ======================================
+ 867   1              
+ 868   1              // =========================================== 代码结束 ======================================
+ 869   1              
+ 870   1              Display_SMG(num1,num2,num3,num4,num5,num6,num7,num8);//2ms刷新数码管
+ 871   1      }
+*** WARNING C294 IN LINE 282 OF main.c: unreachable code
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   2664    ----
+   CONSTANT SIZE    =     26    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     89      15
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =     14    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  1 WARNING(S),  0 ERROR(S)

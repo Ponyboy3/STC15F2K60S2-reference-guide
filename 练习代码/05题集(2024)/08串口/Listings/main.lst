@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.7.0   MAIN                                                              04/06/2024 01:13:33 PAGE 1   
+C51 COMPILER V9.60.7.0   MAIN                                                              04/06/2024 23:03:37 PAGE 1   
 
 
 C51 COMPILER V9.60.7.0, COMPILATION OF MODULE MAIN
@@ -62,7 +62,7 @@ line level    source
   52   1              P2 &= 0x1f;
   53   1      }
   54          void LED0_Off() {
-C51 COMPILER V9.60.7.0   MAIN                                                              04/06/2024 01:13:33 PAGE 2   
+C51 COMPILER V9.60.7.0   MAIN                                                              04/06/2024 23:03:37 PAGE 2   
 
   55   1              P0 = 0xff & temp_Led_P0;
   56   1              P2 = (P2 & 0x1f) | 0x80;  // LED控制开启
@@ -126,7 +126,7 @@ line level    source
  114          void LED4_Off() {
  115   1              P0 = 0xff & temp_Led_P0 & temp_Led_P0;
  116   1              P2 = (P2 & 0x1f) | 0x80;  // LED控制开启
-C51 COMPILER V9.60.7.0   MAIN                                                              04/06/2024 01:13:33 PAGE 3   
+C51 COMPILER V9.60.7.0   MAIN                                                              04/06/2024 23:03:37 PAGE 3   
 
  117   1              L4 = 1;  // 要将P0放在这两句代码之间，避免错乱
  118   1              temp_Led_P0 = P0;
@@ -190,7 +190,7 @@ line level    source
  175   2                                                                              if(0)  // 根据需要的条件
  176   2                                                                              {
  177   3                                                                                      P0 = type1[n6]&0x7f;  // 加入小数点
-C51 COMPILER V9.60.7.0   MAIN                                                              04/06/2024 01:13:33 PAGE 4   
+C51 COMPILER V9.60.7.0   MAIN                                                              04/06/2024 23:03:37 PAGE 4   
 
  178   3                                                                              }
  179   2                                                                              else
@@ -254,7 +254,7 @@ line level    source
  237   2              }
  238   1              
  239   1              if (S6 == 0) {
-C51 COMPILER V9.60.7.0   MAIN                                                              04/06/2024 01:13:33 PAGE 5   
+C51 COMPILER V9.60.7.0   MAIN                                                              04/06/2024 23:03:37 PAGE 5   
 
  240   2                      Delay_Keys(100);
  241   2                      if (S6 == 0) {
@@ -318,7 +318,7 @@ line level    source
  299          
  300          void Change_Keys()
  301          {
-C51 COMPILER V9.60.7.0   MAIN                                                              04/06/2024 01:13:33 PAGE 6   
+C51 COMPILER V9.60.7.0   MAIN                                                              04/06/2024 23:03:37 PAGE 6   
 
  302   1              switch(Scan_Keys())
  303   1              {
@@ -371,7 +371,7 @@ line level    source
  350          
  351          sfr AUXR = 0x8e;  // 辅助寄存器
  352          #define BAUD         9600
- 353          #define SYSTEMCLOCK  11059200L
+ 353          #define SYSTEMCLOCK  12000000L
  354          uchar command = 0x00;
  355          void Init_Uart()
  356          {
@@ -382,7 +382,7 @@ line level    source
  361   1              TR1 = 1;                    //启动定时器1
  362   1              
  363   1              SCON = 0x50;
-C51 COMPILER V9.60.7.0   MAIN                                                              04/06/2024 01:13:33 PAGE 7   
+C51 COMPILER V9.60.7.0   MAIN                                                              04/06/2024 23:03:37 PAGE 7   
 
  364   1              AUXR = 0x40;
  365   1              
@@ -446,7 +446,7 @@ line level    source
  423   1              
  424   1              // =========================================== 代码结束 ======================================
  425   1      }
-C51 COMPILER V9.60.7.0   MAIN                                                              04/06/2024 01:13:33 PAGE 8   
+C51 COMPILER V9.60.7.0   MAIN                                                              04/06/2024 23:03:37 PAGE 8   
 
  426          
  427          void main()
@@ -510,7 +510,7 @@ line level    source
  485   5                                                      command = 0x00;
  486   5                                              break;
  487   5                                      }
-C51 COMPILER V9.60.7.0   MAIN                                                              04/06/2024 01:13:33 PAGE 9   
+C51 COMPILER V9.60.7.0   MAIN                                                              04/06/2024 23:03:37 PAGE 9   
 
  488   4                              }
  489   3                              // =========================================== 代码结束 ======================================
@@ -518,7 +518,7 @@ line level    source
  491   2          }
  492   1      }
  493          
- 494          void Service_T0() interrupt 2
+ 494          void Service_T0() interrupt 1
  495          {
  496   1              TH0 = (65536 - 2000) / 256;
  497   1              TL0 = (65536 - 2000) % 256;

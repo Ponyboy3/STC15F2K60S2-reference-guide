@@ -146,14 +146,6 @@ void LED6_Off() {
 	temp_Led_P0 = P0;
 	P2 &= 0x1f;
 }
-
-void LED_On(uchar n) {
-	P0 = 0xff & temp_Led_P0;
-	P2 = (P2 & 0x1f) | 0x80;  // LED控制开启
-	L6 = 0;  // 要将P0放在这两句代码之间，避免错乱
-	temp_Led_P0 = P0;
-	P2 &= 0x1f;
-}
 //=========================================数码管显示==============================================
 void Display_SMG(uchar n1,uchar n2,uchar n3,uchar n4,uchar n5,uchar n6,uchar n7,uchar n8)
 {
@@ -408,13 +400,12 @@ void main()
     }
 }
 
-void Service_T0() interrupt 2
+void Service_T0() interrupt 1
 {
 	TH0 = (65536 - 50000) / 256;
 	TL0 = (65536 - 50000) % 256;
 	
 	f_50ms = 1;
-	
 }
 
 void Service_T1() interrupt 3

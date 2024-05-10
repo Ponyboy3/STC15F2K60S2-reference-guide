@@ -1,10 +1,10 @@
-C51 COMPILER V9.59.0.0   MAIN                                                              03/30/2023 16:13:55 PAGE 1   
+C51 COMPILER V9.60.7.0   MAIN                                                              04/09/2024 18:34:39 PAGE 1   
 
 
-C51 COMPILER V9.59.0.0, COMPILATION OF MODULE MAIN
+C51 COMPILER V9.60.7.0, COMPILATION OF MODULE MAIN
 OBJECT MODULE PLACED IN .\Objects\main.obj
 COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\main
-                    -.lst) TABS(2) OBJECT(.\Objects\main.obj)
+                    -.lst) OBJECT(.\Objects\main.obj)
 
 line level    source
 
@@ -13,7 +13,7 @@ line level    source
    3          
    4          #define uchar unsigned char 
    5          #define uint unsigned int
-   6            
+   6                  
    7          uchar code type1[] = {0xc0,0xf9,0xa4,0xb0,0x99,0x92,0x82,0xf8,0x80,0x90,0xff};
    8          uchar code type2[] = {0x01,0x02,0x04,0x08,0x10,0x20,0x40,0x80};
    9          
@@ -25,82 +25,84 @@ line level    source
   15          
   16          void Display_Smg(uchar n1,uchar n2,uchar n3,uchar n4,uchar n5,uchar n6,uchar n7,uchar n8)
   17          {
-  18   1        uchar i;
-  19   1        P0 = 0xff;
-  20   1        P2 = (P2 & 0x1f) | 0xc0;
-  21   1        P0 = type2[i];
-  22   1        P2 &= 0x1f;
-  23   1        switch(i)
-  24   1        {
-  25   2          case 0:P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n1];P2 &= 0x1f;break;
-  26   2          case 1:P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n2];P2 &= 0x1f;break;
-  27   2          case 2:P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n3];P2 &= 0x1f;break;
-  28   2          case 3:P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n4];P2 &= 0x1f;break;
-  29   2          case 4:P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n5];P2 &= 0x1f;break;
-  30   2          case 5:P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n6]&0x7f;P2 &= 0x1f;break;
-  31   2          case 6:P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n7];P2 &= 0x1f;break;
-  32   2          case 7:P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n8];P2 &= 0x1f;break;
-  33   2        }
-  34   1        if(++i == 8)
-  35   1          i = 0;
+  18   1              uchar i;
+  19   1              P0 = 0xff;
+  20   1              P2 = (P2 & 0x1f) | 0xc0;
+  21   1              P0 = type2[i];
+  22   1              P2 &= 0x1f;
+  23   1              switch(i)
+  24   1              {
+  25   2                      case 0:P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n1];P2 &= 0x1f;break;
+  26   2                      case 1:P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n2];P2 &= 0x1f;break;
+  27   2                      case 2:P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n3];P2 &= 0x1f;break;
+  28   2                      case 3:P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n4];P2 &= 0x1f;break;
+  29   2                      case 4:P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n5];P2 &= 0x1f;break;
+  30   2                      case 5:P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n6]&0x7f;P2 &= 0x1f;break;
+  31   2                      case 6:P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n7];P2 &= 0x1f;break;
+  32   2                      case 7:P2 = (P2 & 0x1f) | 0xe0;P0 = type1[n8];P2 &= 0x1f;break;
+  33   2              }
+  34   1              if(++i == 8)
+  35   1                      i = 0;
   36   1      }
   37          void Init_T1()
   38          {
-  39   1        TMOD = (TMOD & 0x0f) | 0x10;
-  40   1        TH1 = (65536 - 2000) / 256;
-  41   1        TL0 = (65536 - 2000) % 256;
-  42   1        
-  43   1        EA = 1;
-  44   1        ET1 = 1;
-  45   1        TR1 = 1;
+  39   1              TMOD = (TMOD & 0x0f) | 0x10;
+  40   1              TH1 = (65536 - 2000) / 256;
+  41   1              TL0 = (65536 - 2000) % 256;
+  42   1              
+  43   1              EA = 1;
+  44   1              ET1 = 1;
+  45   1              TR1 = 1;
   46   1      }
   47          void Init_Sys()
   48          {
-  49   1        P2 = (P2 & 0x1f) | 0x80;
-  50   1        P0 = 0xff;
-  51   1        P2 &= 0x1f;
-  52   1        P2 = (P2 & 0x1f) | 0xa0;
-  53   1        P0 = 0x00;
-  54   1        P2 &= 0x1f;
-C51 COMPILER V9.59.0.0   MAIN                                                              03/30/2023 16:13:55 PAGE 2   
+  49   1              P2 = (P2 & 0x1f) | 0x80;
+  50   1              P0 = 0xff;
+  51   1              P2 &= 0x1f;
+  52   1              P2 = (P2 & 0x1f) | 0xa0;
+  53   1              P0 = 0x00;
+  54   1              P2 &= 0x1f;
+C51 COMPILER V9.60.7.0   MAIN                                                              04/09/2024 18:34:39 PAGE 2   
 
-  55   1        P2 = (P2 & 0x1f) | 0xc0;
-  56   1        P0 = 0xff;
-  57   1        P2 &= 0x1f;
-  58   1        P2 = (P2 & 0x1f) | 0xe0;
-  59   1        P0 = 0xff;
-  60   1        P2 &= 0x1f;
+  55   1              P2 = (P2 & 0x1f) | 0xc0;
+  56   1              P0 = 0xff;
+  57   1              P2 &= 0x1f;
+  58   1              P2 = (P2 & 0x1f) | 0xe0;
+  59   1              P0 = 0xff;
+  60   1              P2 &= 0x1f;
   61   1      }
   62          void main()
   63          {
-  64   1        Init_Sys();
-  65   1        Init_T1();
-  66   1        Init_18b20();
-  67   1        while(1)
-  68   1        {
-  69   2          if(f_2ms == 1)
-  70   2          {
-  71   3            f_2ms = 0;
-  72   3            if(++t_2ms == 250)
-  73   3            {
-  74   4              t_2ms = 0;
-  75   4              temp = Read_Temperature();
-  76   4            }
-  77   3            num1=10;num2=10;num3=10;num4=10;num5=temp/1000;num6=temp/100%10;num7=temp/10%10;num8=temp%10;
-  78   3          }
-  79   2        }
-  80   1      }
-  81          void Service_T1() interrupt 3
-  82          {
-  83   1        TH1 = (65536 - 2000) / 256;
-  84   1        TL0 = (65536 - 2000) % 256;
-  85   1        f_2ms = 1;
-  86   1        Display_Smg(num1,num2,num3,num4,num5,num6,num7,num8);
-  87   1      }
+  64   1              Init_Sys();
+  65   1              Init_T1();
+  66   1              Init_18b20();
+  67   1              while(1)
+  68   1              {
+  69   2                      if(f_2ms == 1)
+  70   2                      {
+  71   3                              f_2ms = 0;
+  72   3      //                      if(++t_2ms == 250)
+  73   3      //                      {
+  74   3      //                              t_2ms = 0;
+  75   3      //                              temp = Read_Temperature();
+  76   3      //                      }
+  77   3      
+  78   3                              temp = Read_Temperature();
+  79   3                              num1=10;num2=10;num3=10;num4=10;num5=temp/1000;num6=temp/100%10;num7=temp/10%10;num8=temp%10;
+  80   3                      }
+  81   2              }
+  82   1      }
+  83          void Service_T1() interrupt 3
+  84          {
+  85   1              TH1 = (65536 - 2000) / 256;
+  86   1              TL0 = (65536 - 2000) % 256;
+  87   1              f_2ms = 1;
+  88   1              Display_Smg(num1,num2,num3,num4,num5,num6,num7,num8);
+  89   1      }
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
-   CODE SIZE        =    449    ----
+   CODE SIZE        =    427    ----
    CONSTANT SIZE    =     19    ----
    XDATA SIZE       =   ----    ----
    PDATA SIZE       =   ----    ----

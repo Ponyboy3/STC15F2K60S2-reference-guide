@@ -1,0 +1,295 @@
+C51 COMPILER V9.60.7.0   EX16                                                              04/10/2024 13:26:26 PAGE 1   
+
+
+C51 COMPILER V9.60.7.0, COMPILATION OF MODULE EX16
+OBJECT MODULE PLACED IN ex16.OBJ
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE ex16.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          /*******************************************************************************
+   2          * 文件名称：矩阵键盘实验
+   3          * 实验目的：1.掌握矩阵键盘扫描的基本原理
+   4          *           2.掌握按键扫描及消除抖动的基本原理
+   5          * 实验配置：J3跳线配置为IO方式，J5配置为KBD、J2配置为1-3和2-4
+   6          * 实验现象：按键S7、S11、S15、S19数码管显示00-03
+   7                      按键S6、S10、S14、S18数码管显示04-07
+   8                      按键S5、S9、S13、S17数码管显示08-11
+   9                      按键S4、S8、S12、S16数码管显示12-15
+  10          * 硬件说明：IAP15F2K61S2@11.0592MHz
+  11          * 程序说明：采用状态法进行按键扫描，系统实时性好，且每10ms扫描可以防止抖动。
+  12          * 日期版本：2022/02/08
+  13          *******************************************************************************/
+  14          #include "STC15F2K60S2.H"  //用此头文件直接代替REG52.H，请进行两个头文件对比
+  15          #include "absacc.h"
+  16          
+  17                                   //  0      1     2     3     4     5     6     7      8     9    熄灭
+  18          code unsigned char tab[] = { 0xc0, 0xf9, 0xa4, 0xb0, 0x99, 0x92, 0x82, 0xf8, 0x80, 0x90, 0xFF};
+  19          unsigned char dspbuf[8] = {10, 10, 10, 10, 10, 10, 10, 10}; //显示缓冲区
+  20          bit key_flag = 0;//按键扫描标志位
+  21          unsigned char key_value = 0xFF; //按键值
+  22          /******函数声明***********************/
+  23          void read_keyboard(void);
+  24          void display();
+  25          /************************************/
+  26          
+  27          void cls_buzz(void)     //关闭蜂鸣器
+  28          {
+  29   1          P2 = (P2 & 0x1F | 0xA0);
+  30   1          P0 = 0x00;
+  31   1          P2 &= 0x1F;
+  32   1      }
+  33          
+  34          void cls_led(void)//关闭所有LED
+  35          {
+  36   1          P2 = ((P2 & 0x1f) | 0x80);
+  37   1          P0 = 0xff;
+  38   1          P2 &= 0x1f;
+  39   1      }
+  40          
+  41          //主函数
+  42          void main(void)
+  43          {
+  44   1          cls_buzz();
+  45   1          cls_led();
+  46   1          AUXR |= 0x80;       //1T模式，IAP15F2K61S2单片机特殊功能寄存器
+  47   1          TMOD &= 0xF0;
+  48   1          TL0 = 0xCD;
+  49   1          TH0 = 0xD4;
+  50   1          TF0 = 0;
+  51   1          TR0 = 1;
+  52   1          ET0 = 1;
+  53   1          EA = 1;
+  54   1          while(1)
+  55   1          {
+C51 COMPILER V9.60.7.0   EX16                                                              04/10/2024 13:26:26 PAGE 2   
+
+  56   2              if(key_flag)
+  57   2              {
+  58   3                  key_flag = 0;
+  59   3                  read_keyboard();
+  60   3                  if(key_value != 0xFF)
+  61   3                  {
+  62   4                      dspbuf[7] = key_value % 10;
+  63   4                      dspbuf[6] = key_value / 10;
+  64   4                  }
+  65   3              }
+  66   2      
+  67   2          }
+  68   1      }
+  69          
+  70          //定时器中断服务函数
+  71          void isr_timer_0(void)  interrupt 1  //默认中断优先级 1
+  72          {
+  73   1          static unsigned char intr = 0;
+  74   1          display(); //1ms执行一次
+  75   1          if(++intr == 10)
+  76   1          {
+  77   2              intr = 0;
+  78   2              key_flag = 1;  //10ms按键扫描标志位置1
+  79   2          }
+  80   1      }
+  81          
+  82          //读取矩阵键盘键值:转接板中使用P42和P44代替8051引脚
+  83          //顺序中的P36和P37引脚
+  84          void read_keyboard(void)
+  85          {
+  86   1          static unsigned char hang;
+  87   1          static unsigned char key_state = 0;
+  88   1          switch(key_state)
+  89   1          {
+  90   2          case 0:
+  91   2          {
+  92   3              P3 = 0x0f;
+  93   3              P42 = 0;
+  94   3              P44 = 0;
+  95   3              if(P3 != 0x0f) //有按键按下
+  96   3                  key_state = 1;
+  97   3          }
+  98   2          break;
+  99   2          case 1:
+ 100   2          {
+ 101   3              P3 = 0x0f;
+ 102   3              P42 = 0;
+ 103   3              P44 = 0;
+ 104   3              if(P3 != 0x0f) //有按键按下
+ 105   3              {
+ 106   4                  if(P30 == 0)hang = 1;
+ 107   4                  if(P31 == 0)hang = 2;
+ 108   4                  if(P32 == 0)hang = 3;
+ 109   4                  if(P33 == 0)hang = 4;//确定行
+ 110   4                  switch(hang)
+ 111   4                  {
+ 112   5                  case 1:
+ 113   5                  {
+ 114   6                      P3 = 0xf0;
+ 115   6                      P42 = 1;
+ 116   6                      P44 = 1;
+ 117   6                      if(P44 == 0)
+C51 COMPILER V9.60.7.0   EX16                                                              04/10/2024 13:26:26 PAGE 3   
+
+ 118   6                      {
+ 119   7                          key_value = 0;
+ 120   7                          key_state = 2;
+ 121   7                      }
+ 122   6                      else if(P42 == 0)
+ 123   6                      {
+ 124   7                          key_value = 1;
+ 125   7                          key_state = 2;
+ 126   7                      }
+ 127   6                      else if(P35 == 0)
+ 128   6                      {
+ 129   7                          key_value = 2;
+ 130   7                          key_state = 2;
+ 131   7                      }
+ 132   6                      else if(P34 == 0)
+ 133   6                      {
+ 134   7                          key_value = 3;
+ 135   7                          key_state = 2;
+ 136   7                      }
+ 137   6                  }
+ 138   5                  break;
+ 139   5                  case 2:
+ 140   5                  {
+ 141   6                      P3 = 0xf0;
+ 142   6                      P42 = 1;
+ 143   6                      P44 = 1;
+ 144   6                      if(P44 == 0)
+ 145   6                      {
+ 146   7                          key_value = 4;
+ 147   7                          key_state = 2;
+ 148   7                      }
+ 149   6                      else if(P42 == 0)
+ 150   6                      {
+ 151   7                          key_value = 5;
+ 152   7                          key_state = 2;
+ 153   7                      }
+ 154   6                      else if(P35 == 0)
+ 155   6                      {
+ 156   7                          key_value = 6;
+ 157   7                          key_state = 2;
+ 158   7                      }
+ 159   6                      else if(P34 == 0)
+ 160   6                      {
+ 161   7                          key_value = 7;
+ 162   7                          key_state = 2;
+ 163   7                      }
+ 164   6                  }
+ 165   5                  break;
+ 166   5                  case 3:
+ 167   5                  {
+ 168   6                      P3 = 0xf0;
+ 169   6                      P42 = 1;
+ 170   6                      P44 = 1;
+ 171   6                      if(P44 == 0)
+ 172   6                      {
+ 173   7                          key_value = 8;
+ 174   7                          key_state = 2;
+ 175   7                      }
+ 176   6                      else if(P42 == 0)
+ 177   6                      {
+ 178   7                          key_value = 9;
+ 179   7                          key_state = 2;
+C51 COMPILER V9.60.7.0   EX16                                                              04/10/2024 13:26:26 PAGE 4   
+
+ 180   7                      }
+ 181   6                      else if(P35 == 0)
+ 182   6                      {
+ 183   7                          key_value = 10;
+ 184   7                          key_state = 2;
+ 185   7                      }
+ 186   6                      else if(P34 == 0)
+ 187   6                      {
+ 188   7                          key_value = 11;
+ 189   7                          key_state = 2;
+ 190   7                      }
+ 191   6                  }
+ 192   5                  break;
+ 193   5                  case 4:
+ 194   5                  {
+ 195   6                      P3 = 0xf0;
+ 196   6                      P42 = 1;
+ 197   6                      P44 = 1;
+ 198   6                      if(P44 == 0)
+ 199   6                      {
+ 200   7                          key_value = 12;
+ 201   7                          key_state = 2;
+ 202   7                      }
+ 203   6                      else if(P42 == 0)
+ 204   6                      {
+ 205   7                          key_value = 13;
+ 206   7                          key_state = 2;
+ 207   7                      }
+ 208   6                      else if(P35 == 0)
+ 209   6                      {
+ 210   7                          key_value = 14;
+ 211   7                          key_state = 2;
+ 212   7                      }
+ 213   6                      else if(P34 == 0)
+ 214   6                      {
+ 215   7                          key_value = 15;
+ 216   7                          key_state = 2;
+ 217   7                      }
+ 218   6                  }
+ 219   5                  break;
+ 220   5                  }
+ 221   4              }
+ 222   3              else
+ 223   3              {
+ 224   4                  key_state = 0;
+ 225   4              }
+ 226   3          }
+ 227   2          break;
+ 228   2          case 2:
+ 229   2          {
+ 230   3              P3 = 0x0f;
+ 231   3              P42 = 0;
+ 232   3              P44 = 0;
+ 233   3              if(P3 == 0x0f) //按键放开
+ 234   3                  key_state = 0;
+ 235   3          }
+ 236   2          break;
+ 237   2      
+ 238   2          }
+ 239   1      
+ 240   1      }
+ 241          
+C51 COMPILER V9.60.7.0   EX16                                                              04/10/2024 13:26:26 PAGE 5   
+
+ 242          
+ 243          //显示函数
+ 244          void display(void)
+ 245          {
+ 246   1          static unsigned char dspcom = 0;
+ 247   1          P0 = 0xff;
+ 248   1          P2 = ((P2 & 0x1f) | 0xE0);
+ 249   1          P2 &= 0x1f;
+ 250   1      
+ 251   1          P0 = 1 << dspcom;
+ 252   1          P2 = ((P2 & 0x1f) | 0xC0);
+ 253   1          P2 &= 0x1f;
+ 254   1      
+ 255   1          P0 = tab[dspbuf[dspcom]];
+ 256   1          P2 = ((P2 & 0x1f) | 0xE0);
+ 257   1          P2 &= 0x1f;
+ 258   1      
+ 259   1          if(++dspcom == 8)
+ 260   1          {
+ 261   2              dspcom = 0;
+ 262   2          }
+ 263   1      }
+ 264          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    514    ----
+   CONSTANT SIZE    =     11    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     13    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      1    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -5,10 +5,10 @@
 <h2>Tool Versions:</h2>
 IDE-Version: μVision V5.38.0.0
 Copyright (C) 2022 ARM Ltd and ARM Germany GmbH. All rights reserved.
-License Information: Zuo Jinshan, CDUTCM, LIC=----
+License Information: Zuo Jinshan, CDUTCM, LIC=PEGU5-G8D76-L0XNE-581Y9-3HTER-XB8X1
  
 Tool Versions:
-Toolchain:       PK51 Prof. Develpers Kit  Version: 9.60.7.0
+Toolchain:       PK51 Prof. Developers Kit  Version: 9.60.7.0
 Toolchain Path:  C:\Keil_v5\C51\BIN
 C Compiler:      C51.exe V9.60.7.0
 Assembler:       A51.exe V8.2.7.0
@@ -22,7 +22,11 @@ C:\Users\24021\文档\MyGit\STC15F2K60S2-reference-guide\练习代码\05题集(2024)\02L
 Project File Date:  04/04/2024
 
 <h2>Output:</h2>
-Build target 'Target 1'
+Rebuild target 'Target 1'
+assembling STARTUP.A51...
+compiling main.c...
+main.c(132): warning C280: 'n': unreferenced local variable
+main.c(157): warning C294: unreachable code
 linking...
 *** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
     SEGMENT: ?PR?LED1_ON?MAIN
@@ -56,8 +60,8 @@ linking...
     SEGMENT: ?PR?SCANKEYS_ALONE?MAIN
 Program Size: data=33.2 xdata=0 code=1244
 creating hex file from ".\Objects\Project"...
-".\Objects\Project" - 0 Error(s), 15 Warning(s).
-Build Time Elapsed:  00:00:00
+".\Objects\Project" - 0 Error(s), 17 Warning(s).
+Build Time Elapsed:  00:00:01
 </pre>
 </body>
 </html>

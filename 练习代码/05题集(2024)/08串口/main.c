@@ -350,7 +350,7 @@ void Init_T0()
 
 sfr AUXR = 0x8e;  // ¸¨Öú¼Ä´æÆ÷
 #define BAUD         9600
-#define SYSTEMCLOCK  11059200L
+#define SYSTEMCLOCK  12000000L
 uchar command = 0x00;
 void Init_Uart()
 {
@@ -491,7 +491,7 @@ void main()
     }
 }
 
-void Service_T0() interrupt 2
+void Service_T0() interrupt 1
 {
 	TH0 = (65536 - 2000) / 256;
 	TL0 = (65536 - 2000) % 256;

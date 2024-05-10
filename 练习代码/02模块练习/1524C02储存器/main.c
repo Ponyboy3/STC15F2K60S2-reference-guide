@@ -12,6 +12,7 @@ uchar num1,num2,num3,num4,num5,num6,num7,num8;
 bit f_2ms;
 uchar GN;
 uchar h,m,s;
+//unsigned char dat1 = 0,dat2 = 0,dat3 = 0;  // 24c02Êý¾Ý
 
 void Display_Smg(uchar n1,uchar n2,uchar n3,uchar n4,uchar n5,uchar n6,uchar n7,uchar n8)
 {
@@ -61,9 +62,9 @@ void Change_Keys()
 
 void Init_DS1302()
 {
-	Write_Ds1302_Byte(0x80,0x45);
-	Write_Ds1302_Byte(0x82,0x59);
-	Write_Ds1302_Byte(0x84,0x23);
+	Write_Ds1302_Byte(0x80,h);
+	Write_Ds1302_Byte(0x82,m);
+	Write_Ds1302_Byte(0x84,s);
 }
 void Du_DS1302()
 {
@@ -131,6 +132,10 @@ void main()
 	Init_Sys();
 	Init_T1();
 	Init_DS1302();
+	Xie_24c02(0x01,23);
+	Xie_24c02(0x03,59);
+	Xie_24c02(0x05,50);
+	
 	h = Du_24c02(0x01);
 	m = Du_24c02(0x03);
 	s = Du_24c02(0x05);

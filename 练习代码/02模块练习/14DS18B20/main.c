@@ -69,11 +69,13 @@ void main()
 		if(f_2ms == 1)
 		{
 			f_2ms = 0;
-			if(++t_2ms == 250)
-			{
-				t_2ms = 0;
-				temp = Read_Temperature();
-			}
+//			if(++t_2ms == 250)
+//			{
+//				t_2ms = 0;
+//				temp = Read_Temperature();
+//			}
+
+			temp = Read_Temperature();
 			num1=10;num2=10;num3=10;num4=10;num5=temp/1000;num6=temp/100%10;num7=temp/10%10;num8=temp%10;
 		}
 	}

@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.7.0   MAIN                                                              04/05/2024 23:55:46 PAGE 1   
+C51 COMPILER V9.60.7.0   MAIN                                                              04/06/2024 22:59:26 PAGE 1   
 
 
 C51 COMPILER V9.60.7.0, COMPILATION OF MODULE MAIN
@@ -62,7 +62,7 @@ line level    source
   52          void LED0_Off() {
   53   1              P0 = 0xff & temp_Led_P0;
   54   1              P2 = (P2 & 0x1f) | 0x80;  // LED控制开启
-C51 COMPILER V9.60.7.0   MAIN                                                              04/05/2024 23:55:46 PAGE 2   
+C51 COMPILER V9.60.7.0   MAIN                                                              04/06/2024 22:59:26 PAGE 2   
 
   55   1              L0 = 1;  // 要将P0放在这两句代码之间，避免错乱
   56   1              temp_Led_P0 = P0;
@@ -126,7 +126,7 @@ line level    source
  114   1              P2 = (P2 & 0x1f) | 0x80;  // LED控制开启
  115   1              L4 = 1;  // 要将P0放在这两句代码之间，避免错乱
  116   1              temp_Led_P0 = P0;
-C51 COMPILER V9.60.7.0   MAIN                                                              04/05/2024 23:55:46 PAGE 3   
+C51 COMPILER V9.60.7.0   MAIN                                                              04/06/2024 22:59:26 PAGE 3   
 
  117   1              P2 &= 0x1f;
  118   1      }
@@ -190,7 +190,7 @@ line level    source
  175   3                                                                                      P0 = type1[n6]&0x7f;  // 加入小数点
  176   3                                                                              }
  177   2                                                                              else
-C51 COMPILER V9.60.7.0   MAIN                                                              04/05/2024 23:55:46 PAGE 4   
+C51 COMPILER V9.60.7.0   MAIN                                                              04/06/2024 22:59:26 PAGE 4   
 
  178   2                                                                                      P0 = type1[n6];
  179   2                                                                                                        P2 &= 0x1f;break;
@@ -254,7 +254,7 @@ line level    source
  237   1              
  238   1              if (S6 == 0) {
  239   2                      Delay_Keys(100);
-C51 COMPILER V9.60.7.0   MAIN                                                              04/05/2024 23:55:46 PAGE 5   
+C51 COMPILER V9.60.7.0   MAIN                                                              04/06/2024 22:59:26 PAGE 5   
 
  240   2                      if (S6 == 0) {
  241   3                              // =========================================== 代码开始 ======================================
@@ -318,7 +318,7 @@ line level    source
  299          void Change_Keys()
  300          {
  301   1              switch(Scan_Keys())
-C51 COMPILER V9.60.7.0   MAIN                                                              04/05/2024 23:55:46 PAGE 6   
+C51 COMPILER V9.60.7.0   MAIN                                                              04/06/2024 22:59:26 PAGE 6   
 
  302   1              {
  303   2                      case 0x88:GN = 4;break;  // S4
@@ -382,7 +382,7 @@ line level    source
  361   1              num1=num2=num3=num4=num5=num6=num7=num8=10;
  362   1      }
  363          
-C51 COMPILER V9.60.7.0   MAIN                                                              04/05/2024 23:55:46 PAGE 7   
+C51 COMPILER V9.60.7.0   MAIN                                                              04/06/2024 22:59:26 PAGE 7   
 
  364          void LED_control() {
  365   1              // ================= 测试开始 =============
@@ -446,7 +446,7 @@ line level    source
  423   4                                      TR0 = 1;
  424   4                                      pwm_dut = 10;
  425   4                              }
-C51 COMPILER V9.60.7.0   MAIN                                                              04/05/2024 23:55:46 PAGE 8   
+C51 COMPILER V9.60.7.0   MAIN                                                              04/06/2024 22:59:26 PAGE 8   
 
  426   3                              else if (k_mode == 2) {
  427   4                                      pwm_dut = 50;
@@ -459,7 +459,7 @@ line level    source
  434   2          }
  435   1      }
  436          
- 437          void Service_T0() interrupt 2
+ 437          void Service_T0() interrupt 1
  438          {
  439   1              TH0 = (65536 - 100) / 256;
  440   1              TL0 = (65536 - 100) % 256;
@@ -510,7 +510,7 @@ line level    source
  485   1              
  486   1              Display_SMG(num1,num2,num3,num4,num5,num6,num7,num8);//2ms刷新数码管
  487   1      }
-C51 COMPILER V9.60.7.0   MAIN                                                              04/05/2024 23:55:46 PAGE 9   
+C51 COMPILER V9.60.7.0   MAIN                                                              04/06/2024 22:59:26 PAGE 9   
 
 *** WARNING C294 IN LINE 175 OF main.c: unreachable code
 
